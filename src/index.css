@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+html, body, #root {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  position: fixed;
+  inset: 0;
+  background-color: #0c0e12;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* Polices */
+.font-pixel {
+  font-family: 'Press Start 2P', monospace;
+}
+
+.font-gta {
+  font-family: 'Chakra Petch', 'Orbitron', sans-serif;
+}
+
+/* Rendu Minecraft pixelisé pour la carte */
+.minecraft-map-filter {
+  image-rendering: pixelated;
+  filter: contrast(135%) saturate(160%) brightness(95%);
+}
+
+/* Rendu GTA 5 sombre tactique */
+.gta-map-filter {
+  filter: contrast(140%) brightness(75%) saturate(70%);
+}
+
+/* Masquer les barres de défilement partout */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Masquer les boutons natifs MapLibre */
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}
+.maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right {
+  display: none !important;
+}
+
+/* Effet de battement rouge pour excès de vitesse */
+@keyframes speed-beat {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.85);
+    background-color: rgba(185, 28, 28, 0.25);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), 0 0 15px rgba(255, 0, 0, 0.8), inset 0 0 25px rgba(239, 68, 68, 0.55);
+    border-color: #ef4444;
+    background-color: rgba(220, 38, 38, 0.45);
+  }
+}
+
+.speed-excess-beat {
+  animation: speed-beat 0.75s ease-in-out infinite;
+}
+
