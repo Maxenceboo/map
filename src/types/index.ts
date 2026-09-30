@@ -32,3 +32,29 @@ export interface LocationSearchResult {
   type?: 'address' | 'street' | 'city' | 'poi' | 'place';
   postcode?: string;
 }
+
+export type RadarType = 'speed' | 'red_light' | 'discriminant' | 'section' | 'crossing';
+
+export interface RadarItem {
+  id: string;
+  type: RadarType;
+  coordinates: Coordinates; // [lng, lat]
+  speedLimit: number;
+  road?: string;
+  place?: string;
+  direction?: string;
+}
+
+export interface RadarAlert {
+  radar: RadarItem;
+  distanceMeters: number;
+  level: 'warning' | 'urgent';
+}
+
+export interface RadarTrafficSettings {
+  radarAlertsEnabled: boolean;
+  soundAlertsEnabled: boolean;
+  trafficEnabled: boolean;
+  tomtomApiKey: string;
+}
+

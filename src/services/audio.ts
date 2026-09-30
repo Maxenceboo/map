@@ -119,6 +119,38 @@ class GpsAudioEngine {
   }
 
   /**
+   * Bip d'alerte radar / zone de contrôle / feux
+   */
+  public playRadarAlertSound(urgent: boolean = false) {
+    if (this.muted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const pulses = urgent ? [0, 0.12, 0.24] : [0, 0.15];
+
+    pulses.forEach((timeOffset) => {
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = urgent ? 'sawtooth' : 'triangle';
+      osc.frequency.setValueAtTime(urgent ? 987.77 : 783.99, now + timeOffset);
+      osc.frequency.exponentialRampToValueAtTime(urgent ? 1318.51 : 1046.5, now + timeOffset + 0.08);
+
+      const maxGain = urgent ? 0.25 : 0.18;
+      gain.gain.setValueAtTime(maxGain, now + timeOffset);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 0.1);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now + timeOffset);
+      osc.stop(now + timeOffset + 0.1);
+    });
+  }
+
+  /**
    * Synthèse vocale de guidage
    */
   public speak(text: string) {
@@ -135,3 +167,4 @@ class GpsAudioEngine {
 }
 
 export const gpsAudio = new GpsAudioEngine();
+

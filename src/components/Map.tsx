@@ -7,6 +7,7 @@ import { CarMapTheme, getTheme } from '../styles/mapStyles';
 import { VehicleType, getVehicleMarkerHtml } from '../services/vehicleCustomization';
 import { Vehicle3DLayer } from '../services/vehicle3DLayer';
 import { detectSpeedLimitFromFeature, getDistanceMeters } from '../services/speedLimits';
+import { getRadarsInBBox } from '../services/radarService';
 
 try {
   if (workerUrl) {
@@ -34,6 +35,9 @@ interface MapProps {
   onMapLongPress?: (coords: Coordinates) => void;
   onUserMove?: () => void;
   onRoadSpeedLimitDetected?: (speedLimit: number) => void;
+  trafficEnabled?: boolean;
+  tomtomApiKey?: string;
+  radarAlertsEnabled?: boolean;
 }
 
 export const Map: React.FC<MapProps> = ({
@@ -50,7 +54,11 @@ export const Map: React.FC<MapProps> = ({
   onMapLongPress,
   onUserMove,
   onRoadSpeedLimitDetected,
+  trafficEnabled = true,
+  tomtomApiKey = '',
+  radarAlertsEnabled = true,
 }) => {
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const playerMarkerRef = useRef<maplibregl.Marker | null>(null);
@@ -63,7 +71,18 @@ export const Map: React.FC<MapProps> = ({
   const routeGlowLayerId = 'active-route-glow';
   const routeCoreLayerId = 'active-route-core';
 
+  const radarSourceId = 'radars-source';
+  const radarGlowLayerId = 'radars-glow';
+  const radarCoreLayerId = 'radars-core';
+  const radarLabelLayerId = 'radars-label';
+
+  const trafficSourceId = 'tomtom-traffic-flow';
+  const trafficLayerId = 'tomtom-traffic-flow-layer';
+  const incidentsSourceId = 'tomtom-traffic-incidents';
+  const incidentsLayerId = 'tomtom-traffic-incidents-layer';
+
   const themeConfig = getTheme(theme);
+
 
 
 
@@ -124,6 +143,178 @@ export const Map: React.FC<MapProps> = ({
       }
     }
   }, [currentPosition, bearing, vehicleType, vehicleColor, showHeadlights]);
+
+  // Configuration et rafraîchissement de la couche Trafic TomTom
+  const setupTomTomTraffic = useCallback((mapInstance?: maplibregl.Map | null) => {
+    const map = mapInstance || mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    try {
+      if (map.getLayer(incidentsLayerId)) map.removeLayer(incidentsLayerId);
+      if (map.getSource(incidentsSourceId)) map.removeSource(incidentsSourceId);
+      if (map.getLayer(trafficLayerId)) map.removeLayer(trafficLayerId);
+      if (map.getSource(trafficSourceId)) map.removeSource(trafficSourceId);
+    } catch (_) {}
+
+    if (trafficEnabled && tomtomApiKey && tomtomApiKey.trim().length > 5) {
+      const key = encodeURIComponent(tomtomApiKey.trim());
+      const beforeLayer = map.getLayer(routeGlowLayerId) ? routeGlowLayerId : undefined;
+
+      try {
+        map.addSource(trafficSourceId, {
+          type: 'raster',
+          tiles: [`https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${key}`],
+          tileSize: 256,
+        });
+
+        map.addLayer(
+          {
+            id: trafficLayerId,
+            type: 'raster',
+            source: trafficSourceId,
+            paint: {
+              'raster-opacity': 0.75,
+            },
+          },
+          beforeLayer
+        );
+
+        map.addSource(incidentsSourceId, {
+          type: 'raster',
+          tiles: [`https://api.tomtom.com/traffic/map/4/tile/incidents/s3/{z}/{x}/{y}.png?key=${key}`],
+          tileSize: 256,
+        });
+
+        map.addLayer(
+          {
+            id: incidentsLayerId,
+            type: 'raster',
+            source: incidentsSourceId,
+            paint: {
+              'raster-opacity': 0.85,
+            },
+          },
+          beforeLayer
+        );
+      } catch (err) {
+        console.warn('Erreur chargement couches TomTom Traffic:', err);
+      }
+    }
+  }, [trafficEnabled, tomtomApiKey]);
+
+  // Configuration et rafraîchissement des pastilles radars sur la carte
+  const setupRadarLayers = useCallback((mapInstance?: maplibregl.Map | null) => {
+    const map = mapInstance || mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    try {
+      if (map.getLayer(radarLabelLayerId)) map.removeLayer(radarLabelLayerId);
+      if (map.getLayer(radarCoreLayerId)) map.removeLayer(radarCoreLayerId);
+      if (map.getLayer(radarGlowLayerId)) map.removeLayer(radarGlowLayerId);
+      if (map.getSource(radarSourceId)) map.removeSource(radarSourceId);
+    } catch (_) {}
+
+    if (!radarAlertsEnabled) return;
+
+    try {
+      map.addSource(radarSourceId, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      // Halo lumineux du radar
+      map.addLayer({
+        id: radarGlowLayerId,
+        type: 'circle',
+        source: radarSourceId,
+        minzoom: 11,
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 7, 16, 12],
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.75,
+          'circle-blur': 0.35,
+        },
+      });
+
+      // Point central
+      map.addLayer({
+        id: radarCoreLayerId,
+        type: 'circle',
+        source: radarSourceId,
+        minzoom: 11,
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 16, 6],
+          'circle-color': '#ffffff',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#000000',
+        },
+      });
+
+      // Étiquette vitesse ou FEU
+      map.addLayer({
+        id: radarLabelLayerId,
+        type: 'symbol',
+        source: radarSourceId,
+        minzoom: 13,
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-size': 11,
+          'text-offset': [0, -1.3],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-allow-overlap': false,
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': '#000000',
+          'text-halo-width': 2,
+        },
+      });
+    } catch (err) {
+      console.warn('Erreur initialisation couches radars:', err);
+    }
+  }, [radarAlertsEnabled]);
+
+  // Mise à jour des points radars selon l'emprise visible
+  const updateRadars = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded() || !radarAlertsEnabled) return;
+
+    const source = map.getSource(radarSourceId) as maplibregl.GeoJSONSource | undefined;
+    if (!source) return;
+
+    const zoom = map.getZoom();
+    if (zoom < 10.5) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
+
+    const bounds = map.getBounds();
+    const items = getRadarsInBBox(
+      bounds.getWest(),
+      bounds.getSouth(),
+      bounds.getEast(),
+      bounds.getNorth()
+    );
+
+    source.setData({
+      type: 'FeatureCollection',
+      features: items.map((r) => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: r.coordinates,
+        },
+        properties: {
+          id: r.id,
+          type: r.type,
+          speedLimit: r.speedLimit,
+          label: r.type === 'red_light' ? 'FEU' : String(r.speedLimit),
+          color: r.type === 'red_light' ? '#ef4444' : '#f59e0b',
+        },
+      })),
+    });
+  }, [radarAlertsEnabled]);
+
 
   // Fonction de dessin de l'itinéraire garantie permanente
   const drawRoute = useCallback(() => {
@@ -362,7 +553,14 @@ export const Map: React.FC<MapProps> = ({
       map.resize();
       loadMinecraftTextures(map);
       drawRoute();
+      setupTomTomTraffic(map);
+      setupRadarLayers(map);
+      updateRadars();
       setup3DVehicleLayer(map);
+    });
+
+    map.on('moveend', () => {
+      updateRadars();
     });
 
     map.on('error', (e) => {
@@ -376,6 +574,7 @@ export const Map: React.FC<MapProps> = ({
     (window as any).carMap = map;
     map.on('zoomend', () => {
       console.log('[CAR_GPS] Zoom level:', map.getZoom().toFixed(2));
+      updateRadars();
     });
 
     return () => {
@@ -386,7 +585,7 @@ export const Map: React.FC<MapProps> = ({
     };
   }, []);
 
-  // 2. Changement de thème (avec re-dessin immédiat de la route)
+  // 2. Changement de thème (avec re-dessin immédiat de la route, radars et trafic)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -395,6 +594,9 @@ export const Map: React.FC<MapProps> = ({
     map.once('styledata', () => {
       loadMinecraftTextures(map);
       drawRoute(); // Garantit que l'itinéraire ne disparaît JAMAIS au changement de thème
+      setupTomTomTraffic(map);
+      setupRadarLayers(map);
+      updateRadars();
       setup3DVehicleLayer(map);
     });
 
@@ -406,7 +608,19 @@ export const Map: React.FC<MapProps> = ({
         arrowEl.style.transform = `rotate(${bearing}deg)`;
       }
     }
-  }, [theme, drawRoute, vehicleType, vehicleColor, showHeadlights]);
+  }, [theme, drawRoute, vehicleType, vehicleColor, showHeadlights, setupTomTomTraffic, setupRadarLayers, updateRadars]);
+
+  // 2b. Mise à jour dynamique du trafic TomTom quand la clé ou l'option change
+  useEffect(() => {
+    setupTomTomTraffic();
+  }, [setupTomTomTraffic]);
+
+  // 2c. Mise à jour dynamique des radars
+  useEffect(() => {
+    setupRadarLayers();
+    updateRadars();
+  }, [setupRadarLayers, updateRadars]);
+
 
   const lastPosTimeRef = useRef<number>(Date.now());
 

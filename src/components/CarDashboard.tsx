@@ -37,12 +37,18 @@ import {
   Edit2,
   Loader2,
   Building2,
-  Store
+  Store,
+  ShieldAlert,
+  Camera,
+  Key,
 } from 'lucide-react';
-import { RouteInfo, RouteStep, LocationSearchResult, Coordinates } from '../types';
+import { RouteInfo, RouteStep, LocationSearchResult, Coordinates, RadarAlert, RadarTrafficSettings } from '../types';
 import { CarMapTheme, CAR_THEMES, getTheme } from '../styles/mapStyles';
 import { searchLocations, PRESET_DESTINATIONS, reverseGeocode } from '../services/geocoding';
 import { detectSpeedLimitFromName } from '../services/speedLimits';
+import { checkRadarProximity, getRadarTrafficSettings, saveRadarTrafficSettings } from '../services/radarService';
+import { gpsAudio } from '../services/audio';
+
 import { 
   getSavedPlaces, 
   setHomePlace, 
@@ -98,6 +104,9 @@ interface CarDashboardProps {
   wakeLockActive: boolean;
   currentPosition?: Coordinates;
   detectedRoadSpeedLimit?: number;
+  bearing?: number;
+  radarTrafficSettings?: RadarTrafficSettings;
+  onUpdateRadarTrafficSettings?: (settings: RadarTrafficSettings) => void;
 }
 
 export const CarDashboard: React.FC<CarDashboardProps> = ({
@@ -131,11 +140,69 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   wakeLockActive,
   currentPosition,
   detectedRoadSpeedLimit,
+  bearing = 0,
+  radarTrafficSettings,
+  onUpdateRadarTrafficSettings,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMenuSection, setActiveMenuSection] = useState<
-    'root' | 'theme' | 'camera' | 'vehicle' | 'vehicle_models' | 'vehicle_colors' | 'audio' | 'system' | 'places'
+    'root' | 'theme' | 'camera' | 'vehicle' | 'vehicle_models' | 'vehicle_colors' | 'audio' | 'system' | 'places' | 'radar_traffic'
   >('root');
+
+  const [activeRadarAlert, setActiveRadarAlert] = useState<RadarAlert | null>(null);
+  const lastAlertAudioKeyRef = React.useRef<string | null>(null);
+
+  const [localRadarTraffic, setLocalRadarTraffic] = useState<RadarTrafficSettings>(
+    () => radarTrafficSettings || getRadarTrafficSettings()
+  );
+  const [tomtomInputKey, setTomtomInputKey] = useState<string>(
+    (radarTrafficSettings || getRadarTrafficSettings()).tomtomApiKey || ''
+  );
+  const [keySavedMessage, setKeySavedMessage] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (radarTrafficSettings) {
+      setLocalRadarTraffic(radarTrafficSettings);
+      setTomtomInputKey(radarTrafficSettings.tomtomApiKey || '');
+    }
+  }, [radarTrafficSettings]);
+
+  const updateRadarTraffic = (partial: Partial<RadarTrafficSettings>) => {
+    const updated = saveRadarTrafficSettings(partial);
+    setLocalRadarTraffic(updated);
+    if (onUpdateRadarTrafficSettings) {
+      onUpdateRadarTrafficSettings(updated);
+    }
+  };
+
+  // Détection en direct des radars et zones de contrôle
+  useEffect(() => {
+    if (!currentPosition) {
+      setActiveRadarAlert(null);
+      return;
+    }
+
+    const alert = checkRadarProximity(
+      currentPosition,
+      bearing,
+      currentSpeed,
+      localRadarTraffic
+    );
+    setActiveRadarAlert(alert);
+
+    if (alert) {
+      if (localRadarTraffic.soundAlertsEnabled && !isMuted) {
+        const key = `${alert.radar.id}_${alert.level}`;
+        if (lastAlertAudioKeyRef.current !== key) {
+          lastAlertAudioKeyRef.current = key;
+          gpsAudio.playRadarAlertSound(alert.level === 'urgent');
+        }
+      }
+    } else {
+      lastAlertAudioKeyRef.current = null;
+    }
+  }, [currentPosition, bearing, currentSpeed, localRadarTraffic, isMuted]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -143,6 +210,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   const [speedLimit, setSpeedLimit] = useState<number>(50);
 
   const searchAbortRef = React.useRef<AbortController | null>(null);
+
   const searchDebounceRef = React.useRef<any>(null);
 
   useEffect(() => {
@@ -728,7 +796,75 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
             </div>
           </div>
         )}
+
+        {/* 3. ALERTE RADARS / FEUX ROUGES EN TÊTE DE COCKPIT */}
+        {activeRadarAlert && (
+          <div
+            className={`pointer-events-auto w-full backdrop-blur-xl border rounded-xl p-3 md:p-3.5 shadow-2xl flex items-center justify-between gap-3 text-white transition-all animate-in slide-in-from-top-2 duration-200 ${
+              activeRadarAlert.radar.type === 'red_light'
+                ? 'bg-red-950/95 border-red-500/60 shadow-[0_0_25px_rgba(239,68,68,0.25)]'
+                : 'bg-neutral-900/98 border-amber-500/60 shadow-[0_0_25px_rgba(245,158,11,0.25)]'
+            }`}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 font-bold border ${
+                  activeRadarAlert.radar.type === 'red_light'
+                    ? 'bg-red-500/20 border-red-500/40 text-red-400 animate-pulse'
+                    : 'bg-amber-500/20 border-amber-500/40 text-amber-400 animate-pulse'
+                }`}
+              >
+                {activeRadarAlert.radar.type === 'red_light' ? (
+                  <ShieldAlert className="w-6 h-6" />
+                ) : (
+                  <Camera className="w-6 h-6" />
+                )}
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-black uppercase tracking-wider ${
+                      activeRadarAlert.radar.type === 'red_light' ? 'text-red-400' : 'text-amber-400'
+                    }`}
+                  >
+                    {activeRadarAlert.radar.type === 'red_light'
+                      ? 'Zone Contrôle Feu Rouge'
+                      : activeRadarAlert.radar.type === 'section'
+                      ? 'Radar Tronçon Vitesse'
+                      : 'Radar Fixe'}
+                  </span>
+                  {activeRadarAlert.level === 'urgent' && (
+                    <span className="text-[10px] uppercase font-black bg-red-500/20 border border-red-500/40 text-red-400 px-1.5 py-0.5 rounded animate-pulse">
+                      Imminent
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm font-bold text-white truncate mt-0.5">
+                  {activeRadarAlert.radar.road || activeRadarAlert.radar.place || 'Zone sous surveillance'}
+                  {activeRadarAlert.radar.direction ? ` • ${activeRadarAlert.radar.direction}` : ''}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-right">
+                <div className="text-2xl md:text-3xl font-black text-white leading-none font-mono">
+                  {Math.round(activeRadarAlert.distanceMeters)}{' '}
+                  <span className="text-xs font-bold text-neutral-400">m</span>
+                </div>
+              </div>
+
+              {activeRadarAlert.radar.type !== 'red_light' && (
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-red-600 flex items-center justify-center text-black font-black text-xs shadow-md">
+                  {activeRadarAlert.radar.speedLimit}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
 
       {/* ============================================================== */}
       {/* 2. CENTRE / BAS : APERÇU D'ITINÉRAIRE (AVANT DE DÉMARRER) */}
@@ -936,7 +1072,9 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                     {activeMenuSection === 'audio' && 'Audio'}
                     {activeMenuSection === 'system' && 'Système'}
                     {activeMenuSection === 'places' && 'Lieux Favoris'}
+                    {activeMenuSection === 'radar_traffic' && 'Radars & Trafic'}
                   </h3>
+
                 )}
 
                 <button
@@ -1104,8 +1242,34 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                       </button>
                     </div>
                   </div>
+
+                  {/* Section 4 : Sécurité & Circulation */}
+                  <div className="flex flex-col">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 pb-2 border-b border-neutral-900">
+                      Sécurité & Circulation
+                    </div>
+                    <div className="divide-y divide-neutral-900">
+                      <button
+                        onClick={() => setActiveMenuSection('radar_traffic')}
+                        className="w-full py-3.5 px-1 hover:bg-neutral-900/50 active:bg-neutral-900 flex items-center justify-between text-left transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Radio className="w-4 h-4 text-neutral-400" />
+                          <span className="text-sm font-medium text-white">Radars, Feux & Trafic</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-neutral-400">
+                            {localRadarTraffic.radarAlertsEnabled ? 'Alertes ON' : 'OFF'}
+                            {localRadarTraffic.trafficEnabled && localRadarTraffic.tomtomApiKey ? ' • Trafic ON' : ''}
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-neutral-500" />
+                        </div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
+
 
               {/* -------------------------------------------------------- */}
               {/* SOUS-MENU : THÈME                                        */}
@@ -1637,7 +1801,189 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* -------------------------------------------------------- */}
+              {/* SOUS-MENU : RADARS, FEUX & TRAFIC                       */}
+              {/* -------------------------------------------------------- */}
+              {activeMenuSection === 'radar_traffic' && (
+                <div className="flex flex-col gap-6 animate-in fade-in duration-100">
+                  {/* Section 1 : Radars & Feux */}
+                  <div className="flex flex-col">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 pb-2 border-b border-neutral-900">
+                      Zones de contrôle & Feux
+                    </div>
+                    <div className="divide-y divide-neutral-900">
+                      {/* Ligne 1 : Alertes Radars & Feux */}
+                      <div
+                        onClick={() => updateRadarTraffic({ radarAlertsEnabled: !localRadarTraffic.radarAlertsEnabled })}
+                        className="w-full py-3.5 px-1 flex items-center justify-between cursor-pointer hover:bg-neutral-900/50 active:bg-neutral-900 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Camera className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-white">Alertes radars & feux</span>
+                            <span className="text-xs text-neutral-500">Détection d'approche (France & International)</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className={`w-2 h-2 rounded-full ${
+                            localRadarTraffic.radarAlertsEnabled
+                              ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]'
+                              : 'bg-neutral-600'
+                          }`} />
+                          <span className="text-xs text-neutral-400">
+                            {localRadarTraffic.radarAlertsEnabled ? 'Activé' : 'Désactivé'}
+                          </span>
+                          <div className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${
+                            localRadarTraffic.radarAlertsEnabled ? 'bg-blue-600' : 'bg-neutral-700'
+                          }`}>
+                            <div className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${
+                              localRadarTraffic.radarAlertsEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`} />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ligne 2 : Bip sonore d'alerte */}
+                      <div
+                        onClick={() => updateRadarTraffic({ soundAlertsEnabled: !localRadarTraffic.soundAlertsEnabled })}
+                        className="w-full py-3.5 px-1 flex items-center justify-between cursor-pointer hover:bg-neutral-900/50 active:bg-neutral-900 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Volume2 className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-white">Bip sonore d'approche</span>
+                            <span className="text-xs text-neutral-500">Signal audio procédural à 300m</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className={`w-2 h-2 rounded-full ${
+                            localRadarTraffic.soundAlertsEnabled
+                              ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]'
+                              : 'bg-neutral-600'
+                          }`} />
+                          <span className="text-xs text-neutral-400">
+                            {localRadarTraffic.soundAlertsEnabled ? 'Activé' : 'Désactivé'}
+                          </span>
+                          <div className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${
+                            localRadarTraffic.soundAlertsEnabled ? 'bg-blue-600' : 'bg-neutral-700'
+                          }`}>
+                            <div className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${
+                              localRadarTraffic.soundAlertsEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2 : Trafic en direct (TomTom) */}
+                  <div className="flex flex-col">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 pb-2 border-b border-neutral-900">
+                      Trafic & Bouchons (TomTom)
+                    </div>
+                    <div className="divide-y divide-neutral-900">
+                      {/* Ligne 1 : Couche trafic */}
+                      <div
+                        onClick={() => updateRadarTraffic({ trafficEnabled: !localRadarTraffic.trafficEnabled })}
+                        className="w-full py-3.5 px-1 flex items-center justify-between cursor-pointer hover:bg-neutral-900/50 active:bg-neutral-900 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Layers className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-white">Affichage du trafic</span>
+                            <span className="text-xs text-neutral-500">Flux routier en temps réel sur la carte</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className={`w-2 h-2 rounded-full ${
+                            localRadarTraffic.trafficEnabled
+                              ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]'
+                              : 'bg-neutral-600'
+                          }`} />
+                          <span className="text-xs text-neutral-400">
+                            {localRadarTraffic.trafficEnabled ? 'Activé' : 'Désactivé'}
+                          </span>
+                          <div className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${
+                            localRadarTraffic.trafficEnabled ? 'bg-blue-600' : 'bg-neutral-700'
+                          }`}>
+                            <div className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${
+                              localRadarTraffic.trafficEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`} />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ligne 2 : Clé API TomTom */}
+                      <div className="py-3.5 px-1 flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Key className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-white">Clé API TomTom Traffic</span>
+                              <span className="text-xs text-neutral-500">Requise pour charger les flux en direct</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${
+                              localRadarTraffic.tomtomApiKey
+                                ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]'
+                                : 'bg-neutral-600'
+                            }`} />
+                            <span className="text-xs text-neutral-400">
+                              {localRadarTraffic.tomtomApiKey ? 'Configurée' : 'Non configurée'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                          <input
+                            type="text"
+                            value={tomtomInputKey}
+                            onChange={(e) => {
+                              setTomtomInputKey(e.target.value);
+                              setKeySavedMessage(false);
+                            }}
+                            placeholder="Coller la clé API TomTom..."
+                            className="flex-1 px-3 py-2 bg-neutral-900 border border-neutral-800 focus:border-neutral-600 rounded text-xs font-mono text-white placeholder-neutral-500 outline-none transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateRadarTraffic({ tomtomApiKey: tomtomInputKey.trim() });
+                              setKeySavedMessage(true);
+                              setTimeout(() => setKeySavedMessage(false), 2500);
+                            }}
+                            className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-200 font-medium text-xs rounded transition-colors flex-shrink-0"
+                          >
+                            Enregistrer
+                          </button>
+                        </div>
+
+                        {keySavedMessage && (
+                          <div className="text-xs font-medium text-emerald-400 animate-in fade-in">
+                            ✓ Clé TomTom enregistrée
+                          </div>
+                        )}
+
+                        <div className="text-[11px] text-neutral-500">
+                          Clé gratuite (2 500 requêtes/jour) sur{' '}
+                          <a
+                            href="https://developer.tomtom.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-neutral-400 hover:text-white underline"
+                          >
+                            developer.tomtom.com
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
 
             {/* Bouton bas */}
             <div className="pt-4 border-t border-neutral-900">

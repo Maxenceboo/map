@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Coordinates, RouteInfo, LocationSearchResult } from './types';
+import { Coordinates, RouteInfo, LocationSearchResult, RadarTrafficSettings } from './types';
 import { CarMapTheme } from './styles/mapStyles';
 import { calculateRoute } from './services/routing';
 import { gpsAudio } from './services/audio';
@@ -14,6 +14,8 @@ import { MissionPassedModal } from './components/MissionPassedModal';
 import { Navigation } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { calculateBearing, snapToRoute, snapToNearestRoad } from './services/mapMatching';
+import { getRadarTrafficSettings } from './services/radarService';
+
 
 
 
@@ -80,8 +82,10 @@ export function App() {
   const [showArrivalModal, setShowArrivalModal] = useState<boolean>(false);
   const [completedTripStats, setCompletedTripStats] = useState<{ distance: number; duration: number } | null>(null);
   const [detectedSpeedLimit, setDetectedSpeedLimit] = useState<number>(50);
+  const [radarTrafficSettings, setRadarTrafficSettings] = useState<RadarTrafficSettings>(() => getRadarTrafficSettings());
 
   // Références d'état pour les écouteurs d'événements
+
   const routeRef = useRef<RouteInfo | null>(null);
   routeRef.current = route;
   const isNavigatingRef = useRef<boolean>(false);
@@ -598,6 +602,9 @@ export function App() {
         onMapLongPress={handleMapLongPress}
         onUserMove={() => setFollowUser(false)}
         onRoadSpeedLimitDetected={setDetectedSpeedLimit}
+        trafficEnabled={radarTrafficSettings.trafficEnabled}
+        tomtomApiKey={radarTrafficSettings.tomtomApiKey}
+        radarAlertsEnabled={radarTrafficSettings.radarAlertsEnabled}
       />
 
       {/* 2. Tableau de bord voiture épuré Waze/GTA/Minecraft */}
@@ -639,7 +646,11 @@ export function App() {
         wakeLockActive={wakeLockActive}
         currentPosition={currentPosition}
         detectedRoadSpeedLimit={detectedSpeedLimit}
+        bearing={bearing}
+        radarTrafficSettings={radarTrafficSettings}
+        onUpdateRadarTrafficSettings={setRadarTrafficSettings}
       />
+
 
       {/* 3. Modal de mission accomplie à l'arrivée */}
       <MissionPassedModal
