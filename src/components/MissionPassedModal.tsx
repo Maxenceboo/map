@@ -36,9 +36,9 @@ export const MissionPassedModal: React.FC<MissionPassedModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 font-sans animate-in fade-in duration-200">
-      <div className="bg-neutral-900 border border-neutral-800 max-w-sm w-full rounded-3xl p-6 shadow-2xl text-center relative overflow-hidden text-white">
+      <div className="bg-neutral-900 border border-neutral-800 max-w-sm w-full rounded-xl p-6 shadow-2xl text-center relative overflow-hidden text-white">
         <div className="mb-4 flex flex-col items-center">
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl mb-3">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg mb-3">
             <CheckCircle2 className="w-9 h-9" />
           </div>
           <h2 className="text-2xl font-black tracking-tight text-white">
@@ -50,7 +50,7 @@ export const MissionPassedModal: React.FC<MissionPassedModalProps> = ({
         </div>
 
         {/* Statistiques du trajet */}
-        <div className="grid grid-cols-2 gap-3 my-5 bg-neutral-950 p-3.5 rounded-2xl border border-neutral-800/80">
+        <div className="grid grid-cols-2 gap-3 my-5 bg-neutral-950 p-3.5 rounded-lg border border-neutral-800/80">
           <div>
             <div className="text-[11px] text-neutral-400 font-medium">Distance</div>
             <div className="text-lg font-extrabold text-white mt-0.5">

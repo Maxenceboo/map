@@ -45,14 +45,21 @@
         <!-- Service Android Auto de navigation -->
         <service
             android:name=".GameGpsCarAppService"
-            android:exported="true">
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
                 <category android:name="androidx.car.app.category.NAVIGATION" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
 
     </application>
+
+    <!-- Permissions requises pour Android Auto (NavigationTemplate & Surface) -->
+    <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
+    <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
 
     <!-- Permissions requises pour la navigation GPS voiture -->
     <uses-permission android:name="android.permission.INTERNET" />

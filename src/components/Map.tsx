@@ -6,6 +6,7 @@ import { Coordinates, RouteInfo } from '../types';
 import { CarMapTheme, getTheme } from '../styles/mapStyles';
 import { VehicleType, getVehicleMarkerHtml } from '../services/vehicleCustomization';
 import { Vehicle3DLayer } from '../services/vehicle3DLayer';
+import { detectSpeedLimitFromFeature, getDistanceMeters } from '../services/speedLimits';
 
 try {
   if (workerUrl) {
@@ -32,6 +33,7 @@ interface MapProps {
   showHeadlights?: boolean;
   onMapLongPress?: (coords: Coordinates) => void;
   onUserMove?: () => void;
+  onRoadSpeedLimitDetected?: (speedLimit: number) => void;
 }
 
 export const Map: React.FC<MapProps> = ({
@@ -47,12 +49,15 @@ export const Map: React.FC<MapProps> = ({
   showHeadlights = true,
   onMapLongPress,
   onUserMove,
+  onRoadSpeedLimitDetected,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const playerMarkerRef = useRef<maplibregl.Marker | null>(null);
   const vehicle3DLayerRef = useRef<Vehicle3DLayer | null>(null);
   const destMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const routeRef = useRef<RouteInfo | null>(route);
+  routeRef.current = route;
 
   const routeSourceId = 'active-route-source';
   const routeGlowLayerId = 'active-route-glow';
@@ -130,24 +135,39 @@ export const Map: React.FC<MapProps> = ({
       return;
     }
 
+    const currentRoute = routeRef.current;
+
     // Nettoyage sécurisé
-    if (map.getLayer(routeCoreLayerId)) map.removeLayer(routeCoreLayerId);
-    if (map.getLayer(routeGlowLayerId)) map.removeLayer(routeGlowLayerId);
-    if (map.getSource(routeSourceId)) map.removeSource(routeSourceId);
+    try {
+      if (map.getLayer(routeCoreLayerId)) map.removeLayer(routeCoreLayerId);
+    } catch (_) {}
+    try {
+      if (map.getLayer(routeGlowLayerId)) map.removeLayer(routeGlowLayerId);
+    } catch (_) {}
+    try {
+      if (map.getSource(routeSourceId)) map.removeSource(routeSourceId);
+    } catch (_) {}
 
     if (destMarkerRef.current) {
       destMarkerRef.current.remove();
       destMarkerRef.current = null;
     }
+    // Nettoyage de tout balisage de destination résiduel
+    if (typeof document !== 'undefined') {
+      document.querySelectorAll('.dest-beacon').forEach((el) => el.remove());
+    }
 
-    if (!route || route.coordinates.length < 2) return;
+    if (!currentRoute || !currentRoute.coordinates || currentRoute.coordinates.length < 2) {
+      map.triggerRepaint();
+      return;
+    }
 
     const geojsonData = {
       type: 'Feature' as const,
       properties: {},
       geometry: {
         type: 'LineString' as const,
-        coordinates: route.coordinates,
+        coordinates: currentRoute.coordinates,
       },
     };
 
@@ -190,7 +210,7 @@ export const Map: React.FC<MapProps> = ({
     });
 
     // 3. Marqueur de destination au bout du chemin
-    const destCoords = route.coordinates[route.coordinates.length - 1];
+    const destCoords = currentRoute.coordinates[currentRoute.coordinates.length - 1];
     const destEl = document.createElement('div');
     destEl.className = 'dest-beacon';
 
@@ -388,15 +408,22 @@ export const Map: React.FC<MapProps> = ({
     }
   }, [theme, drawRoute, vehicleType, vehicleColor, showHeadlights]);
 
+  const lastPosTimeRef = useRef<number>(Date.now());
+
   // Mise à jour instantanée du véhicule, couleur ou phares
   useEffect(() => {
+    const now = Date.now();
+    const timeDelta = Math.max(400, Math.min(2500, now - lastPosTimeRef.current));
+    lastPosTimeRef.current = now;
+
     if (vehicle3DLayerRef.current) {
       vehicle3DLayerRef.current.update(
         currentPosition,
         bearing,
         vehicleType,
         vehicleColor,
-        showHeadlights
+        showHeadlights,
+        timeDelta
       );
     }
 
@@ -410,9 +437,48 @@ export const Map: React.FC<MapProps> = ({
     }
   }, [vehicleType, vehicleColor, showHeadlights, bearing, currentPosition]);
 
+  const lastQueriedPosRef = useRef<Coordinates | null>(null);
+
+  // Détection en direct de la route sous le véhicule pour la limitation de vitesse
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded() || !onRoadSpeedLimitDetected) return;
+
+    if (
+      lastQueriedPosRef.current &&
+      getDistanceMeters(lastQueriedPosRef.current, currentPosition) < 6
+    ) {
+      return;
+    }
+    lastQueriedPosRef.current = currentPosition;
+
+    try {
+      const point = map.project(currentPosition);
+      const bbox: [maplibregl.PointLike, maplibregl.PointLike] = [
+        [point.x - 8, point.y - 8],
+        [point.x + 8, point.y + 8],
+      ];
+      const features = map.queryRenderedFeatures(bbox, {
+        layers: [
+          'highway_motorway_inner',
+          'highway_motorway_casing',
+          'highway_major_inner',
+          'highway_major_casing',
+          'highway_minor',
+        ],
+      });
+
+      if (features && features.length > 0) {
+        const topRoad = features[0];
+        const detectedLimit = detectSpeedLimitFromFeature(topRoad.properties);
+        onRoadSpeedLimitDetected(detectedLimit);
+      }
+    } catch (_) {}
+  }, [currentPosition, onRoadSpeedLimitDetected]);
+
   const prevFollowUserRef = useRef<boolean>(followUser);
 
-  // 3. Mise à jour position & cap (caméra de suivi avec zoom classique garanti)
+  // 3. Mise à jour position & cap (caméra de suivi avec zoom classique garanti et transition linéaire)
   useEffect(() => {
     if (!mapRef.current || !playerMarkerRef.current) return;
 
@@ -431,7 +497,8 @@ export const Map: React.FC<MapProps> = ({
         bearing: is3D ? bearing : 0,
         pitch: is3D ? 55 : 0,
         padding: { top: 120, bottom: 200, left: 0, right: 0 },
-        duration: justRecentered ? 750 : 250,
+        duration: justRecentered ? 750 : 900,
+        easing: (t) => t, // Transition linéaire pure sans à-coups ni téléportation
       });
     }
 

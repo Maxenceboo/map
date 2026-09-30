@@ -13,22 +13,9 @@ import { CarDashboard } from './components/CarDashboard';
 import { MissionPassedModal } from './components/MissionPassedModal';
 import { Navigation } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
+import { calculateBearing, snapToRoute, snapToNearestRoad } from './services/mapMatching';
 
-function calculateBearing(start: Coordinates, end: Coordinates): number {
-  const startLat = (start[1] * Math.PI) / 180;
-  const startLng = (start[0] * Math.PI) / 180;
-  const endLat = (end[1] * Math.PI) / 180;
-  const endLng = (end[0] * Math.PI) / 180;
 
-  const dLng = endLng - startLng;
-  const y = Math.sin(dLng) * Math.cos(endLat);
-  const x =
-    Math.cos(startLat) * Math.sin(endLat) -
-    Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
-
-  let brng = (Math.atan2(y, x) * 180) / Math.PI;
-  return (brng + 360) % 360;
-}
 
 function getDistanceMeters(c1: Coordinates, c2: Coordinates): number {
   const R = 6371e3;
@@ -91,6 +78,8 @@ export function App() {
   const [recenterTrigger, setRecenterTrigger] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [showArrivalModal, setShowArrivalModal] = useState<boolean>(false);
+  const [completedTripStats, setCompletedTripStats] = useState<{ distance: number; duration: number } | null>(null);
+  const [detectedSpeedLimit, setDetectedSpeedLimit] = useState<number>(50);
 
   // Références d'état pour les écouteurs d'événements
   const routeRef = useRef<RouteInfo | null>(null);
@@ -107,6 +96,12 @@ export function App() {
   const lastStepSpokenRef = useRef<number>(-1);
   const offRouteTicksRef = useRef<number>(0);
   const isReroutingRef = useRef<boolean>(false);
+
+  // Données de dynamique de véhicule : vitesse réelle et cap basé 100% sur le déplacement
+  const lastFixDataRef = useRef<{ pos: Coordinates; time: number } | null>(null);
+  const smoothedSpeedRef = useRef<number>(0);
+  const lastMovementBearingRef = useRef<number>(30);
+  const lastRawGpsPosRef = useRef<Coordinates | null>(null);
 
   // ==============================================================
   // 1. SCREEN WAKE LOCK (Maintien de l'écran allumé en voiture)
@@ -166,7 +161,20 @@ export function App() {
 
     // 1. Arrivée à destination (< 25 mètres)
     if (distToDest < 25) {
+      setCompletedTripStats({
+        distance: curRoute.distance,
+        duration: curRoute.duration,
+      });
       setIsNavigating(false);
+      setRoute(null);
+      routeRef.current = null;
+      setDestinationCoords(null);
+      destinationCoordsRef.current = null;
+      setDestinationName('');
+      setTotalDistanceRemaining(0);
+      setTotalDurationRemaining(0);
+      setStepDistanceRemaining(0);
+      setCurrentStepIndex(0);
       setCurrentSpeed(0);
       setShowArrivalModal(true);
       gpsAudio.playArrivalChime();
@@ -262,6 +270,11 @@ export function App() {
           const coords: Coordinates = [pos.coords.longitude, pos.coords.latitude];
           setCurrentPosition(coords);
           lastGpsPosRef.current = coords;
+          lastRawGpsPosRef.current = coords;
+          if (pos.coords.heading !== null && !isNaN(pos.coords.heading) && pos.coords.heading >= 0) {
+            setBearing(pos.coords.heading);
+            lastMovementBearingRef.current = pos.coords.heading;
+          }
           setGpsStatus('locked');
         }
       } catch (e) {
@@ -283,16 +296,15 @@ export function App() {
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setGpsStatus('locked');
-        const newPos: Coordinates = [pos.coords.longitude, pos.coords.latitude];
-        setCurrentPosition(newPos);
+        const rawPos: Coordinates = [pos.coords.longitude, pos.coords.latitude];
 
         // Si un itinéraire était calculé depuis le fallback de départ (Bordeaux),
         // recalcul automatique immédiat dès réception de la vraie position GPS !
         if (destinationCoordsRef.current && !hasRecalculatedFromRealGpsRef.current) {
-          const distToDefault = getDistanceMeters(newPos, [-0.5792, 44.8378]);
+          const distToDefault = getDistanceMeters(rawPos, [-0.5792, 44.8378]);
           if (distToDefault > 500) {
             hasRecalculatedFromRealGpsRef.current = true;
-            calculateRoute(newPos, destinationCoordsRef.current).then((r) => {
+            calculateRoute(rawPos, destinationCoordsRef.current).then((r) => {
               setRoute(r);
               setTotalDistanceRemaining(r.distance);
               setTotalDurationRemaining(r.duration);
@@ -303,28 +315,108 @@ export function App() {
           }
         }
 
-        // Orientation / Cap de la voiture
-        if (pos.coords.heading !== null && !isNaN(pos.coords.heading) && pos.coords.heading >= 0) {
-          setBearing(pos.coords.heading);
-        } else if (lastGpsPosRef.current) {
-          const movedDist = getDistanceMeters(lastGpsPosRef.current, newPos);
-          if (movedDist > 2.5) {
-            setBearing(calculateBearing(lastGpsPosRef.current, newPos));
+        // 1. Vitesse réelle en km/h avec priorité absolue au capteur Doppler GPS matériel
+        const fixTime = pos.timestamp || Date.now();
+        let instantSpeedKmh = 0;
+
+        if (pos.coords.speed !== null && !isNaN(pos.coords.speed) && pos.coords.speed >= 0) {
+          // Sur smartphone Android, pos.coords.speed est la vitesse Doppler native ultra-précise
+          instantSpeedKmh = pos.coords.speed * 3.6;
+        } else if (lastFixDataRef.current) {
+          // Fallback par différenciation UNIQUEMENT si le GPS natif ne fournit pas la vitesse
+          const dtSec = Math.max(0.2, (fixTime - lastFixDataRef.current.time) / 1000);
+          const movedDist = getDistanceMeters(lastFixDataRef.current.pos, rawPos);
+          if (dtSec < 5 && movedDist >= 4.0) {
+            const calculatedSpeed = (movedDist / dtSec) * 3.6;
+            if (calculatedSpeed < 230) {
+              instantSpeedKmh = calculatedSpeed;
+            }
           }
         }
 
-        // Vitesse réelle en km/h
-        const speedKmh = pos.coords.speed !== null && !isNaN(pos.coords.speed)
-          ? Math.max(0, pos.coords.speed * 3.6)
-          : 0;
-        setCurrentSpeed(speedKmh < 1.8 ? 0 : speedKmh);
+        // Seuil d'arrêt strict : en dessous de 3.0 km/h, le véhicule est physiquement arrêté
+        // (feu rouge, stop, parking). Clampe immédiatement à 0 km/h et supprime toute fausse vitesse !
+        if (instantSpeedKmh < 3.0) {
+          instantSpeedKmh = 0;
+          smoothedSpeedRef.current = 0;
+        } else {
+          smoothedSpeedRef.current = smoothedSpeedRef.current === 0
+            ? instantSpeedKmh
+            : smoothedSpeedRef.current * 0.65 + instantSpeedKmh * 0.35;
+        }
+
+        const displaySpeed = Math.round(smoothedSpeedRef.current);
+        setCurrentSpeed(displaySpeed);
+
+        // 2. Magnétisation de la position sur la route la plus proche
+        let displayPos: Coordinates = rawPos;
+        let routeRoadBearing: number | null = null;
+
+        // Priorité : Magnétisation sur l'itinéraire actif (< 38m)
+        if (routeRef.current && routeRef.current.coordinates.length >= 2) {
+          const snapped = snapToRoute(rawPos, routeRef.current.coordinates, 38);
+          if (snapped) {
+            displayPos = snapped.snappedPos;
+            routeRoadBearing = snapped.roadBearing;
+          }
+        }
+
+        // Stabilité à l'arrêt : si la voiture est à 0 km/h et que le bruit GPS est < 3.5m,
+        // on bloque la position pour empêcher la voiture de gigoter sur place
+        if (displaySpeed === 0 && lastGpsPosRef.current) {
+          const jitterDist = getDistanceMeters(lastGpsPosRef.current, displayPos);
+          if (jitterDist < 3.5) {
+            displayPos = lastGpsPosRef.current;
+          }
+        }
+
+        setCurrentPosition(displayPos);
+
+        // 3. Orientation : 100% basée sur le vecteur de déplacement réel
+        // À L'ARRÊT (0 km/h) : LE CAP RESTE RIGIDEMENT BLOQUÉ, AUCUNE ROTATION / TOUPIE POSSIBLE !
+        if (displaySpeed >= 3.5) {
+          if (!lastRawGpsPosRef.current) {
+            lastRawGpsPosRef.current = rawPos;
+          } else {
+            const movedDistance = getDistanceMeters(lastRawGpsPosRef.current, rawPos);
+
+            // Seuil de déplacement physique réel (>= 3.5 mètres) pour calculer un cap fiable
+            if (movedDistance >= 3.5) {
+              const movementVector = calculateBearing(lastRawGpsPosRef.current, rawPos);
+              let targetBearing = movementVector;
+
+              if (routeRoadBearing !== null) {
+                // Si la voiture suit un itinéraire, alignement le long de la voie dans le sens de marche
+                const diffAngle = Math.abs(((movementVector - routeRoadBearing + 540) % 360) - 180);
+                if (diffAngle < 55) {
+                  targetBearing = routeRoadBearing;
+                } else if (diffAngle > 125) {
+                  targetBearing = (routeRoadBearing + 180) % 360;
+                }
+              }
+
+              lastMovementBearingRef.current = targetBearing;
+              lastRawGpsPosRef.current = rawPos;
+
+              // Interpolation douce du cap uniquement lors des déplacements réels
+              setBearing((prev) => {
+                const diff = ((targetBearing - prev + 540) % 360) - 180;
+                return (prev + diff * 0.75 + 360) % 360;
+              });
+            }
+          }
+        } else {
+          // À l'arrêt complet : le point d'ancrage est synchronisé sans jamais altérer le cap
+          lastRawGpsPosRef.current = rawPos;
+        }
 
         // Si navigation active, mise à jour du guidage
         if (isNavigatingRef.current) {
-          processNavigationTick(newPos, speedKmh);
+          processNavigationTick(displayPos, displaySpeed);
         }
 
-        lastGpsPosRef.current = newPos;
+        lastFixDataRef.current = { pos: rawPos, time: fixTime };
+        lastGpsPosRef.current = displayPos;
       },
       (err) => {
         console.warn('GPS Status:', err.message);
@@ -453,16 +545,28 @@ export function App() {
   // Annuler l'aperçu du trajet
   const handleCancelPreview = () => {
     setRoute(null);
+    routeRef.current = null;
     setDestinationCoords(null);
+    destinationCoordsRef.current = null;
     setDestinationName('');
+    setTotalDistanceRemaining(0);
+    setTotalDurationRemaining(0);
+    setStepDistanceRemaining(0);
+    setCurrentStepIndex(0);
   };
 
   // Quitter la navigation en cours de route
   const handleStopNavigation = () => {
     setIsNavigating(false);
     setRoute(null);
+    routeRef.current = null;
     setDestinationCoords(null);
+    destinationCoordsRef.current = null;
     setDestinationName('');
+    setTotalDistanceRemaining(0);
+    setTotalDurationRemaining(0);
+    setStepDistanceRemaining(0);
+    setCurrentStepIndex(0);
   };
 
   const handleCenterOnGPS = () => {
@@ -493,6 +597,7 @@ export function App() {
         showHeadlights={vehicleCustomization.showHeadlights}
         onMapLongPress={handleMapLongPress}
         onUserMove={() => setFollowUser(false)}
+        onRoadSpeedLimitDetected={setDetectedSpeedLimit}
       />
 
       {/* 2. Tableau de bord voiture épuré Waze/GTA/Minecraft */}
@@ -533,20 +638,33 @@ export function App() {
         gpsStatus={gpsStatus}
         wakeLockActive={wakeLockActive}
         currentPosition={currentPosition}
+        detectedRoadSpeedLimit={detectedSpeedLimit}
       />
 
       {/* 3. Modal de mission accomplie à l'arrivée */}
       <MissionPassedModal
         isOpen={showArrivalModal}
-        onClose={() => setShowArrivalModal(false)}
-        distance={route?.distance || 0}
-        duration={route?.duration || 0}
+        onClose={() => {
+          setShowArrivalModal(false);
+          setCompletedTripStats(null);
+          setRoute(null);
+          routeRef.current = null;
+          setDestinationCoords(null);
+          destinationCoordsRef.current = null;
+          setDestinationName('');
+          setTotalDistanceRemaining(0);
+          setTotalDurationRemaining(0);
+          setStepDistanceRemaining(0);
+          setCurrentStepIndex(0);
+        }}
+        distance={completedTripStats?.distance || 0}
+        duration={completedTripStats?.duration || 0}
       />
 
       {/* 4. Modal de confirmation si trajet déjà en cours */}
       {showReplaceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in select-none">
-          <div className="bg-neutral-900 border border-neutral-700 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-white text-center">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 max-w-sm w-full shadow-2xl text-white text-center">
             <div className="w-14 h-14 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <Navigation className="w-7 h-7" />
             </div>
@@ -557,13 +675,13 @@ export function App() {
             <div className="flex flex-col gap-2.5">
               <button
                 onClick={handleConfirmReplaceRoute}
-                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-black font-black text-sm rounded-2xl shadow-xl transition-all"
+                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-black font-black text-sm rounded-xl shadow-xl transition-all"
               >
                 Remplacer l'itinéraire
               </button>
               <button
                 onClick={handleCancelReplaceRoute}
-                className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-300 font-bold text-sm rounded-2xl transition-all"
+                className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-300 font-bold text-sm rounded-xl transition-all"
               >
                 Continuer le trajet actuel
               </button>

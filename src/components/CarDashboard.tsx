@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -39,6 +39,7 @@ import {
 import { RouteInfo, RouteStep, LocationSearchResult, Coordinates } from '../types';
 import { CarMapTheme, CAR_THEMES, getTheme } from '../styles/mapStyles';
 import { searchLocations, PRESET_DESTINATIONS, reverseGeocode } from '../services/geocoding';
+import { detectSpeedLimitFromName } from '../services/speedLimits';
 import { 
   getSavedPlaces, 
   setHomePlace, 
@@ -93,6 +94,7 @@ interface CarDashboardProps {
   gpsStatus: 'locating' | 'locked' | 'error';
   wakeLockActive: boolean;
   currentPosition?: Coordinates;
+  detectedRoadSpeedLimit?: number;
 }
 
 export const CarDashboard: React.FC<CarDashboardProps> = ({
@@ -125,6 +127,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   gpsStatus,
   wakeLockActive,
   currentPosition,
+  detectedRoadSpeedLimit,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMenuSection, setActiveMenuSection] = useState<
@@ -134,6 +137,15 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [speedLimit, setSpeedLimit] = useState<number>(50);
+
+  useEffect(() => {
+    if (!route && !destinationName) {
+      setSearchQuery('');
+    }
+    if (route || isNavigating) {
+      setIsSearchOpen(false);
+    }
+  }, [route, destinationName, isNavigating]);
 
   // Lieux enregistrés & Favoris (Maison, Travail, Favoris personnalisés)
   const [savedPlaces, setSavedPlaces] = useState<SavedPlacesState>(getSavedPlaces);
@@ -153,7 +165,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   const handlePlaceSearchChange = async (val: string) => {
     setPlaceSearchInput(val);
     if (val.trim().length >= 2) {
-      const res = await searchLocations(val);
+      const res = await searchLocations(val, currentPosition);
       setPlaceSuggestions(res);
     } else {
       setPlaceSuggestions(PRESET_DESTINATIONS);
@@ -197,21 +209,15 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
     setPlaceModal(null);
   };
 
-  // Détection de la limitation selon la route
-  React.useEffect(() => {
+  // Détection exacte de la limitation selon la route (guidage actif ou conduite libre)
+  useEffect(() => {
     if (currentStep && currentStep.name) {
-      const name = currentStep.name.toLowerCase();
-      if (name.includes('a630') || name.includes('rocade')) {
-        setSpeedLimit(90);
-      } else if (name.includes('a10') || name.includes('a62') || name.includes('a63') || name.includes('autoroute')) {
-        setSpeedLimit(130);
-      } else if (name.includes('d106') || name.includes('d1215') || name.includes('route') || name.includes('d') || name.includes('n')) {
-        setSpeedLimit(80);
-      } else {
-        setSpeedLimit(50);
-      }
+      const limit = detectSpeedLimitFromName(currentStep.name);
+      setSpeedLimit(limit);
+    } else if (detectedRoadSpeedLimit) {
+      setSpeedLimit(detectedRoadSpeedLimit);
     }
-  }, [currentStep]);
+  }, [currentStep, detectedRoadSpeedLimit]);
 
   const isOverSpeed = currentSpeed > speedLimit;
   const activeTheme = getTheme(theme);
@@ -250,11 +256,12 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   const handleSearchChange = async (val: string) => {
     setSearchQuery(val);
     if (val.trim().length >= 2) {
-      const res = await searchLocations(val);
+      const res = await searchLocations(val, currentPosition);
       setSearchResults(res);
       setIsSearchOpen(true);
     } else {
-      setSearchResults(PRESET_DESTINATIONS);
+      const res = await searchLocations('', currentPosition);
+      setSearchResults(res);
     }
   };
 
@@ -267,107 +274,104 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   const isPreviewingRoute = route !== null && !isNavigating;
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between pt-10 px-3 pb-3 md:p-6 z-20 overflow-hidden font-sans">
+    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between pt-14 px-4 pb-6 md:pt-16 md:px-6 md:pb-8 z-20 overflow-hidden font-sans">
       {/* ============================================================== */}
-      {/* 1. HAUT : BARRE GPS UNIQUE ÉPURÉE [ ☰ MENU ] [ RECHERCHE... ] [ ⌖ GPS ] */}
+      {/* 1. HAUT : MENU & RECHERCHE FLOTTANTS INDÉPENDANTS SANS AUCUN FOND */}
       {/* ============================================================== */}
-      <div className="pointer-events-auto flex flex-col gap-2.5 w-full max-w-4xl mx-auto">
-        {/* Mode Normal : Barre d'accueil compacte épurée */}
-        {!isNavigating && !isSearchOpen && (
-          <div className="bg-neutral-900/95 backdrop-blur-md border border-neutral-700/80 p-2 sm:p-2.5 rounded-3xl shadow-2xl flex items-center gap-2">
-            {/* Bouton Menu */}
+      <div className="pointer-events-auto flex flex-col gap-3.5 w-full max-w-4xl mx-auto">
+        {/* Mode Normal : Menu et Recherche flottants sans conteneur de fond englobant */}
+        {!route && !isNavigating && !isSearchOpen && (
+          <div className="w-full flex items-center gap-3.5">
+            {/* Bouton Menu Flottant */}
             <button
               onClick={() => {
                 setActiveMenuSection('root');
                 setIsMenuOpen(true);
               }}
-              className="w-[52px] h-[52px] bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-white border border-neutral-700 rounded-2xl flex items-center justify-center shadow-lg transition-all transform active:scale-95 flex-shrink-0"
-              title="Paramètres"
+              className="h-13 w-13 bg-neutral-900/95 backdrop-blur-md border border-neutral-800 rounded-xl flex items-center justify-center text-neutral-200 hover:text-white hover:bg-neutral-800 active:scale-95 shadow-xl flex-shrink-0 transition-all"
+              title="Menu et paramètres"
             >
               <Menu className="w-5 h-5 text-neutral-200" />
             </button>
 
-            {/* Champ de recherche cliquable */}
+            {/* Champ de recherche flottant cliquable */}
             <div
               onClick={() => {
                 setIsSearchOpen(true);
                 if (searchResults.length === 0) setSearchResults(PRESET_DESTINATIONS);
               }}
-              className="flex-1 flex items-center bg-neutral-950/90 border border-neutral-700/80 hover:border-neutral-500 rounded-2xl px-4 py-3 h-[52px] transition-colors shadow-inner cursor-pointer"
+              className="flex-1 h-13 bg-neutral-900/95 backdrop-blur-md border border-neutral-800 hover:border-neutral-700 rounded-xl px-4 flex items-center gap-3 cursor-pointer shadow-xl overflow-hidden transition-colors"
             >
-              <Search className="w-5 h-5 text-neutral-400 mr-2.5 flex-shrink-0" />
-              <span className={`text-sm md:text-base font-semibold truncate ${searchQuery ? 'text-white' : 'text-neutral-400'}`}>
+              <Search className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+              <span className={`text-sm md:text-base font-semibold truncate flex-1 ${searchQuery ? 'text-white' : 'text-neutral-400'}`}>
                 {searchQuery || "Où aller ? (Bordeaux, Arcachon...)"}
               </span>
+
               {searchQuery && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setSearchQuery('');
                   }}
-                  className="p-1 hover:bg-neutral-800 text-neutral-400 hover:text-white rounded-full text-sm font-black px-2 ml-auto"
+                  className="p-1 hover:bg-neutral-800 text-neutral-400 hover:text-white rounded-md text-xs font-black px-2 flex-shrink-0"
                 >
                   ✕
                 </button>
               )}
-            </div>
 
-            {/* Affiché UNIQUEMENT si incident GPS (perte de signal ou recherche) */}
-            {gpsStatus !== 'locked' && (
-              <button
-                onClick={onCenterOnGPS}
-                className={`h-[52px] px-3 border rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-lg flex-shrink-0 transition-colors ${
-                  gpsStatus === 'locating'
-                    ? 'bg-amber-950/70 border-amber-600/60 text-amber-300'
-                    : 'bg-red-950/70 border-red-600/60 text-red-300'
-                }`}
-                title={gpsStatus === 'locating' ? "Signal GPS en cours d'acquisition (cliquer pour réessayer)" : "Signal GPS indisponible (cliquer pour réessayer)"}
-              >
-                <Radio className={`w-4 h-4 ${gpsStatus === 'locating' ? 'text-amber-400 animate-spin' : 'text-red-400 animate-pulse'}`} />
-                <span className="hidden sm:inline">
-                  {gpsStatus === 'locating' ? 'Recherche GPS' : 'Erreur GPS'}
-                </span>
-              </button>
-            )}
+              {/* Indicateur d'état GPS discret */}
+              <div className="flex items-center pl-1 flex-shrink-0" title={`Signal GPS : ${gpsStatus}`}>
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    gpsStatus === 'locked'
+                      ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]'
+                      : gpsStatus === 'locating'
+                      ? 'bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                      : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Mode Recherche Ouverte : Interface Pleine Largeur, Aérée et Ultra-Lisible */}
-        {!isNavigating && isSearchOpen && (
-          <div className="flex flex-col gap-2 w-full animate-in fade-in slide-in-from-top-2 duration-150">
+        {/* Mode Recherche Ouverte : Bouton Retour Flottant + Barre d'Input + Résultats */}
+        {!route && !isNavigating && isSearchOpen && (
+          <div className="flex flex-col gap-3.5 w-full animate-in fade-in slide-in-from-top-2 duration-150">
             {/* Backdrop sombre pour fermer au clic dehors */}
             <div 
               className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"
               onClick={() => setIsSearchOpen(false)}
             />
 
-            {/* Barre d'input en tête de recherche */}
-            <div className="bg-neutral-900/98 backdrop-blur-xl border border-neutral-700/80 p-2 sm:p-2.5 rounded-2xl shadow-2xl flex items-center gap-2">
+            {/* Barre supérieure : Bouton retour flottant + Champ de saisie flottant */}
+            <div className="w-full flex items-center gap-3.5">
               <button
                 onClick={() => setIsSearchOpen(false)}
-                className="w-12 h-12 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-300 hover:text-white border border-neutral-700 rounded-xl flex items-center justify-center shadow-lg transition-colors flex-shrink-0"
+                className="h-13 w-13 bg-neutral-900/98 backdrop-blur-xl border border-neutral-800 rounded-xl flex items-center justify-center text-neutral-300 hover:text-white hover:bg-neutral-800 active:scale-95 shadow-xl flex-shrink-0 transition-all"
                 title="Fermer la recherche"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
 
-              <div className="flex-1 flex items-center bg-neutral-950 border border-neutral-700/80 focus-within:border-blue-500 rounded-xl px-3.5 h-12 transition-colors">
-                <Search className="w-5 h-5 text-neutral-400 mr-2.5 flex-shrink-0" />
+              <div className="flex-1 h-13 bg-neutral-900/98 backdrop-blur-xl border border-neutral-700 focus-within:border-neutral-500 rounded-xl px-4 flex items-center gap-3 shadow-xl transition-colors">
+                <Search className="w-4 h-4 text-neutral-400 flex-shrink-0" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Tapez une adresse ou une ville..."
                   autoFocus
-                  className="w-full bg-transparent text-white text-base font-semibold focus:outline-none placeholder-neutral-400"
+                  className="flex-1 bg-transparent text-white text-sm md:text-base font-semibold focus:outline-none placeholder-neutral-500"
                 />
+
                 {searchQuery && (
                   <button
                     onClick={() => {
                       setSearchQuery('');
                       setSearchResults(PRESET_DESTINATIONS);
                     }}
-                    className="p-1 text-neutral-400 hover:text-white rounded-md text-sm font-bold ml-1"
+                    className="p-1 hover:bg-neutral-800 text-neutral-400 hover:text-white rounded-md text-xs font-black px-2 flex-shrink-0"
                   >
                     ✕
                   </button>
@@ -376,7 +380,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
             </div>
 
             {/* Panneau principal de résultats et raccourcis très spacieux */}
-            <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden divide-y divide-neutral-900 max-h-[68vh] overflow-y-auto">
+            <div className="bg-neutral-950 border border-neutral-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-neutral-900 max-h-[68vh] overflow-y-auto">
               {/* Raccourcis Rapides : MAISON & TRAVAIL (Grands, confortables et lisibles) */}
               <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-neutral-900/60">
                 {/* Maison */}
@@ -531,7 +535,14 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-sm font-bold text-white truncate">{dest.name}</div>
-                            <div className="text-xs text-neutral-400 truncate mt-0.5">{dest.label}</div>
+                            <div className="text-xs text-neutral-400 truncate mt-0.5 flex items-center gap-1.5">
+                              {dest.distanceMeters !== undefined && (
+                                <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded text-[11px] flex-shrink-0">
+                                  {formatDistance(dest.distanceMeters)}
+                                </span>
+                              )}
+                              <span className="truncate">{dest.label}</span>
+                            </div>
                           </div>
                         </button>
                         <button
@@ -566,21 +577,21 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
         )}
 
         {/* 2. INSTRUCTIONS DE VIRAGE (En cours de navigation) - Agrandies et avec accès au Menu */}
-        {isNavigating && currentStep && (
-          <div className="bg-neutral-900/95 backdrop-blur-md border border-neutral-700/80 rounded-3xl p-4 md:p-5 shadow-2xl flex items-center justify-between gap-4 text-white animate-in slide-in-from-top-3">
+        {isNavigating && (
+          <div className="bg-neutral-900/95 backdrop-blur-md border border-neutral-800 rounded-xl p-4 md:p-5 shadow-2xl flex items-center justify-between gap-4 text-white animate-in slide-in-from-top-3">
             <div className="flex items-center gap-4">
               <div 
-                className="p-3.5 md:p-4 rounded-2xl shadow-lg flex-shrink-0"
+                className="p-3.5 md:p-4 rounded-xl shadow-lg flex-shrink-0"
                 style={{ backgroundColor: activeTheme.routeColor }}
               >
-                {renderManeuverIcon(currentStep)}
+                {currentStep ? renderManeuverIcon(currentStep) : <Navigation className="w-6 h-6 text-white" />}
               </div>
               <div>
                 <div className="text-3xl md:text-5xl font-black text-white leading-none tracking-tight">
-                  {formatDistance(stepDistanceRemaining || currentStep.distance)}
+                  {currentStep ? formatDistance(stepDistanceRemaining || currentStep.distance) : '--'}
                 </div>
                 <div className="text-sm md:text-lg font-bold text-neutral-200 mt-1 line-clamp-1">
-                  {currentStep.instruction}
+                  {currentStep ? currentStep.instruction : (destinationName ? `En route vers ${destinationName}` : 'Navigation en cours')}
                 </div>
               </div>
             </div>
@@ -591,14 +602,14 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                   setActiveMenuSection('root');
                   setIsMenuOpen(true);
                 }}
-                className="p-3.5 rounded-2xl bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-200 transition-colors"
+                className="p-3.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-neutral-200 transition-colors"
                 title="Menu des options"
               >
                 <Menu className="w-6 h-6" />
               </button>
               <button
                 onClick={onToggleMute}
-                className="p-3.5 rounded-2xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
+                className="p-3.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
                 title={isMuted ? 'Activer le son' : 'Couper le son'}
               >
                 {isMuted ? <VolumeX className="w-6 h-6 text-red-400" /> : <Volume2 className="w-6 h-6 text-emerald-400" />}
@@ -612,7 +623,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
       {/* 2. CENTRE / BAS : APERÇU D'ITINÉRAIRE (AVANT DE DÉMARRER) */}
       {/* ============================================================== */}
       {isPreviewingRoute && route && (
-        <div className="pointer-events-auto w-full max-w-xl mx-auto mb-3 bg-neutral-900/95 backdrop-blur-md border border-neutral-700 rounded-3xl p-4 md:p-5 shadow-2xl text-white animate-in slide-in-from-bottom-5">
+        <div className="pointer-events-auto w-full max-w-xl mx-auto mb-3 bg-neutral-900/95 backdrop-blur-md border border-neutral-800 rounded-xl p-4 md:p-5 shadow-2xl text-white animate-in slide-in-from-bottom-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <div className="text-xs uppercase font-black text-purple-400 tracking-wider">Itinéraire trouvé</div>
@@ -656,10 +667,10 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
       {/* 3. BOUTON RECENTRER (PASSE BLEU QUAND DÉCENTRÉ, BIEN ESPACÉ DE LA BARRE) */}
       {/* ============================================================== */}
       <div 
-        className={`pointer-events-auto absolute right-3 md:right-6 z-30 flex flex-col items-end transition-all duration-300 ${
+        className={`pointer-events-auto absolute right-4 md:right-6 z-30 flex flex-col items-end transition-all duration-300 ${
           isNavigating
-            ? 'bottom-32 md:bottom-36'
-            : 'bottom-4 md:bottom-6'
+            ? 'bottom-36 md:bottom-40'
+            : 'bottom-6 md:bottom-8'
         }`}
       >
         <button
@@ -696,7 +707,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
           {/* Panneau rond limitation de vitesse (Cliquable pour ajuster si besoin) */}
           <button
             onClick={() => {
-              const limits = [30, 50, 80, 90, 110, 130];
+              const limits = [30, 50, 70, 80, 90, 110, 130];
               const next = limits[(limits.indexOf(speedLimit) + 1) % limits.length];
               setSpeedLimit(next);
             }}

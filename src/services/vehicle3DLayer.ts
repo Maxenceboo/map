@@ -21,8 +21,19 @@ export class Vehicle3DLayer implements CustomLayerInterface {
   private renderer: THREE.WebGLRenderer | null = null;
   private vehicleMeshGroup: THREE.Group | null = null;
 
-  private position: Coordinates = [0, 0];
-  private heading: number = 0;
+  // Position & Orientation avec interpolation linéaire fluide continue
+  private currentPosition: Coordinates = [0, 0];
+  private startPosition: Coordinates = [0, 0];
+  private targetPosition: Coordinates = [0, 0];
+
+  private currentHeading: number = 0;
+  private startHeading: number = 0;
+  private targetHeading: number = 0;
+
+  private animStartTime: number = 0;
+  private animDuration: number = 1000;
+  private isInterpolating: boolean = false;
+
   private vehicleType: VehicleType = 'car_sport';
   private vehicleColor: string = '#ef4444';
   private showHeadlights: boolean = true;
@@ -34,8 +45,14 @@ export class Vehicle3DLayer implements CustomLayerInterface {
     initialColor: string,
     initialShowHeadlights: boolean
   ) {
-    this.position = initialPosition;
-    this.heading = initialHeading;
+    this.currentPosition = [...initialPosition];
+    this.startPosition = [...initialPosition];
+    this.targetPosition = [...initialPosition];
+    this.currentHeading = initialHeading;
+    this.startHeading = initialHeading;
+    this.targetHeading = initialHeading;
+    this.animStartTime = performance.now();
+
     this.vehicleType = initialType;
     this.vehicleColor = initialColor;
     this.showHeadlights = initialShowHeadlights;
@@ -46,18 +63,45 @@ export class Vehicle3DLayer implements CustomLayerInterface {
     heading: number,
     type: VehicleType,
     color: string,
-    showHeadlights: boolean
+    showHeadlights: boolean,
+    durationMs: number = 1000
   ) {
     const meshChanged =
       this.vehicleType !== type ||
       this.vehicleColor !== color ||
       this.showHeadlights !== showHeadlights;
 
-    this.position = position;
-    this.heading = heading;
     this.vehicleType = type;
     this.vehicleColor = color;
     this.showHeadlights = showHeadlights;
+
+    // Détection de premier positionnement ou téléportation volontaire (> 350m)
+    const isFirstFix = this.startPosition[0] === 0 && this.startPosition[1] === 0;
+    const distApproxM = Math.hypot(
+      (position[0] - this.currentPosition[0]) * 111320 * Math.cos((position[1] * Math.PI) / 180),
+      (position[1] - this.currentPosition[1]) * 110540
+    );
+
+    if (isFirstFix || distApproxM > 350) {
+      this.currentPosition = [...position];
+      this.startPosition = [...position];
+      this.targetPosition = [...position];
+      this.currentHeading = heading;
+      this.startHeading = heading;
+      this.targetHeading = heading;
+      this.isInterpolating = false;
+    } else {
+      // Progression linéaire continue sans aucune téléportation
+      this.startPosition = [...this.currentPosition];
+      this.targetPosition = [...position];
+
+      this.startHeading = this.currentHeading;
+      this.targetHeading = heading;
+
+      this.animStartTime = performance.now();
+      this.animDuration = Math.max(300, Math.min(2500, durationMs));
+      this.isInterpolating = true;
+    }
 
     if (meshChanged && this.scene) {
       this.rebuildMesh();
@@ -126,9 +170,33 @@ export class Vehicle3DLayer implements CustomLayerInterface {
   public render(_gl: WebGL2RenderingContext, options: CustomRenderMethodInput) {
     if (!this.map || !this.scene || !this.camera || !this.renderer) return;
 
+    // Progression linéaire continue sans à-coups (60 FPS)
+    if (this.isInterpolating) {
+      const now = performance.now();
+      const elapsed = now - this.animStartTime;
+      const progress = Math.min(1.0, elapsed / Math.max(1, this.animDuration));
+
+      // 1. Déplacement linéaire du véhicule entre le point A et le point B
+      this.currentPosition[0] =
+        this.startPosition[0] + (this.targetPosition[0] - this.startPosition[0]) * progress;
+      this.currentPosition[1] =
+        this.startPosition[1] + (this.targetPosition[1] - this.startPosition[1]) * progress;
+
+      // 2. Interpolation angulaire sur le chemin le plus court (-180..+180)
+      let diffHeading = ((this.targetHeading - this.startHeading + 540) % 360) - 180;
+      this.currentHeading = (this.startHeading + diffHeading * progress + 360) % 360;
+
+      if (progress >= 1.0) {
+        this.isInterpolating = false;
+      } else {
+        // Redessine l'image suivante à 60 FPS
+        this.map.triggerRepaint();
+      }
+    }
+
     // Convert GPS coordinate to MapLibre Mercator [0..1]
     const coord = MercatorCoordinate.fromLngLat(
-      [this.position[0], this.position[1]],
+      [this.currentPosition[0], this.currentPosition[1]],
       0
     );
 
@@ -159,7 +227,7 @@ export class Vehicle3DLayer implements CustomLayerInterface {
     // In Mercator: North is -Y, South is +Y.
     // Since +Z maps to South (+Y), facing North requires 180 deg (Math.PI).
     // Clockwise heading rotates by -headingRad around local Y.
-    const headingRad = (this.heading * Math.PI) / 180;
+    const headingRad = (this.currentHeading * Math.PI) / 180;
     const rotationHeading = new THREE.Matrix4().makeRotationAxis(
       new THREE.Vector3(0, 1, 0),
       Math.PI - headingRad
@@ -175,6 +243,14 @@ export class Vehicle3DLayer implements CustomLayerInterface {
 
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  public getCurrentPosition(): Coordinates {
+    return this.currentPosition;
+  }
+
+  public getCurrentHeading(): number {
+    return this.currentHeading;
   }
 
   public onRemove() {

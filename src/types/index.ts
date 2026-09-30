@@ -28,4 +28,5 @@ export interface LocationSearchResult {
   city?: string;
   country?: string;
   coordinates: Coordinates;
+  distanceMeters?: number;
 }

@@ -52,25 +52,56 @@ export const PRESET_DESTINATIONS: LocationSearchResult[] = [
   },
 ];
 
+function computeDistanceMeters(c1: Coordinates, c2: Coordinates): number {
+  const R = 6371e3;
+  const phi1 = (c1[1] * Math.PI) / 180;
+  const phi2 = (c2[1] * Math.PI) / 180;
+  const deltaPhi = ((c2[1] - c1[1]) * Math.PI) / 180;
+  const deltaLambda = ((c2[0] - c1[0]) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 /**
  * Recherche d'adresse via l'API publique Photon (OSM Geocoding)
+ * Priorité géographique stricte selon la position GPS réelle de l'utilisateur (alentours)
  */
-export async function searchLocations(query: string): Promise<LocationSearchResult[]> {
+export async function searchLocations(
+  query: string,
+  userCoords?: Coordinates
+): Promise<LocationSearchResult[]> {
+  const attachDistAndSort = (items: LocationSearchResult[]) => {
+    if (!userCoords) return items;
+    return items
+      .map(item => ({
+        ...item,
+        distanceMeters: Math.round(computeDistanceMeters(userCoords, item.coordinates)),
+      }))
+      .sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0));
+  };
+
   if (!query || query.trim().length < 2) {
-    return PRESET_DESTINATIONS;
+    return attachDistAndSort(PRESET_DESTINATIONS);
   }
 
   try {
     const encoded = encodeURIComponent(query.trim());
-    // Priorité géographique sur la Gironde / Sud-Ouest (lat ~ 44.8, lon ~ -0.5)
-    const url = `https://photon.komoot.io/api/?q=${encoded}&lat=44.8378&lon=-0.5792&limit=5`;
+    // Biais géographique sur les coordonnées réelles de l'utilisateur
+    const lat = userCoords ? userCoords[1] : 44.8378;
+    const lon = userCoords ? userCoords[0] : -0.5792;
+    const url = `https://photon.komoot.io/api/?q=${encoded}&lat=${lat}&lon=${lon}&location_bias_scale=1.8&limit=10`;
     const response = await fetch(url);
 
     if (!response.ok) {
-      return PRESET_DESTINATIONS.filter(p => 
+      const filtered = PRESET_DESTINATIONS.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) || 
         p.label.toLowerCase().includes(query.toLowerCase())
       );
+      return attachDistAndSort(filtered);
     }
 
     const data = await response.json();
@@ -78,22 +109,34 @@ export async function searchLocations(query: string): Promise<LocationSearchResu
       return [];
     }
 
-    return data.features.map((f: any) => {
+    const results: LocationSearchResult[] = data.features.map((f: any) => {
       const props = f.properties;
       const parts = [props.name, props.street, props.city, props.country].filter(Boolean);
+      const coords = f.geometry.coordinates as Coordinates;
+      const distance = userCoords ? Math.round(computeDistanceMeters(userCoords, coords)) : undefined;
+
       return {
         name: props.name || props.street || 'Point de repère',
         label: parts.join(', '),
-        city: props.city || 'Gironde',
+        city: props.city || '',
         country: props.country || 'France',
-        coordinates: f.geometry.coordinates as Coordinates,
+        coordinates: coords,
+        distanceMeters: distance,
       };
     });
+
+    // Tri en privilégiant la proximité immédiate de l'utilisateur
+    if (userCoords) {
+      results.sort((a, b) => (a.distanceMeters || 0) - (b.distanceMeters || 0));
+    }
+
+    return results;
   } catch (error) {
     console.warn('Erreur geocoding Photon, fallback', error);
-    return PRESET_DESTINATIONS.filter(p => 
+    const filtered = PRESET_DESTINATIONS.filter(p => 
       p.name.toLowerCase().includes(query.toLowerCase())
     );
+    return attachDistAndSort(filtered);
   }
 }
 
