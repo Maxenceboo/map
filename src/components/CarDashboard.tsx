@@ -34,7 +34,10 @@ import {
   Bookmark,
   Trash2,
   Plus,
-  Edit2
+  Edit2,
+  Loader2,
+  Building2,
+  Store
 } from 'lucide-react';
 import { RouteInfo, RouteStep, LocationSearchResult, Coordinates } from '../types';
 import { CarMapTheme, CAR_THEMES, getTheme } from '../styles/mapStyles';
@@ -136,7 +139,11 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [speedLimit, setSpeedLimit] = useState<number>(50);
+
+  const searchAbortRef = React.useRef<AbortController | null>(null);
+  const searchDebounceRef = React.useRef<any>(null);
 
   useEffect(() => {
     if (!route && !destinationName) {
@@ -162,14 +169,17 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
     setSavedPlaces(getSavedPlaces());
   };
 
-  const handlePlaceSearchChange = async (val: string) => {
+  const handlePlaceSearchChange = (val: string) => {
     setPlaceSearchInput(val);
-    if (val.trim().length >= 2) {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (val.trim().length < 2) {
+      setPlaceSuggestions(PRESET_DESTINATIONS);
+      return;
+    }
+    searchDebounceRef.current = setTimeout(async () => {
       const res = await searchLocations(val, currentPosition);
       setPlaceSuggestions(res);
-    } else {
-      setPlaceSuggestions(PRESET_DESTINATIONS);
-    }
+    }, 220);
   };
 
   const handleUseCurrentPositionForPlace = async () => {
@@ -253,16 +263,53 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
     return <ArrowUp className={`${size} text-white`} />;
   };
 
-  const handleSearchChange = async (val: string) => {
-    setSearchQuery(val);
-    if (val.trim().length >= 2) {
-      const res = await searchLocations(val, currentPosition);
-      setSearchResults(res);
-      setIsSearchOpen(true);
-    } else {
-      const res = await searchLocations('', currentPosition);
-      setSearchResults(res);
+  const renderLocationTypeIcon = (type?: string) => {
+    switch (type) {
+      case 'address':
+        return <Home className="w-4 h-4 text-blue-400" />;
+      case 'city':
+        return <Building2 className="w-4 h-4 text-emerald-400" />;
+      case 'poi':
+        return <Store className="w-4 h-4 text-purple-400" />;
+      case 'street':
+        return <Navigation className="w-4 h-4 text-amber-400" />;
+      default:
+        return <MapPin className="w-4 h-4 text-neutral-400" />;
     }
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+
+    if (val.trim().length < 2) {
+      setIsSearching(false);
+      setSearchResults(PRESET_DESTINATIONS);
+      return;
+    }
+
+    setIsSearching(true);
+    searchDebounceRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+      try {
+        const res = await searchLocations(val, currentPosition, controller.signal);
+        if (!controller.signal.aborted) {
+          setSearchResults(res);
+          setIsSearching(false);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          setIsSearching(false);
+        }
+      }
+    }, 220);
   };
 
   const handleSelect = (dest: LocationSearchResult) => {
@@ -344,9 +391,16 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
               onClick={() => setIsSearchOpen(false)}
             />
 
-            {/* Barre supérieure : Bouton retour flottant + Champ de saisie flottant */}
-            <div className="w-full flex items-center gap-3.5">
+            {/* Barre supérieure : Bouton retour flottant + Champ de saisie flottant avec form */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchResults.length > 0) handleSelect(searchResults[0]);
+              }}
+              className="w-full flex items-center gap-3.5"
+            >
               <button
+                type="button"
                 onClick={() => setIsSearchOpen(false)}
                 className="h-13 w-13 bg-neutral-900/98 backdrop-blur-xl border border-neutral-800 rounded-xl flex items-center justify-center text-neutral-300 hover:text-white hover:bg-neutral-800 active:scale-95 shadow-xl flex-shrink-0 transition-all"
                 title="Fermer la recherche"
@@ -354,19 +408,24 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                 <ArrowLeft className="w-5 h-5" />
               </button>
 
-              <div className="flex-1 h-13 bg-neutral-900/98 backdrop-blur-xl border border-neutral-700 focus-within:border-neutral-500 rounded-xl px-4 flex items-center gap-3 shadow-xl transition-colors">
-                <Search className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+              <div className="flex-1 h-13 bg-neutral-900/98 backdrop-blur-xl border border-neutral-700 focus-within:border-neutral-400 rounded-xl px-4 flex items-center gap-3 shadow-xl transition-colors">
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 text-blue-400 flex-shrink-0 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                )}
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Tapez une adresse ou une ville..."
+                  placeholder="Adresse, ville, commerce, gare..."
                   autoFocus
                   className="flex-1 bg-transparent text-white text-sm md:text-base font-semibold focus:outline-none placeholder-neutral-500"
                 />
 
                 {searchQuery && (
                   <button
+                    type="button"
                     onClick={() => {
                       setSearchQuery('');
                       setSearchResults(PRESET_DESTINATIONS);
@@ -377,7 +436,7 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                   </button>
                 )}
               </div>
-            </div>
+            </form>
 
             {/* Panneau principal de résultats et raccourcis très spacieux */}
             <div className="bg-neutral-950 border border-neutral-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-neutral-900 max-h-[68vh] overflow-y-auto">
@@ -512,14 +571,40 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
 
               {/* Suggestions ou résultats de recherche */}
               <div className="bg-neutral-950">
-                <div className="px-4 pt-3 pb-1.5 text-xs font-bold uppercase tracking-wider text-neutral-400">
-                  {searchQuery.trim().length >= 2 ? `Résultats de recherche (${searchResults.length})` : 'Destinations suggérées'}
+                <div className="px-4 pt-3 pb-1.5 text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center justify-between">
+                  <span>
+                    {searchQuery.trim().length >= 2
+                      ? isSearching
+                        ? 'Recherche en cours...'
+                        : `Résultats (${searchResults.length})`
+                      : 'Destinations suggérées'}
+                  </span>
+                  {isSearching && (
+                    <span className="text-[11px] text-blue-400 font-semibold lowercase animate-pulse">
+                      interrogation BAN & OSM...
+                    </span>
+                  )}
                 </div>
+
+                {/* État vide si aucune adresse trouvée */}
+                {searchResults.length === 0 && !isSearching && searchQuery.trim().length >= 2 && (
+                  <div className="p-8 text-center flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-500 mb-3">
+                      <Search className="w-6 h-6" />
+                    </div>
+                    <div className="text-white font-bold text-sm">Aucun résultat trouvé</div>
+                    <div className="text-neutral-400 text-xs mt-1 max-w-xs">
+                      Vérifiez l’orthographe ou essayez un nom de rue, une ville ou un commerce (ex : Auchan, Gare...).
+                    </div>
+                  </div>
+                )}
+
                 <div className="divide-y divide-neutral-900">
                   {searchResults.map((dest, i) => {
                     const isFav = savedPlaces.favorites.some(
-                      (f) => Math.abs(f.coordinates[0] - dest.coordinates[0]) < 0.0001 &&
-                             Math.abs(f.coordinates[1] - dest.coordinates[1]) < 0.0001
+                      (f) =>
+                        Math.abs(f.coordinates[0] - dest.coordinates[0]) < 0.0001 &&
+                        Math.abs(f.coordinates[1] - dest.coordinates[1]) < 0.0001
                     );
                     return (
                       <div
@@ -530,11 +615,28 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                           onClick={() => handleSelect(dest)}
                           className="flex-1 text-left flex items-center gap-3.5 min-w-0"
                         >
-                          <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-800 text-purple-400 flex items-center justify-center flex-shrink-0">
-                            <MapPin className="w-4 h-4" />
+                          <div
+                            className={`w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0 ${
+                              dest.type === 'address'
+                                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                                : dest.type === 'city'
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                : dest.type === 'poi'
+                                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                                : 'bg-neutral-900 border-neutral-800 text-neutral-400'
+                            }`}
+                          >
+                            {renderLocationTypeIcon(dest.type)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-bold text-white truncate">{dest.name}</div>
+                            <div className="text-sm font-bold text-white truncate flex items-center gap-2">
+                              <span className="truncate">{dest.name}</span>
+                              {dest.type === 'city' && (
+                                <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded flex-shrink-0">
+                                  Ville
+                                </span>
+                              )}
+                            </div>
                             <div className="text-xs text-neutral-400 truncate mt-0.5 flex items-center gap-1.5">
                               {dest.distanceMeters !== undefined && (
                                 <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded text-[11px] flex-shrink-0">
@@ -550,22 +652,31 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
                             e.stopPropagation();
                             if (isFav) {
                               const fav = savedPlaces.favorites.find(
-                                (f) => Math.abs(f.coordinates[0] - dest.coordinates[0]) < 0.0001 &&
-                                       Math.abs(f.coordinates[1] - dest.coordinates[1]) < 0.0001
+                                (f) =>
+                                  Math.abs(f.coordinates[0] - dest.coordinates[0]) < 0.0001 &&
+                                  Math.abs(f.coordinates[1] - dest.coordinates[1]) < 0.0001
                               );
                               if (fav) {
                                 const updated = removeFavoritePlace(fav.id);
                                 setSavedPlaces(updated);
                               }
                             } else {
-                              const updated = addFavoritePlace({ name: dest.name, label: dest.label || dest.name, coordinates: dest.coordinates });
+                              const updated = addFavoritePlace({
+                                name: dest.name,
+                                label: dest.label || dest.name,
+                                coordinates: dest.coordinates,
+                              });
                               setSavedPlaces(updated);
                             }
                           }}
                           className="p-2.5 text-neutral-500 hover:text-amber-400 rounded-lg hover:bg-neutral-900 transition-colors ml-2"
-                          title={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                          title={isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                         >
-                          <Star className={`w-4 h-4 ${isFav ? 'text-amber-400 fill-amber-400' : 'text-neutral-500 hover:text-amber-300'}`} />
+                          <Star
+                            className={`w-4 h-4 ${
+                              isFav ? 'text-amber-400 fill-amber-400' : 'text-neutral-500 hover:text-amber-300'
+                            }`}
+                          />
                         </button>
                       </div>
                     );

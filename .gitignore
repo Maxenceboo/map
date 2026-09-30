@@ -32,3 +32,5 @@ android/local.properties
 android/captures/
 *.apk
 *.aab
+screen*.png
+

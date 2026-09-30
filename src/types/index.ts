@@ -29,4 +29,6 @@ export interface LocationSearchResult {
   country?: string;
   coordinates: Coordinates;
   distanceMeters?: number;
+  type?: 'address' | 'street' | 'city' | 'poi' | 'place';
+  postcode?: string;
 }
