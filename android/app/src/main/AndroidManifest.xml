@@ -50,6 +50,7 @@
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.POI" />
                 <category android:name="androidx.car.app.category.NAVIGATION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -64,6 +65,7 @@
 
     <!-- Permissions requises pour Android Auto (NavigationTemplate & Surface) -->
     <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
+    <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
     <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
 
     <!-- Permissions requises pour la navigation GPS voiture -->
