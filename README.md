@@ -9,6 +9,7 @@
 | Branche | Description | Statut |
 | :--- | :--- | :--- |
 | **`main`** | **Cahier des charges**, spécifications d'architecture et feuille de route pour la refonte native / automobile. | En cours (Spécifications & Architecture) |
+| **`native-android`** | **Refonte native** Kotlin + Compose + MapLibre Native + Android Auto (Car App Library). Voir [ARCHITECTURE.md](./ARCHITECTURE.md). | En cours (fondations) |
 | **[`webgl-version`](https://github.com/Maxenceboo/map/tree/webgl-version)** | **Version 3D WebGL complète et fonctionnelle** (React, MapLibre GL, Three.js, Capacitor Android, sons Web Audio, phares volumétriques, HUD flat design). | Archivée & Fonctionnelle (commit `eb7b9eb`) |
 
 ---

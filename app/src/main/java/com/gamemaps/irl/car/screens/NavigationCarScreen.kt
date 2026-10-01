@@ -1,0 +1,109 @@
+package com.gamemaps.irl.car.screens
+
+import androidx.car.app.AppManager
+import androidx.car.app.CarContext
+import androidx.car.app.Screen
+import androidx.car.app.model.Template
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.gamemaps.irl.car.surface.CarMapSurface
+import com.gamemaps.irl.car.templates.CalculatingTemplate
+import com.gamemaps.irl.car.templates.IdleTemplate
+import com.gamemaps.irl.car.templates.MessageTemplates
+import com.gamemaps.irl.car.templates.NavigatingTemplate
+import com.gamemaps.irl.car.trip.CarTripReporter
+import com.gamemaps.irl.data.location.LocationPermissions
+import com.gamemaps.irl.di.AppContainer
+import com.gamemaps.irl.map.MapController
+import com.gamemaps.irl.map.theme.MapTheme
+import com.gamemaps.irl.navigation.NavigationState
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
+
+/**
+ * Écran principal Android Auto : la carte (sur la Surface) + le template qui correspond
+ * à l'état du guidage. Observe le même [AppContainer] que le téléphone.
+ */
+class NavigationCarScreen(
+    carContext: CarContext,
+    private val container: AppContainer,
+) : Screen(carContext) {
+
+    private val engine = container.navigationEngine
+    private var navigation: NavigationState = engine.state.value
+    private var hasLocationPermission = LocationPermissions.isGranted(carContext)
+    private var mapController: MapController? = null
+
+    private val tripReporter = CarTripReporter(carContext, onStopRequested = engine::stop)
+    private val mapSurface = CarMapSurface(carContext, MapTheme.GTA_RADAR) { controller ->
+        mapController = controller
+        refreshMap()
+    }
+
+    init {
+        carContext.getCarService(AppManager::class.java).setSurfaceCallback(mapSurface)
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) = release()
+        })
+        observeNavigation()
+        observeLocation()
+    }
+
+    override fun onGetTemplate(): Template {
+        if (!hasLocationPermission) return MessageTemplates.permissionRequired(::requestLocationPermission)
+        return when (val state = navigation) {
+            is NavigationState.Idle -> IdleTemplate.build(onSearch = ::openSearch)
+            is NavigationState.Calculating -> CalculatingTemplate.build(onStop = engine::stop)
+            is NavigationState.Navigating -> NavigatingTemplate.build(state, onStop = engine::stop)
+            is NavigationState.Arrived -> MessageTemplates.arrived(state.destination.name, onDone = engine::stop)
+            is NavigationState.Failed -> MessageTemplates.failed(
+                reason = state.message,
+                onRetry = { engine.start(state.destination) },
+                onDone = engine::stop,
+            )
+        }
+    }
+
+    private fun observeNavigation() {
+        lifecycleScope.launch {
+            engine.state.collect { state ->
+                navigation = state
+                tripReporter.onStateChanged(state)
+                refreshMap()
+                invalidate()
+            }
+        }
+    }
+
+    private fun observeLocation() {
+        lifecycleScope.launch {
+            container.locationRepository.fixes.filterNotNull().collect { mapController?.showVehicle(it) }
+        }
+    }
+
+    private fun refreshMap() {
+        val controller = mapController ?: return
+        controller.showRoute((navigation as? NavigationState.Navigating)?.route)
+        container.locationRepository.fixes.value?.let(controller::showVehicle)
+    }
+
+    private fun openSearch() {
+        screenManager.push(CarSearchScreen(carContext, container))
+    }
+
+    /** La demande s'affiche sur le téléphone ; la voiture attend la réponse. */
+    private fun requestLocationPermission() {
+        carContext.requestPermissions(LocationPermissions.REQUIRED.toList()) { _, _ ->
+            hasLocationPermission = LocationPermissions.isGranted(carContext)
+            if (hasLocationPermission) container.locationRepository.start()
+            invalidate()
+        }
+    }
+
+    private fun release() {
+        tripReporter.release()
+        mapSurface.release()
+        carContext.getCarService(AppManager::class.java).setSurfaceCallback(null)
+    }
+}
