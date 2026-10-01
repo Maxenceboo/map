@@ -74,6 +74,7 @@ export const Map: React.FC<MapProps> = ({
   const routeCoreLayerId = 'active-route-core';
   const routeTrafficSourceId = 'route-traffic-sections-source';
   const routeTrafficGlowLayerId = 'route-traffic-sections-glow';
+  const routeTrafficBorderLayerId = 'route-traffic-sections-border';
   const routeTrafficCoreLayerId = 'route-traffic-sections-core';
 
   const radarSourceId = 'radars-source';
@@ -319,6 +320,9 @@ export const Map: React.FC<MapProps> = ({
       if (map.getLayer(routeTrafficCoreLayerId)) map.removeLayer(routeTrafficCoreLayerId);
     } catch (_) {}
     try {
+      if (map.getLayer(routeTrafficBorderLayerId)) map.removeLayer(routeTrafficBorderLayerId);
+    } catch (_) {}
+    try {
       if (map.getLayer(routeTrafficGlowLayerId)) map.removeLayer(routeTrafficGlowLayerId);
     } catch (_) {}
     try {
@@ -362,7 +366,7 @@ export const Map: React.FC<MapProps> = ({
       data: geojsonData,
     });
 
-    // 1. Bordure / Halo néon du tracé
+    // 1. Bordure / Halo néon du tracé global (violet)
     map.addLayer({
       id: routeGlowLayerId,
       type: 'line',
@@ -379,23 +383,7 @@ export const Map: React.FC<MapProps> = ({
       },
     });
 
-    // 2. Cœur lumineux du tracé
-    map.addLayer({
-      id: routeCoreLayerId,
-      type: 'line',
-      source: routeSourceId,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': themeConfig.routeColor,
-        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 8],
-        'line-opacity': 0.95,
-      },
-    });
-
-    // 3. Surbrillance des sections de bouchons / ralentissements directement sur le tracé
+    // 2. Sections de trafic : Halo lumineux + Bords rouges/oranges autour du tracé violet
     if (currentRoute.trafficSections && currentRoute.trafficSections.length > 0) {
       const trafficFeatures = currentRoute.trafficSections
         .map((sec, idx) => {
@@ -407,7 +395,7 @@ export const Map: React.FC<MapProps> = ({
             properties: {
               id: idx,
               severity: sec.severity,
-              color: isJam ? '#ef4444' : '#f97316', // Rouge vif pour bouchon, Orange vif pour ralenti
+              borderColor: isJam ? '#ef4444' : '#f97316', // Rouge vif pour bouchon, Orange vif pour ralenti
               glowColor: isJam ? '#dc2626' : '#ea580c',
             },
             geometry: {
@@ -427,7 +415,7 @@ export const Map: React.FC<MapProps> = ({
           },
         });
 
-        // Halo lumineux du bouchon sur le tracé
+        // 2a. Halo lumineux rouge/orange au sol pour signaler le ralentissement
         map.addLayer({
           id: routeTrafficGlowLayerId,
           type: 'line',
@@ -438,15 +426,15 @@ export const Map: React.FC<MapProps> = ({
           },
           paint: {
             'line-color': ['get', 'glowColor'],
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 10, 16, 22],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 12, 16, 24],
             'line-opacity': 0.95,
-            'line-blur': 2.5,
+            'line-blur': 3,
           },
         });
 
-        // Ligne vive de congestion (Orange ou Rouge)
+        // 2b. Bords rouges/oranges du bouchon (casing qui encadre le centre violet)
         map.addLayer({
-          id: routeTrafficCoreLayerId,
+          id: routeTrafficBorderLayerId,
           type: 'line',
           source: routeTrafficSourceId,
           layout: {
@@ -454,12 +442,46 @@ export const Map: React.FC<MapProps> = ({
             'line-cap': 'round',
           },
           paint: {
-            'line-color': ['get', 'color'],
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 5.5, 16, 11],
+            'line-color': ['get', 'borderColor'],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 8, 16, 14],
             'line-opacity': 1.0,
           },
         });
       }
+    }
+
+    // 3. Cœur violet du tracé global (passe par-dessus les bords rouges)
+    map.addLayer({
+      id: routeCoreLayerId,
+      type: 'line',
+      source: routeSourceId,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': themeConfig.routeColor,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 8],
+        'line-opacity': 1.0,
+      },
+    });
+
+    // 4. Ligne centrale violette dédiée aux sections bouchées (garantit un centre violet net sur les bords rouges)
+    if (map.getSource(routeTrafficSourceId)) {
+      map.addLayer({
+        id: routeTrafficCoreLayerId,
+        type: 'line',
+        source: routeTrafficSourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': themeConfig.routeColor,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 8],
+          'line-opacity': 1.0,
+        },
+      });
     }
 
     // 3. Marqueur de destination au bout du chemin
