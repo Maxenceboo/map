@@ -3,6 +3,7 @@ package com.gamemaps.irl;
 import androidx.annotation.NonNull;
 import androidx.car.app.CarAppService;
 import androidx.car.app.Session;
+import androidx.car.app.SessionInfo;
 import androidx.car.app.validation.HostValidator;
 
 /**
@@ -21,6 +22,12 @@ public class GameGpsCarAppService extends CarAppService {
     @NonNull
     @Override
     public Session onCreateSession() {
+        return new GameGpsCarSession();
+    }
+
+    @NonNull
+    @Override
+    public Session onCreateSession(@NonNull SessionInfo sessionInfo) {
         return new GameGpsCarSession();
     }
 }
