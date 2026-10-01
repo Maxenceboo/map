@@ -169,9 +169,7 @@ Les templates (manœuvre, boutons) sont dessinés **par Android Auto** par-dessu
 ## Construire, tester, lancer
 
 ```bash
-# JDK 21 requis (le JBR 25 d'Android Studio est trop récent pour Gradle 8.14)
-export JAVA_HOME="$HOME/.jdks/jbr-21.0.11"
-
+# Gradle 9.6 + AGP 9.4 : fonctionne avec le JDK 25 fourni par Android Studio
 ./gradlew :app:testDebugUnitTest   # tests unitaires (core, data, navigation)
 ./gradlew :app:assembleDebug       # APK : app/build/outputs/apk/debug/app-debug.apk
 ./gradlew :app:installDebug        # installe sur le téléphone branché
