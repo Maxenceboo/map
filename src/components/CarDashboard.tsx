@@ -888,7 +888,14 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
           <div className="grid grid-cols-3 gap-2 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-3 mb-4 text-center">
             <div>
               <div className="text-[10px] uppercase font-bold text-neutral-400">Arrivée</div>
-              <div className="text-lg md:text-xl font-black text-emerald-400">{getEta(route.duration)}</div>
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-lg md:text-xl font-black text-emerald-400">{getEta(route.duration)}</span>
+                {Boolean(route.trafficDelaySeconds && route.trafficDelaySeconds >= 60) && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    +{Math.round(route.trafficDelaySeconds! / 60)}m
+                  </span>
+                )}
+              </div>
             </div>
             <div className="border-x border-neutral-800">
               <div className="text-[10px] uppercase font-bold text-neutral-400">Temps</div>
@@ -993,8 +1000,15 @@ export const CarDashboard: React.FC<CarDashboardProps> = ({
             <div className="flex items-baseline gap-3 md:gap-5">
               <div>
                 <div className="text-[10px] text-neutral-400 uppercase font-black">Arrivée</div>
-                <div className="text-xl md:text-2xl font-black text-emerald-400">
-                  {getEta(totalDurationRemaining)}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl md:text-2xl font-black text-emerald-400">
+                    {getEta(totalDurationRemaining)}
+                  </span>
+                  {Boolean(route?.trafficDelaySeconds && route.trafficDelaySeconds >= 60) && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      +{Math.round((route?.trafficDelaySeconds || 0) / 60)}m
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="h-6 w-[1px] bg-neutral-800" />

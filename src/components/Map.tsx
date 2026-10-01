@@ -70,6 +70,9 @@ export const Map: React.FC<MapProps> = ({
   const routeSourceId = 'active-route-source';
   const routeGlowLayerId = 'active-route-glow';
   const routeCoreLayerId = 'active-route-core';
+  const routeTrafficSourceId = 'route-traffic-sections-source';
+  const routeTrafficGlowLayerId = 'route-traffic-sections-glow';
+  const routeTrafficCoreLayerId = 'route-traffic-sections-core';
 
   const radarSourceId = 'radars-source';
   const radarGlowLayerId = 'radars-glow';
@@ -78,8 +81,6 @@ export const Map: React.FC<MapProps> = ({
 
   const trafficSourceId = 'tomtom-traffic-flow';
   const trafficLayerId = 'tomtom-traffic-flow-layer';
-  const incidentsSourceId = 'tomtom-traffic-incidents';
-  const incidentsLayerId = 'tomtom-traffic-incidents-layer';
 
   const themeConfig = getTheme(theme);
 
@@ -150,15 +151,14 @@ export const Map: React.FC<MapProps> = ({
     if (!map || !map.isStyleLoaded()) return;
 
     try {
-      if (map.getLayer(incidentsLayerId)) map.removeLayer(incidentsLayerId);
-      if (map.getSource(incidentsSourceId)) map.removeSource(incidentsSourceId);
       if (map.getLayer(trafficLayerId)) map.removeLayer(trafficLayerId);
       if (map.getSource(trafficSourceId)) map.removeSource(trafficSourceId);
     } catch (_) {}
 
     if (trafficEnabled && tomtomApiKey && tomtomApiKey.trim().length > 5) {
       const key = encodeURIComponent(tomtomApiKey.trim());
-      const beforeLayer = map.getLayer(routeGlowLayerId) ? routeGlowLayerId : undefined;
+      // Placer sous les pastilles de radars si elles existent
+      const beforeRadar = map.getLayer(radarGlowLayerId) ? radarGlowLayerId : undefined;
 
       try {
         map.addSource(trafficSourceId, {
@@ -173,31 +173,13 @@ export const Map: React.FC<MapProps> = ({
             type: 'raster',
             source: trafficSourceId,
             paint: {
-              'raster-opacity': 0.75,
-            },
-          },
-          beforeLayer
-        );
-
-        map.addSource(incidentsSourceId, {
-          type: 'raster',
-          tiles: [`https://api.tomtom.com/traffic/map/4/tile/incidents/s3/{z}/{x}/{y}.png?key=${key}`],
-          tileSize: 256,
-        });
-
-        map.addLayer(
-          {
-            id: incidentsLayerId,
-            type: 'raster',
-            source: incidentsSourceId,
-            paint: {
               'raster-opacity': 0.85,
             },
           },
-          beforeLayer
+          beforeRadar
         );
       } catch (err) {
-        console.warn('Erreur chargement couches TomTom Traffic:', err);
+        console.warn('Erreur chargement couche TomTom Traffic:', err);
       }
     }
   }, [trafficEnabled, tomtomApiKey]);
@@ -330,6 +312,15 @@ export const Map: React.FC<MapProps> = ({
 
     // Nettoyage sécurisé
     try {
+      if (map.getLayer(routeTrafficCoreLayerId)) map.removeLayer(routeTrafficCoreLayerId);
+    } catch (_) {}
+    try {
+      if (map.getLayer(routeTrafficGlowLayerId)) map.removeLayer(routeTrafficGlowLayerId);
+    } catch (_) {}
+    try {
+      if (map.getSource(routeTrafficSourceId)) map.removeSource(routeTrafficSourceId);
+    } catch (_) {}
+    try {
       if (map.getLayer(routeCoreLayerId)) map.removeLayer(routeCoreLayerId);
     } catch (_) {}
     try {
@@ -396,9 +387,76 @@ export const Map: React.FC<MapProps> = ({
       paint: {
         'line-color': themeConfig.routeColor,
         'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 8],
-        'line-opacity': 1.0,
+        'line-opacity': 0.95,
       },
     });
+
+    // 3. Surbrillance des sections de bouchons / ralentissements directement sur le tracé
+    if (currentRoute.trafficSections && currentRoute.trafficSections.length > 0) {
+      const trafficFeatures = currentRoute.trafficSections
+        .map((sec, idx) => {
+          const coords = currentRoute.coordinates.slice(sec.startIndex, sec.endIndex + 1);
+          if (coords.length < 2) return null;
+          const isJam = sec.severity === 'jam';
+          return {
+            type: 'Feature' as const,
+            properties: {
+              id: idx,
+              severity: sec.severity,
+              color: isJam ? '#ef4444' : '#f97316', // Rouge vif pour bouchon, Orange vif pour ralenti
+              glowColor: isJam ? '#dc2626' : '#ea580c',
+            },
+            geometry: {
+              type: 'LineString' as const,
+              coordinates: coords,
+            },
+          };
+        })
+        .filter(Boolean);
+
+      if (trafficFeatures.length > 0) {
+        map.addSource(routeTrafficSourceId, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: trafficFeatures as any,
+          },
+        });
+
+        // Halo lumineux du bouchon sur le tracé
+        map.addLayer({
+          id: routeTrafficGlowLayerId,
+          type: 'line',
+          source: routeTrafficSourceId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': ['get', 'glowColor'],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 8, 16, 20],
+            'line-opacity': 0.95,
+            'line-blur': 2,
+          },
+        });
+
+        // Ligne vive de congestion (Orange ou Rouge)
+        map.addLayer({
+          id: routeTrafficCoreLayerId,
+          type: 'line',
+          source: routeTrafficSourceId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 8],
+            'line-opacity': 1.0,
+          },
+        });
+      }
+    }
 
     // 3. Marqueur de destination au bout du chemin
     const destCoords = currentRoute.coordinates[currentRoute.coordinates.length - 1];

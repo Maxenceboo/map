@@ -10,12 +10,22 @@ export interface RouteStep {
   modifier?: string;
 }
 
+export interface TrafficSection {
+  startIndex: number;
+  endIndex: number;
+  severity: 'slow' | 'jam';
+  delaySeconds?: number;
+  speedKmh?: number;
+}
+
 export interface RouteInfo {
   coordinates: Coordinates[];
   distance: number; // mètres
   duration: number; // secondes
   steps: RouteStep[];
   summary: string;
+  trafficDelaySeconds?: number;
+  trafficSections?: TrafficSection[];
 }
 
 export type GameTheme = 'gta' | 'cyberpunk' | 'pokemon' | 'zelda';
