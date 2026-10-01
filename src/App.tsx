@@ -605,6 +605,7 @@ export function App() {
         trafficEnabled={radarTrafficSettings.trafficEnabled}
         tomtomApiKey={radarTrafficSettings.tomtomApiKey}
         radarAlertsEnabled={radarTrafficSettings.radarAlertsEnabled}
+        isNavigating={isNavigating}
       />
 
       {/* 2. Tableau de bord voiture épuré Waze/GTA/Minecraft */}

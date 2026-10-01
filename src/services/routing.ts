@@ -72,7 +72,7 @@ async function calculateTomTomRoute(
   const startParam = `${start[1]},${start[0]}`;
   const endParam = `${end[1]},${end[0]}`;
   const key = encodeURIComponent(apiKey.trim());
-  const url = `https://api.tomtom.com/routing/1/calculateRoute/${startParam}:${endParam}/json?traffic=true&computeTravelTimeFor=all&sectionType=traffic&instructionsType=text&language=fr-FR&key=${key}`;
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${startParam}:${endParam}/json?traffic=true&routeType=fastest&departAt=now&computeTravelTimeFor=all&sectionType=traffic&instructionsType=text&language=fr-FR&key=${key}`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -97,12 +97,19 @@ async function calculateTomTomRoute(
   if (route.sections && Array.isArray(route.sections)) {
     for (const sec of route.sections) {
       if (sec.sectionType === 'TRAFFIC') {
-        const isJam = sec.simpleCategory === 'JAM' || (sec.magnitudeOfDelay && sec.magnitudeOfDelay >= 3);
+        const speed = typeof sec.effectiveSpeedInKmh === 'number' ? sec.effectiveSpeedInKmh : 999;
+        const delay = sec.delayInSeconds || 0;
+        const magnitude = sec.magnitudeOfDelay || 0;
+
+        // Vrai bouchon dense (rouge) : vitesse <= 18 km/h, gros retard (>= 120s) ou magnitude >= 2
+        // Ralentissement (orange) : circulation freinée (18 à 45 km/h) avec retard modéré
+        const isJam = speed <= 18 || magnitude >= 2 || delay >= 120;
+
         trafficSections.push({
           startIndex: sec.startPointIndex,
           endIndex: sec.endPointIndex,
           severity: isJam ? 'jam' : 'slow',
-          delaySeconds: sec.delayInSeconds || 0,
+          delaySeconds: delay,
           speedKmh: sec.effectiveSpeedInKmh,
         });
       }

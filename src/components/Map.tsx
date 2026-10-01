@@ -38,6 +38,7 @@ interface MapProps {
   trafficEnabled?: boolean;
   tomtomApiKey?: string;
   radarAlertsEnabled?: boolean;
+  isNavigating?: boolean;
 }
 
 export const Map: React.FC<MapProps> = ({
@@ -47,6 +48,7 @@ export const Map: React.FC<MapProps> = ({
   theme,
   followUser,
   is3D,
+  isNavigating = false,
   recenterTrigger,
   vehicleType = 'arrow_gta',
   vehicleColor = '#facc15',
@@ -157,8 +159,10 @@ export const Map: React.FC<MapProps> = ({
 
     if (trafficEnabled && tomtomApiKey && tomtomApiKey.trim().length > 5) {
       const key = encodeURIComponent(tomtomApiKey.trim());
-      // Placer sous les pastilles de radars si elles existent
-      const beforeRadar = map.getLayer(radarGlowLayerId) ? radarGlowLayerId : undefined;
+      // Placer sous le tracé d'itinéraire et sous les pastilles de radars si elles existent
+      const beforeId = map.getLayer(routeGlowLayerId)
+        ? routeGlowLayerId
+        : (map.getLayer(radarGlowLayerId) ? radarGlowLayerId : undefined);
 
       try {
         map.addSource(trafficSourceId, {
@@ -176,7 +180,7 @@ export const Map: React.FC<MapProps> = ({
               'raster-opacity': 0.85,
             },
           },
-          beforeRadar
+          beforeId
         );
       } catch (err) {
         console.warn('Erreur chargement couche TomTom Traffic:', err);
@@ -434,9 +438,9 @@ export const Map: React.FC<MapProps> = ({
           },
           paint: {
             'line-color': ['get', 'glowColor'],
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 8, 16, 20],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 10, 16, 22],
             'line-opacity': 0.95,
-            'line-blur': 2,
+            'line-blur': 2.5,
           },
         });
 
@@ -451,7 +455,7 @@ export const Map: React.FC<MapProps> = ({
           },
           paint: {
             'line-color': ['get', 'color'],
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 8],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 5.5, 16, 11],
             'line-opacity': 1.0,
           },
         });
@@ -794,7 +798,28 @@ export const Map: React.FC<MapProps> = ({
   // 4. Mise à jour de l'itinéraire quand route change
   useEffect(() => {
     drawRoute();
-  }, [route, drawRoute]);
+
+    const map = mapRef.current;
+    if (!map || !route || !route.coordinates || route.coordinates.length < 2) return;
+
+    // Si on est en prévisualisation d'itinéraire (avant de cliquer sur DÉMARRER),
+    // cadrage automatique de tout le trajet pour révéler immédiatement les bouchons et l'arrivée !
+    if (!isNavigating) {
+      try {
+        const bounds = new maplibregl.LngLatBounds(route.coordinates[0], route.coordinates[0]);
+        for (const coord of route.coordinates) {
+          bounds.extend(coord);
+        }
+        map.fitBounds(bounds, {
+          padding: { top: 120, bottom: 280, left: 60, right: 60 },
+          pitch: 25,
+          duration: 900,
+        });
+      } catch (err) {
+        console.warn('Erreur fitBounds itinéraire:', err);
+      }
+    }
+  }, [route, drawRoute, isNavigating]);
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
