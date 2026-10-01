@@ -415,7 +415,7 @@ export const Map: React.FC<MapProps> = ({
           },
         });
 
-        // 2a. Halo lumineux rouge/orange au sol pour signaler le ralentissement
+        // 2a. Halo lumineux discret au sol
         map.addLayer({
           id: routeTrafficGlowLayerId,
           type: 'line',
@@ -426,13 +426,13 @@ export const Map: React.FC<MapProps> = ({
           },
           paint: {
             'line-color': ['get', 'glowColor'],
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 12, 16, 24],
-            'line-opacity': 0.95,
-            'line-blur': 3,
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 8, 16, 15],
+            'line-opacity': 0.6,
+            'line-blur': 2,
           },
         });
 
-        // 2b. Bords rouges/oranges du bouchon (casing qui encadre le centre violet)
+        // 2b. Bords fins rouges/oranges du bouchon (liseré net et élégant)
         map.addLayer({
           id: routeTrafficBorderLayerId,
           type: 'line',
@@ -443,7 +443,7 @@ export const Map: React.FC<MapProps> = ({
           },
           paint: {
             'line-color': ['get', 'borderColor'],
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 8, 16, 14],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 6, 16, 11],
             'line-opacity': 1.0,
           },
         });
