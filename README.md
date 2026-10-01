@@ -1,79 +1,65 @@
-# 🎮 Game Maps IRL — Navigation GPS Style GTA V / Cyberpunk
+# Game Maps IRL 🚗🎮
 
-Application de navigation GPS en conditions réelles combinant l'ambiance et les codes visuels des jeux vidéo (**GTA V**, **Cyberpunk 2077**, **Need for Speed**) avec la précision cartographique moderne (**MapLibre GL**, **OSRM**), un moteur de rendu de véhicules en véritable **3D WebGL (Three.js)**, et un packaging mobile **Android via Capacitor**.
-
----
-
-## ✨ Fonctionnalités Principales
-
-- **Cartographie immersive** : Thème GTA V sombre haute lisibilité, Cyberpunk néon avec bâtiments rétro-éclairés, vue satellite hybride haute définition, et vue claire Waze.
-- **Véhicules en 3D temps réel (Three.js)** :
-  - Supercar GT avec aileron carbone et diffuseur
-  - Muscle Car V8 avec supercharger sur le capot
-  - Monoplace F1 avec ailerons aéro et pneus slick larges
-  - 4x4 Offroad surélevé avec galerie d'expédition
-  - Superbike de compétition avec pilote
-  - Vaisseau antigravité Hovercar avec 4 réacteurs néon
-  - Flèches radar emblématiques biseautées en volume
-- **Phares et éclairage de chaussée dynamiques** : Faisceau volumétrique doux orienté vers l'avant avec nappe d'éclairage au sol sur le bitume.
-- **Aperçu 3D Studio interactif** : Plateau tournant tactile dans les paramètres pour examiner et faire tourner chaque véhicule avec ses reflets de carrosserie.
-- **Design Plat & HUD Cockpit** : Interface sombre épurée, sans cartes artificielles arrondies, avec barre de recherche élargie et indicateurs d'état discrets.
-- **Gestion des Lieux Enregistrés** : Raccourcis pour Maison, Travail et favoris personnalisés avec géolocalisation.
-- **Moteur Audio Procédural** : Sons de manœuvres, jingle d'arrivée GTA V "Mission Passed" et alertes sonores via Web Audio API.
+> **Application de navigation GPS réelle immersive inspirée des jeux vidéo (GTA V, Need for Speed, Cyberpunk 2077, Minecraft).**
 
 ---
 
-## 🛠️ Stack Technique
+## 📌 Organisation des Branches
 
-- **Frontend** : React 19, TypeScript, Vite, Tailwind CSS
-- **Cartographie** : MapLibre GL v6, OSRM (Open Source Routing Machine)
-- **3D & Rendu WebGL** : Three.js (Custom Style Layer synchronisé dans MapLibre)
-- **Mobile** : Capacitor 8 (Android)
-- **Audio** : Web Audio API procédurale
+| Branche | Description | Statut |
+| :--- | :--- | :--- |
+| **`main`** | **Cahier des charges**, spécifications d'architecture et feuille de route pour la refonte native / automobile. | En cours (Spécifications & Architecture) |
+| **[`webgl-version`](https://github.com/Maxenceboo/map/tree/webgl-version)** | **Version 3D WebGL complète et fonctionnelle** (React, MapLibre GL, Three.js, Capacitor Android, sons Web Audio, phares volumétriques, HUD flat design). | Archivée & Fonctionnelle (commit `eb7b9eb`) |
 
 ---
 
-## 🚀 Démarrage Rapide
+## 📖 Documentation Maîtresse
 
-### Prérequis
-- Node.js 18+
-- Android Studio et SDK Android (pour le build mobile)
-- Appareil Android avec Débogage USB activé (optionnel, pour déploiement direct)
+Pour consulter l'intégralité des spécifications fonctionnelles, des formules mathématiques, des règles de design cockpit, des shaders de phares et de l'analyse des contraintes Android Auto / Apple CarPlay, consultez :
 
-### Installation & Développement Web
+👉 **[CAHIER_DES_CHARGES.md](./CAHIER_DES_CHARGES.md)**
+
+---
+
+## 🕹️ Comment Lancer la Version WebGL 3D (Three.js)
+
+La version WebGL 3D complète est préservée intacte sur la branche `webgl-version`. Pour la cloner, l'exécuter ou la compiler sur smartphone Android :
+
 ```bash
-# Installation des dépendances
+# 1. Basculer sur la branche WebGL
+git checkout webgl-version
+
+# 2. Installer les dépendances
 npm install
 
-# Lancement du serveur de développement local
+# 3. Lancer le serveur de développement local
 npm run dev
-```
 
-### Build & Déploiement Android via ADB
-```bash
-# 1. Compilation Web
+# 4. (Optionnel) Compiler et installer sur smartphone Android connecté en USB
 npm run build
-
-# 2. Synchronisation Capacitor vers le dossier Android
 npx cap sync android
-
-# 3. Compilation de l'APK Debug
 cd android
 ./gradlew assembleDebug
 cd ..
-
-# 4. Installation sur smartphone connecté via ADB
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-
-# 5. Lancement direct de l'application
 adb shell monkey -p com.gamemaps.irl -c android.intent.category.LAUNCHER 1
 ```
 
 ---
 
-## 🤖 Contexte Antigravity & Assistance IA
+## 🌟 Fonctionnalités Clés de la Version WebGL (Préservées sur `webgl-version`)
 
-Ce projet a été développé avec l'assistance de Google DeepMind Antigravity. Pour rouvrir et continuer le projet sur un autre ordinateur avec l'intégralité du contexte :
-- Consulter [GEMINI.md](file:///c:/Users/maxen/Documents/antigravity/map/GEMINI.md) et [AGENTS.md](file:///c:/Users/maxen/Documents/antigravity/map/AGENTS.md) pour les règles d'architecture et les directives utilisateur.
-- Les règles spécifiques se trouvent dans `.agent/rules/`.
-- L'historique complet des sessions, décisions et transcriptions se trouve dans `.context/`.
+- **Véhicules en Vraie 3D (Three.js)** : Couche WebGL native MapLibre (`CustomLayerInterface`). Forward en `+Z`, échelle dynamique 58px.
+- **Phares Avant Réalistes** : Faisceaux volumétriques avec dégradé sans disque de coupe + nappe lumineuse projetée sur le bitume (`NormalBlending`).
+- **Catalogue de Véhicules Procéduraux** : Sportive, Muscle Car, Formule 1, 4x4 SUV, Moto de course, Cyberpunk V-Tech, Flèches radar GTA/Waze.
+- **Cockpit HUD Flat Design** : Respect strict des règles minimalistes sombres (pas de cards arrondies génériques, menus en listes verticales hiérarchiques).
+- **Styles Cartographiques** : Radar GTA V sombre, Voxel Minecraft avec textures animées, Waze nocturne haute lisibilité.
+- **Guidage & Trafic TomTom** : Tracé GPS violet (`#c084fc`) avec bordures orange/rouge sur les ralentissements.
+- **Radars & Vitesse** : Détection des radars français à 800m avec bip modulé et macaron de limitation OSM.
+- **Audio Procédural** : Synthèse Web Audio pure de la fanfare GTA V "Mission Passed" et des clics de cockpit.
+
+---
+
+## 🚗 Prochaine Étape : Compatibilité Automobile (Android Auto / CarPlay)
+
+Consultez les sections 9 et 10 du [Cahier des charges](./CAHIER_DES_CHARGES.md) pour les détails techniques sur la barrière des WebViews en voiture et la feuille de route pour le moteur natif.

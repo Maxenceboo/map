@@ -1,36 +1,37 @@
+# Node & Dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Android & Gradle
+.gradle/
+build/
+android/app/build/
+android/.gradle/
+*.apk
+*.aab
+local.properties
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
+# IDEs & System
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.DS_Store
+Thumbs.db
 
-# Android build outputs & local Gradle files
-.gradle/
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-android/captures/
-*.apk
-*.aab
-screen*.png
-
+# Environment & Temp
+.env
+.env.*
+!.env.example
