@@ -7,7 +7,7 @@ import com.gamemaps.irl.navigation.NavigationState
 
 /**
  * Itinéraire calculé depuis le téléphone, en attente de départ :
- * estimation d'arrivée + boutons Démarrer / Annuler.
+ * estimation d'arrivée + bouton Démarrer et croix pour annuler.
  * (Choisi depuis la voiture, le guidage démarre directement : pas d'écran en plus au volant.)
  */
 object PreviewTemplate {
@@ -18,7 +18,7 @@ object PreviewTemplate {
             .setActionStrip(
                 CarActions.strip(
                     CarActions.button("Démarrer", onStart),
-                    CarActions.button("Annuler", onCancel),
+                    CarActions.cancelTrip(onCancel),
                 ),
             )
             .build()

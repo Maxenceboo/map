@@ -130,7 +130,7 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings
             }
             is NavigationState.Previewing -> Unit // L'aperçu s'affiche en bas (PreviewPanel).
             is NavigationState.Calculating ->
-                StatusBanner("Calcul de l'itinéraire vers ${navigation.destination.name}…")
+                StatusBanner("Calcul de l'itinéraire vers ${navigation.destination.name}…", loading = true, onDismiss = viewModel::onStopNavigation)
             is NavigationState.Navigating ->
                 ManeuverBanner(navigation.toHudModel())
             is NavigationState.Arrived -> Unit // Écran plein "Mission accomplie" (voir MainScreen).

@@ -12,7 +12,7 @@ import com.gamemaps.irl.navigation.NavigationState
 
 /**
  * Guidage actif : carte avec, par-dessus, la manœuvre (gérée par Android Auto),
- * l'estimation d'arrivée et les boutons : changer de destination, son, arrêter.
+ * l'estimation d'arrivée et les boutons : changer de destination, son, croix pour annuler le trajet.
  */
 object NavigatingTemplate {
 
@@ -43,8 +43,7 @@ object NavigatingTemplate {
                 CarActions.strip(
                     CarActions.search(onSearch),
                     CarActions.muteToggle(isMuted, onToggleMute),
-                    // Libellé court : avec trois boutons, "Arrêter" est tronqué par l'écran de la voiture.
-                    CarActions.button("Stop", onStop),
+                    CarActions.cancelTrip(onStop),
                 ),
             )
             .build()

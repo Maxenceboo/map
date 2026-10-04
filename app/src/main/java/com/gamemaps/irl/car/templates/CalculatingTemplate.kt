@@ -9,6 +9,6 @@ object CalculatingTemplate {
 
     fun build(onStop: () -> Unit): Template = NavigationTemplate.Builder()
         .setNavigationInfo(RoutingInfo.Builder().setLoading(true).build())
-        .setActionStrip(CarActions.strip(CarActions.button("Annuler", onStop)))
+        .setActionStrip(CarActions.strip(CarActions.cancelTrip(onStop)))
         .build()
 }

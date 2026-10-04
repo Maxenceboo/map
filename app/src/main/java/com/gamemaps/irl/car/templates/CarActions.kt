@@ -9,6 +9,10 @@ object CarActions {
     fun button(title: String, onClick: () -> Unit): Action =
         Action.Builder().setTitle(title).setOnClickListener { onClick() }.build()
 
+    /** Croix rouge : annule le trajet (calcul, aperçu ou guidage en cours). */
+    fun cancelTrip(onClick: () -> Unit): Action =
+        Action.Builder().setIcon(CloseIcon.icon).setOnClickListener { onClick() }.build()
+
     /** Ouvre la recherche de destination (clavier ou dictée). */
     fun search(onClick: () -> Unit): Action = button("Où aller ?", onClick)
 
