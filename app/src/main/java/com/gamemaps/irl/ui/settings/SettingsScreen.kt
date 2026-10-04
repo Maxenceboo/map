@@ -23,6 +23,7 @@ import com.gamemaps.irl.ui.settings.sections.PlacesSection
 import com.gamemaps.irl.ui.settings.sections.RadarSection
 import com.gamemaps.irl.ui.settings.sections.RootSection
 import com.gamemaps.irl.ui.settings.sections.ThemeSection
+import com.gamemaps.irl.ui.settings.sections.TrafficSettingsSection
 import com.gamemaps.irl.ui.settings.sections.VehicleColorSection
 import com.gamemaps.irl.ui.settings.sections.VehicleModelSection
 import com.gamemaps.irl.ui.settings.sections.VehicleSection
@@ -63,6 +64,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
                 SettingsSection.VEHICLE_COLOR -> VehicleColorSection(state.settings.vehicleColor) { color -> viewModel.update { it.copy(vehicleColor = color) } }
                 SettingsSection.AUDIO -> AudioSection(state.settings, state.isMuted, viewModel::toggleMuted, viewModel::update)
                 SettingsSection.RADARS -> RadarSection(state.settings, viewModel::update)
+                SettingsSection.TRAFFIC -> TrafficSettingsSection(state.settings, viewModel::update)
                 SettingsSection.PLACES -> PlacesSection(state.savedPlaces, viewModel::clearHome, viewModel::clearWork, viewModel::removeFavorite)
                 SettingsSection.ABOUT -> AboutSection()
             }

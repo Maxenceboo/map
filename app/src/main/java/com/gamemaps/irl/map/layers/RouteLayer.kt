@@ -15,7 +15,7 @@ import org.maplibre.geojson.LineString
 
 /**
  * Tracé de l'itinéraire : un liseré sombre (casing) sous une ligne violette de 8 px
- * (cahier des charges §5.2). Les bordures de trafic s'ajouteront ici.
+ * (cahier des charges §5.2). Les bordures de trafic sont dans [TrafficLayer].
  */
 class RouteLayer(private val style: Style, private var palette: MapPalette) {
 
@@ -61,9 +61,10 @@ class RouteLayer(private val style: Style, private var palette: MapPalette) {
         PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
     )
 
-    private companion object {
-        const val SOURCE_ID = "route-source"
-        const val CASING_LAYER_ID = "route-casing"
+    companion object {
+        /** Identifiant de la ligne violette : [TrafficLayer] se glisse juste dessous. */
         const val LINE_LAYER_ID = "route-line"
+        private const val SOURCE_ID = "route-source"
+        private const val CASING_LAYER_ID = "route-casing"
     }
 }

@@ -2,7 +2,7 @@ package com.gamemaps.irl.ui.settings
 
 /**
  * Écrans du menu Paramètres, en arborescence (règle §2.3) :
- * Paramètres > Thème, Perspective, Véhicule (> Modèle, Couleur), Audio, Radars, Lieux, À propos.
+ * Paramètres > Thème, Perspective, Véhicule (> Modèle, Couleur), Audio, Radars, Trafic, Lieux, À propos.
  *
  * @property parent écran vers lequel "← Retour" ramène ; null pour la racine (retour = fermer le menu).
  */
@@ -15,6 +15,7 @@ enum class SettingsSection(val title: String, val parent: SettingsSection?) {
     VEHICLE_COLOR("Couleur de carrosserie", VEHICLE),
     AUDIO("Audio", ROOT),
     RADARS("Radars", ROOT),
+    TRAFFIC("Trafic", ROOT),
     PLACES("Lieux enregistrés", ROOT),
     ABOUT("À propos", ROOT),
 }

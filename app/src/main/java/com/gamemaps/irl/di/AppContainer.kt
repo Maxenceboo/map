@@ -13,7 +13,10 @@ import com.gamemaps.irl.data.osm.OverpassClient
 import com.gamemaps.irl.data.radar.RadarRepository
 import com.gamemaps.irl.data.radar.official.OfficialRadarDatabase
 import com.gamemaps.irl.data.routing.RoutingService
+import com.gamemaps.irl.data.routing.TrafficAwareRoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
+import com.gamemaps.irl.data.routing.tomtom.TomTomApiKey
+import com.gamemaps.irl.data.routing.tomtom.TomTomClient
 import com.gamemaps.irl.data.places.SavedPlacesRepository
 import com.gamemaps.irl.data.search.HybridPlaceSearch
 import com.gamemaps.irl.data.search.ban.BanGeocoder
@@ -53,7 +56,16 @@ class AppContainer(context: Context) {
 
     val savedPlacesRepository = SavedPlacesRepository(context)
 
-    val routingService: RoutingService = OsrmClient(httpClient)
+
+    val audioPreferences = AudioPreferences(context)
+    val settingsRepository = SettingsRepository(context)
+
+    /** TomTom (avec trafic) si une clé est installée et le réglage actif, sinon OSRM. */
+    val routingService: RoutingService = TrafficAwareRoutingService(
+        withTraffic = TomTomApiKey.value?.let { key -> TomTomClient(httpClient, key) },
+        fallback = OsrmClient(httpClient),
+        trafficEnabled = { settingsRepository.settings.value.traffic },
+    )
 
     val locationRepository = LocationRepository(AndroidLocationSource(context.applicationContext), appScope)
 
@@ -69,9 +81,7 @@ class AppContainer(context: Context) {
         overpass = overpassClient,
     ).apply { start() }
 
-    val audioPreferences = AudioPreferences(context)
 
-    val settingsRepository = SettingsRepository(context)
 
     /** Alerte radar en cours, ou null si les alertes sont désactivées dans les Paramètres. */
     val radarAlerts: StateFlow<RadarAlert?> =

@@ -2,7 +2,7 @@ package com.gamemaps.irl.data.routing
 
 /**
  * Type de manœuvre, indépendant du moteur de routage.
- * OSRM (aujourd'hui) ou TomTom (plus tard) sont convertis vers cette liste.
+ * OSRM et TomTom sont convertis vers cette liste.
  */
 enum class ManeuverType {
     DEPART,

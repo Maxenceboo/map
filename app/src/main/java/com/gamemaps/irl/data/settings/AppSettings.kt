@@ -19,6 +19,8 @@ data class AppSettings(
     val radarBeeps: Boolean = true,
     /** Bip d'excès de vitesse. */
     val speedingBeep: Boolean = true,
+    /** Itinéraires TomTom tenant compte des bouchons (si une clé est installée). */
+    val traffic: Boolean = true,
     /** Alertes radar (bandeau, voiture, sons). Les radars restent visibles sur la carte. */
     val radarAlerts: Boolean = true,
 )

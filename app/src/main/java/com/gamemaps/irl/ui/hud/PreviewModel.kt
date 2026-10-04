@@ -12,6 +12,8 @@ data class PreviewModel(
     val distance: String,
     val duration: String,
     val arrivalTime: String,
+    /** "+ 6 min de bouchons", ou null si le trafic est fluide ou inconnu. */
+    val trafficDelay: String?,
 )
 
 fun NavigationState.Previewing.toPreviewModel(nowMillis: Long = System.currentTimeMillis()) = PreviewModel(
@@ -20,4 +22,5 @@ fun NavigationState.Previewing.toPreviewModel(nowMillis: Long = System.currentTi
     distance = DistanceFormatter.format(route.lengthMeters),
     duration = DurationFormatter.format(route.durationSeconds),
     arrivalTime = ArrivalTimeFormatter.format(nowMillis, route.durationSeconds),
+    trafficDelay = route.trafficDelaySeconds.takeIf { it >= 60 }?.let { "+ ${DurationFormatter.format(it)} de bouchons" },
 )

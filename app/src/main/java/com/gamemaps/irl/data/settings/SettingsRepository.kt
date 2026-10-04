@@ -25,6 +25,7 @@ class SettingsRepository(context: Context) {
             .putBoolean(KEY_RADAR_BEEPS, newValue.radarBeeps)
             .putBoolean(KEY_SPEEDING_BEEP, newValue.speedingBeep)
             .putBoolean(KEY_RADAR_ALERTS, newValue.radarAlerts)
+            .putBoolean(KEY_TRAFFIC, newValue.traffic)
             .apply()
         _settings.value = newValue
     }
@@ -41,6 +42,7 @@ class SettingsRepository(context: Context) {
             radarBeeps = prefs.getBoolean(KEY_RADAR_BEEPS, defaults.radarBeeps),
             speedingBeep = prefs.getBoolean(KEY_SPEEDING_BEEP, defaults.speedingBeep),
             radarAlerts = prefs.getBoolean(KEY_RADAR_ALERTS, defaults.radarAlerts),
+            traffic = prefs.getBoolean(KEY_TRAFFIC, defaults.traffic),
         )
     }
 
@@ -59,5 +61,6 @@ class SettingsRepository(context: Context) {
         const val KEY_RADAR_BEEPS = "radar_beeps"
         const val KEY_SPEEDING_BEEP = "speeding_beep"
         const val KEY_RADAR_ALERTS = "radar_alerts"
+        const val KEY_TRAFFIC = "traffic"
     }
 }

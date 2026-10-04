@@ -9,7 +9,7 @@ import okhttp3.OkHttpClient
 
 /**
  * Client du serveur OSRM public (sans trafic temps réel).
- * TomTom remplacera ce client pour le trafic, derrière la même interface [RoutingService].
+ * Moteur de secours quand TomTom n'est pas disponible, derrière la même interface [RoutingService].
  */
 class OsrmClient(private val http: OkHttpClient) : RoutingService {
 

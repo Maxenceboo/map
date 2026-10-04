@@ -7,6 +7,7 @@ import com.gamemaps.irl.map.layers.DestinationLayer
 import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
+import com.gamemaps.irl.map.layers.TrafficLayer
 import com.gamemaps.irl.map.layers.VehicleArrowBitmap
 import com.gamemaps.irl.map.layers.VehicleMarkerLayer
 import com.gamemaps.irl.map.style.MapStyleSource
@@ -32,8 +33,9 @@ object MapSetup {
     ) {
         configureUi(map, interactive)
         map.setStyle(Style.Builder().fromUri(MapStyleSource.BASE_STYLE_URL)) { style ->
-            // Ordre d'empilement : tracé, destination, radars, puis véhicule tout en haut.
+            // Ordre d'empilement : tracé (et trafic sous la ligne), destination, radars, puis véhicule tout en haut.
             val routeLayer = RouteLayer(style, theme.palette).apply { install() }
+            val trafficLayer = TrafficLayer(style).apply { install() }
             val destinationLayer = DestinationLayer(style, DestinationPinBitmap.create(theme.palette)).apply { install() }
             val radarLayer = RadarLayer(style).apply { install() }
             val vehicleLayer = VehicleMarkerLayer(style, VehicleArrowBitmap.create(theme.palette)).apply { install() }
@@ -41,7 +43,7 @@ object MapSetup {
             val camera = FollowCamera(map, viewHeightPx, cameraConfig)
             if (interactive) pauseFollowingOnUserGesture(map, camera)
             // applyTheme repeint le fond de carte, installe les textures et choisit l'icône du véhicule.
-            val controller = MapController(context, style, routeLayer, destinationLayer, radarLayer, vehicleLayer, vehicle3DLayer, camera)
+            val controller = MapController(context, style, routeLayer, trafficLayer, destinationLayer, radarLayer, vehicleLayer, vehicle3DLayer, camera)
             controller.applyTheme(theme)
             map.addOnCameraMoveListener(controller::onCameraMoved)
             onReady(controller)

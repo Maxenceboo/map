@@ -26,8 +26,8 @@ suspend fun OkHttpClient.getText(url: HttpUrl): String = suspendCancellableCorou
         override fun onResponse(call: Call, response: Response) {
             response.use {
                 if (!it.isSuccessful) {
-                    // Sans la requête : elle contient souvent la position de l'utilisateur.
-                    continuation.resumeWithException(HttpException(it.code, "${url.host}${url.encodedPath}"))
+                    // L'hôte seulement : le chemin et la requête contiennent souvent la position ou une clé d'API.
+                    continuation.resumeWithException(HttpException(it.code, url.host))
                 } else {
                     continuation.resume(it.body?.string().orEmpty())
                 }

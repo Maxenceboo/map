@@ -74,7 +74,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `network/HttpClientFactory.kt` | Client OkHttp unique. |
 | `network/HttpGet.kt` | GET annulable en coroutine. |
 | `network/UserAgentInterceptor.kt` | User-Agent identifiable (demandé par OSRM / IGN). |
-| `network/HttpException.kt` | Erreur HTTP. |
+| `network/HttpException.kt` | Erreur HTTP ; ne cite que le serveur, jamais l'adresse complète (position GPS, clé d'API). |
 | `search/Place.kt` | Un lieu (nom, adresse, position, nature, catégorie OSM). |
 | `search/PlaceKind.kt` | Adresse, rue, ville, point d'intérêt. |
 | `search/PlaceSearch.kt` | Interface de recherche. |
@@ -93,9 +93,20 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `routing/Route.kt` / `RouteStep.kt` | Itinéraire et ses étapes. |
 | `routing/ManeuverType.kt` | Types de manœuvres (indépendants du moteur). |
 | `routing/RoutingService.kt` | Interface de calcul d'itinéraire. |
+| `routing/TrafficAwareRoutingService.kt` | TomTom si une clé est installée et le trafic activé, sinon OSRM ; repli sur OSRM si TomTom échoue. |
 | `routing/osrm/OsrmClient.kt` | Appel au serveur OSRM. |
 | `routing/osrm/OsrmResponseParser.kt` | JSON OSRM → `Route`. |
 | `routing/osrm/OsrmManeuverMapper.kt` | Manœuvres OSRM → `ManeuverType`. |
+| `routing/tomtom/TomTomApiKey.kt` | Clé d'API lue dans `local.properties` à la compilation (jamais dans le code). |
+| `routing/tomtom/TomTomClient.kt` | Appel à TomTom : trajet le plus rapide compte tenu des bouchons. |
+| `routing/tomtom/TomTomResponseParser.kt` | JSON TomTom → `Route` (tracé, durée, retard). |
+| `routing/tomtom/TomTomStepBuilder.kt` | Instructions TomTom → étapes placées le long du tracé. |
+| `routing/tomtom/TomTomTrafficParser.kt` | Sections `TRAFFIC` → portions ralenties. |
+| `routing/tomtom/TomTomManeuverMapper.kt` | Codes de manœuvre TomTom → `ManeuverType`. |
+| `routing/tomtom/TomTomJson.kt` | Petit utilitaire de lecture des tableaux JSON. |
+| `traffic/TrafficSection.kt` | Portion ralentie : indices dans le tracé, gravité, retard. |
+| `traffic/TrafficSeverity.kt` | Ralentissement (orange) ou bouchon (rouge). |
+| `traffic/TrafficSeverityClassifier.kt` | Seuils : bouchon si ≤ 18 km/h, retard ≥ 2 min ou magnitude ≥ 2. |
 | `speedlimit/SpeedLimitRepository.kt` | Limitation de la route actuelle (`StateFlow`), recharge la zone en approchant du bord. |
 | `speedlimit/OverpassResponseParser.kt` | JSON Overpass → `RoadSegment`. |
 | `speedlimit/MaxSpeedParser.kt` | "50", "FR:urban", "30 mph" → km/h. |
@@ -145,6 +156,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `theme/MapPalette.kt` | Couleurs d'un thème. |
 | `theme/MapThemeApplier.kt` | Repeint chaque calque du style selon la palette. |
 | `layers/RouteLayer.kt` | Tracé violet + liseré. |
+| `layers/TrafficLayer.kt` | Bordures orange / rouges autour du tracé sur les portions ralenties. |
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
 | `layers/VehicleMarkerLayer.kt` | Marqueur 2D du véhicule orienté selon le cap (masqué quand un modèle 3D est affiché). |
@@ -246,7 +258,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | :--- | :--- |
 | `SettingsScreen.kt` | Menu plein écran, navigation entre sections, bouton retour. |
 | `SettingsViewModel.kt` | Lit et modifie réglages, son et lieux enregistrés. |
-| `SettingsSection.kt` | Racine, Thème, Perspective, Véhicule (> Modèle, Couleur), Audio, Radars, Lieux, À propos. |
+| `SettingsSection.kt` | Racine, Thème, Perspective, Véhicule (> Modèle, Couleur), Audio, Radars, Trafic, Lieux, À propos. |
 | `SettingsUiState.kt` | Ce qu'affiche le menu. |
 | `sections/*.kt` | Un fichier par écran du menu. |
 | `components/SettingsHeader.kt` | « ← Retour » + titre. |
@@ -283,14 +295,15 @@ Android Auto interdit WebView et WebGL (§9), mais donne aux apps de navigation 
 `Presentation` contenant une `MapView` MapLibre ordinaire, configurée par le même `MapSetup` que le téléphone.
 Les templates (manœuvre, boutons) sont dessinés **par Android Auto** par-dessus.
 
-## Services externes (gratuits, sans clé)
+## Services externes (gratuits ; seul TomTom demande une clé)
 
 | Besoin | Service |
 | :--- | :--- |
 | Fond de carte | OpenFreeMap (tuiles OpenStreetMap) |
 | Recherche d'adresses | Base Adresse Nationale — `data.geopf.fr/geocodage` |
 | Recherche de lieux | Photon — `photon.komoot.io` (OpenStreetMap) |
-| Itinéraire | OSRM public — `router.project-osrm.org` (démo, sans trafic) |
+| Itinéraire avec trafic | TomTom Routing — `api.tomtom.com` (optionnel, clé gratuite) |
+| Itinéraire sans trafic | OSRM public — `router.project-osrm.org` (démo ; utilisé sans clé TomTom ou en repli) |
 | Radars (base officielle) | `app/src/main/assets/radars_france.json`, généré par `tools/convert_radars.py` |
 | Limitations de vitesse, radars complémentaires | Overpass API — `overpass-api.de` (tags OSM `maxspeed`, nœuds `highway=speed_camera`) |
 
@@ -310,6 +323,19 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
    Activer aussi *Sources inconnues* dans les paramètres développeur d'Android Auto.
 3. `adb forward tcp:5277 tcp:5277` puis lancer `desktop-head-unit.exe` (dans `extras/google/auto`).
 
-## Prochaines étapes (hors de cette première passe)
+## Activer le trafic TomTom
 
-1. Trafic TomTom : bordures orange / rouge sur le tracé (clé d'API à fournir, jamais écrite dans le code).
+1. Créer une clé gratuite sur <https://developer.tomtom.com> (produit *Routing API*).
+2. Ajouter dans `local.properties`, à la racine du projet (fichier ignoré par git) :
+   ```properties
+   tomtom.apiKey=VOTRE_CLE
+   ```
+3. Recompiler. *Paramètres > Trafic* affiche alors « Clé TomTom installée ».
+
+Sans clé, tout fonctionne avec OSRM, simplement sans bouchons. La clé est copiée dans l'APK :
+ne pas diffuser un APK compilé avec sa clé personnelle.
+
+## Prochaines étapes
+
+1. Recalcul périodique pendant le trajet pour rafraîchir les bouchons (aujourd'hui : au départ et à chaque recalcul).
+2. Calque de trafic sur toutes les routes de la carte (tuiles TomTom Traffic Flow).

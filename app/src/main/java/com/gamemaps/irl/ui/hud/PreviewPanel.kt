@@ -47,6 +47,10 @@ fun PreviewPanel(
                 Metric(preview.distance, "DISTANCE")
                 Metric(preview.arrivalTime, "ARRIVÉE")
             }
+            preview.trafficDelay?.let { delay ->
+                Spacer(Modifier.height(8.dp))
+                Text(delay, style = CockpitTypography.Caption, color = CockpitColors.Warning)
+            }
             Spacer(Modifier.height(12.dp))
             PlaceSaveActions(saveState, saveCallbacks)
             Spacer(Modifier.height(8.dp))

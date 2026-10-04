@@ -10,6 +10,7 @@ import com.gamemaps.irl.map.layers.DestinationLayer
 import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
+import com.gamemaps.irl.map.layers.TrafficLayer
 import com.gamemaps.irl.map.layers.VehicleIconFactory
 import com.gamemaps.irl.map.layers.VehicleMarkerLayer
 import com.gamemaps.irl.map.theme.MapTheme
@@ -29,6 +30,7 @@ class MapController internal constructor(
     private val context: Context,
     private val style: Style,
     private val routeLayer: RouteLayer,
+    private val trafficLayer: TrafficLayer,
     private val destinationLayer: DestinationLayer,
     private val radarLayer: RadarLayer,
     private val vehicleLayer: VehicleMarkerLayer,
@@ -49,9 +51,10 @@ class MapController internal constructor(
         camera.follow(fix)
     }
 
-    /** Tracé + épingle de destination (au bout du tracé). null efface les deux. */
+    /** Tracé, bordures de trafic et épingle de destination (au bout du tracé). null efface tout. */
     fun showRoute(route: Route?) {
         routeLayer.update(route)
+        trafficLayer.update(route)
         destinationLayer.update(route?.geometry?.lastOrNull())
     }
 
