@@ -2,6 +2,8 @@ package com.gamemaps.irl.car.screens
 
 import androidx.car.app.AppManager
 import androidx.car.app.CarContext
+import com.gamemaps.irl.data.search.Place
+import androidx.car.app.CarToast
 import androidx.car.app.Screen
 import androidx.car.app.model.Template
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -62,6 +64,8 @@ class NavigationCarScreen(
         if (!hasLocationPermission) return MessageTemplates.permissionRequired(::requestLocationPermission)
         return when (val state = navigation) {
             is NavigationState.Idle -> IdleTemplate.build(
+                onHome = { startSavedTrip(container.savedPlacesRepository.saved.value.home, "Maison") },
+                onWork = { startSavedTrip(container.savedPlacesRepository.saved.value.work, "Travail") },
                 onSearch = ::openSearch,
                 isMuted = audio.muted.value,
                 onToggleMute = audio::toggleMuted,
@@ -137,6 +141,15 @@ class NavigationCarScreen(
         controller.showRoute(route)
         controller.showRadars(container.radarRepository.radars.value)
         container.locationRepository.fixes.value?.let(controller::showVehicle)
+    }
+
+    /** Icône Maison / Travail : démarre le guidage, ou explique comment enregistrer le lieu. */
+    private fun startSavedTrip(place: Place?, label: String) {
+        if (place != null) {
+            engine.start(place, autoStart = true)
+        } else {
+            CarToast.makeText(carContext, "$label n'est pas défini : choisissez-le sur le téléphone, dans l'aperçu d'un trajet", CarToast.LENGTH_LONG).show()
+        }
     }
 
     private fun openSearch() {

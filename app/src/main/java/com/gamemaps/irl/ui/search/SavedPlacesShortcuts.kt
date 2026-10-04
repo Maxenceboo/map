@@ -1,5 +1,6 @@
 package com.gamemaps.irl.ui.search
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gamemaps.irl.data.places.SavedPlaces
 import com.gamemaps.irl.data.search.Place
@@ -30,17 +32,18 @@ import com.gamemaps.irl.ui.theme.CockpitColors
 import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
- * Raccourcis sous la barre de recherche : Maison, Travail, puis les favoris.
+ * Raccourcis sous la barre de recherche : Maison et Travail (toujours proposés), puis les favoris.
  * Un appui lance directement l'itinéraire (cahier des charges §8 : "trajet en 1 clic").
+ * Tant que Maison ou Travail n'est pas défini, la pastille est grisée et explique comment faire.
  */
 @Composable
 fun SavedPlacesShortcuts(saved: SavedPlaces, onSelect: (Place) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val shortcuts = buildList {
-        saved.home?.let { add(Shortcut(Icons.Filled.Home, "Maison", it)) }
-        saved.work?.let { add(Shortcut(HudIcons.Work, "Travail", it)) }
+        add(Shortcut(Icons.Filled.Home, "Maison", saved.home))
+        add(Shortcut(HudIcons.Work, "Travail", saved.work))
         saved.favorites.forEach { add(Shortcut(Icons.Filled.Star, it.name, it)) }
     }
-    if (shortcuts.isEmpty()) return
 
     LazyRow(
         modifier = modifier.fillMaxWidth(),
@@ -48,16 +51,26 @@ fun SavedPlacesShortcuts(saved: SavedPlaces, onSelect: (Place) -> Unit, modifier
         // La marge laisse la place à l'ombre des pastilles.
         contentPadding = PaddingValues(vertical = 4.dp),
     ) {
-        items(shortcuts, key = { it.label + it.place.id }) { shortcut ->
-            Chip(shortcut, onClick = { onSelect(shortcut.place) })
+        items(shortcuts, key = { it.label + it.place?.id }) { shortcut ->
+            Chip(shortcut) {
+                val place = shortcut.place
+                if (place != null) {
+                    onSelect(place)
+                } else {
+                    val hint = "Cherchez l'adresse, puis touchez ${shortcut.label} dans l'aperçu du trajet"
+                    Toast.makeText(context, hint, Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 }
 
-private class Shortcut(val icon: ImageVector, val label: String, val place: Place)
+/** @property place null si le lieu (Maison, Travail) n'est pas encore défini. */
+private class Shortcut(val icon: ImageVector, val label: String, val place: Place?)
 
 @Composable
 private fun Chip(shortcut: Shortcut, onClick: () -> Unit) {
+    val defined = shortcut.place != null
     Row(
         modifier = Modifier
             .hudSurface(HudShapes.Pill)
@@ -65,8 +78,8 @@ private fun Chip(shortcut: Shortcut, onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(shortcut.icon, contentDescription = null, tint = CockpitColors.Accent, modifier = Modifier.size(18.dp))
+        Icon(shortcut.icon, contentDescription = null, tint = if (defined) CockpitColors.Accent else CockpitColors.TextMuted, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
-        Text(shortcut.label, style = CockpitTypography.Metric, color = CockpitColors.Text, maxLines = 1)
+        Text(shortcut.label, style = CockpitTypography.Metric, color = if (defined) CockpitColors.Text else CockpitColors.TextMuted, maxLines = 1)
     }
 }

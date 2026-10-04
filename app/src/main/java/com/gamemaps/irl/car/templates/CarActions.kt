@@ -2,6 +2,7 @@ package com.gamemaps.irl.car.templates
 
 import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
+import androidx.car.app.model.CarIcon
 
 /** Boutons réutilisés par plusieurs templates. */
 object CarActions {
@@ -11,7 +12,16 @@ object CarActions {
 
     /** Croix rouge : annule le trajet (calcul, aperçu ou guidage en cours). */
     fun cancelTrip(onClick: () -> Unit): Action =
-        Action.Builder().setIcon(CloseIcon.icon).setOnClickListener { onClick() }.build()
+        iconButton(CarIcons.close, onClick)
+
+    /** Trajet en un appui vers la maison. */
+    fun home(onClick: () -> Unit): Action = iconButton(CarIcons.home, onClick)
+
+    /** Trajet en un appui vers le travail. */
+    fun work(onClick: () -> Unit): Action = iconButton(CarIcons.work, onClick)
+
+    private fun iconButton(icon: CarIcon, onClick: () -> Unit): Action =
+        Action.Builder().setIcon(icon).setOnClickListener { onClick() }.build()
 
     /** Ouvre la recherche de destination (clavier ou dictée). */
     fun search(onClick: () -> Unit): Action = button("Où aller ?", onClick)

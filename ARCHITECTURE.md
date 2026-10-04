@@ -289,6 +289,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `templates/MessageTemplates.kt` | Arrivée, erreur, permission. |
 | `templates/PlaceListBuilder.kt` | Résultats de recherche ; Maison / Travail / favoris quand rien n'est tapé. |
 | `templates/CarActions.kt` | Boutons communs. |
+| `templates/CarIcons.kt` | Icônes des boutons voiture : maison, mallette, croix. |
 | `mapping/CarManeuverMapper.kt` | `ManeuverType` → type Android Auto. |
 | `mapping/CarStepMapper.kt` | `RouteStep` → `Step` Android Auto. |
 | `mapping/CarDistanceMapper.kt` | Mètres → `Distance`. |
