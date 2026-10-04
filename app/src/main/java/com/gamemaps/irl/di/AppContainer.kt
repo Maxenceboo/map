@@ -14,7 +14,10 @@ import com.gamemaps.irl.data.radar.RadarRepository
 import com.gamemaps.irl.data.radar.official.OfficialRadarDatabase
 import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
-import com.gamemaps.irl.data.search.BanGeocoder
+import com.gamemaps.irl.data.places.SavedPlacesRepository
+import com.gamemaps.irl.data.search.HybridPlaceSearch
+import com.gamemaps.irl.data.search.ban.BanGeocoder
+import com.gamemaps.irl.data.search.photon.PhotonGeocoder
 import com.gamemaps.irl.data.search.PlaceSearch
 import com.gamemaps.irl.data.settings.AudioPreferences
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
@@ -38,7 +41,10 @@ class AppContainer(context: Context) {
 
     private val overpassClient = OverpassClient(httpClient)
 
-    val placeSearch: PlaceSearch = BanGeocoder(httpClient)
+    /** Adresses (BAN) + lieux (Photon / OpenStreetMap), interrogés en parallèle puis classés ensemble. */
+    val placeSearch: PlaceSearch = HybridPlaceSearch(listOf(BanGeocoder(httpClient), PhotonGeocoder(httpClient)))
+
+    val savedPlacesRepository = SavedPlacesRepository(context)
 
     val routingService: RoutingService = OsrmClient(httpClient)
 

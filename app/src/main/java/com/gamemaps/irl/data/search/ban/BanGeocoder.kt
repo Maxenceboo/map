@@ -1,7 +1,9 @@
-package com.gamemaps.irl.data.search
+package com.gamemaps.irl.data.search.ban
 
 import com.gamemaps.irl.core.geo.LatLng
 import com.gamemaps.irl.data.network.getText
+import com.gamemaps.irl.data.search.Place
+import com.gamemaps.irl.data.search.PlaceSearch
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 

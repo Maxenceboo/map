@@ -1,13 +1,15 @@
-package com.gamemaps.irl.data.search
+package com.gamemaps.irl.data.search.ban
 
 import com.gamemaps.irl.core.geo.LatLng
+import com.gamemaps.irl.data.search.Place
+import com.gamemaps.irl.data.search.PlaceKind
 import org.json.JSONObject
 
 /**
  * Transforme la réponse GeoJSON de la BAN en liste de [Place].
  *
  * Format attendu : `features[].geometry.coordinates = [lng, lat]` et
- * `features[].properties = { id, label, name, postcode, city, context }`.
+ * `features[].properties = { id, label, name, type, postcode, city, context }`.
  */
 object BanResponseParser {
 
@@ -19,12 +21,20 @@ object BanResponseParser {
             val coords = feature.optJSONObject("geometry")?.optJSONArray("coordinates") ?: return@mapNotNull null
             val label = props.optString("label")
             Place(
-                id = props.optString("id").ifBlank { label },
+                id = "ban_" + props.optString("id").ifBlank { label },
                 name = props.optString("name").ifBlank { label },
                 subtitle = subtitleOf(props),
                 position = LatLng(lat = coords.getDouble(1), lng = coords.getDouble(0)),
+                kind = kindOf(props.optString("type")),
             )
         }
+    }
+
+    /** Types BAN : housenumber, street, locality (lieu-dit), municipality. */
+    private fun kindOf(type: String): PlaceKind = when (type) {
+        "street" -> PlaceKind.STREET
+        "municipality", "locality" -> PlaceKind.CITY
+        else -> PlaceKind.ADDRESS
     }
 
     private fun subtitleOf(props: JSONObject): String {

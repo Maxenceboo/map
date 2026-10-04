@@ -72,10 +72,21 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `network/HttpGet.kt` | GET annulable en coroutine. |
 | `network/UserAgentInterceptor.kt` | User-Agent identifiable (demandé par OSRM / IGN). |
 | `network/HttpException.kt` | Erreur HTTP. |
-| `search/Place.kt` | Un lieu trouvé. |
+| `search/Place.kt` | Un lieu (nom, adresse, position, nature, catégorie OSM). |
+| `search/PlaceKind.kt` | Adresse, rue, ville, point d'intérêt. |
 | `search/PlaceSearch.kt` | Interface de recherche. |
-| `search/BanGeocoder.kt` | Recherche via la Base Adresse Nationale (IGN). |
-| `search/BanResponseParser.kt` | JSON BAN → `Place`. |
+| `search/HybridPlaceSearch.kt` | BAN + Photon en parallèle, fusion, classement ; un moteur en panne ne bloque pas l'autre. |
+| `search/ban/BanGeocoder.kt` | Adresses via la Base Adresse Nationale (IGN). |
+| `search/ban/BanResponseParser.kt` | JSON BAN → `Place`. |
+| `search/photon/PhotonGeocoder.kt` | Lieux (gares, magasins, stations…) via Photon / OpenStreetMap, objets inutiles exclus. |
+| `search/photon/PhotonResponseParser.kt` | JSON Photon → `Place`. |
+| `search/ranking/PlaceRanker.kt` | Score : texte + proximité + utilité du lieu. |
+| `search/ranking/PlaceDeduplicator.kt` | Même nom à < 400 m = doublon (gare vs arrêt de tram). |
+| `search/ranking/CategoryPriority.kt` | Gare / aéroport > magasin > arrêt de bus. |
+| `search/ranking/TextNormalizer.kt` | "Saint-Jean" ≈ "saint jean" (accents, tirets). |
+| `places/SavedPlaces.kt` | Maison, Travail, favoris. |
+| `places/SavedPlacesRepository.kt` | Sauvegarde sur le téléphone (`StateFlow`), partagée avec la voiture. |
+| `places/SavedPlacesSerializer.kt` | `SavedPlaces` ⇄ JSON. |
 | `routing/Route.kt` / `RouteStep.kt` | Itinéraire et ses étapes. |
 | `routing/ManeuverType.kt` | Types de manœuvres (indépendants du moteur). |
 | `routing/RoutingService.kt` | Interface de calcul d'itinéraire. |
@@ -177,9 +188,12 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `hud/MuteButton.kt` | Bouton 🔊 / 🔇. |
 | `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
 | `hud/PreviewModel.kt` | Textes de l'aperçu. |
+| `hud/PlaceSaveActions.kt` | Boutons Maison / Travail / Favori de l'aperçu. |
 | `hud/RecenterButton.kt` | « ◎ RECENTRER » quand la carte a été déplacée. |
 | `search/SearchBar.kt` | Champ "Où aller ?". |
-| `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3). |
+| `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3) : icône, adresse, distance. |
+| `search/PlaceIcons.kt` | Pictogramme par catégorie (🚉 ⛽ 🛒 🏨…). |
+| `search/SavedPlacesShortcuts.kt` | Raccourcis Maison / Travail / favoris sous la barre de recherche. |
 | `search/SearchUiState.kt` | État de la recherche. |
 | `components/CockpitPanel.kt` | Conteneur flat sombre à bordure fine (§2.1). |
 | `permissions/LocationPermissionEffect.kt` | Demande la localisation. |
@@ -199,7 +213,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `templates/PreviewTemplate.kt` | Trajet choisi sur le téléphone : Démarrer / Annuler. |
 | `templates/NavigatingTemplate.kt` | Manœuvre + estimation d'arrivée + "Arrêter". |
 | `templates/MessageTemplates.kt` | Arrivée, erreur, permission. |
-| `templates/PlaceListBuilder.kt` | Résultats de recherche. |
+| `templates/PlaceListBuilder.kt` | Résultats de recherche ; Maison / Travail / favoris quand rien n'est tapé. |
 | `templates/CarActions.kt` | Boutons communs. |
 | `mapping/CarManeuverMapper.kt` | `ManeuverType` → type Android Auto. |
 | `mapping/CarStepMapper.kt` | `RouteStep` → `Step` Android Auto. |
@@ -220,6 +234,7 @@ Les templates (manœuvre, boutons) sont dessinés **par Android Auto** par-dessu
 | :--- | :--- |
 | Fond de carte | OpenFreeMap (tuiles OpenStreetMap) |
 | Recherche d'adresses | Base Adresse Nationale — `data.geopf.fr/geocodage` |
+| Recherche de lieux | Photon — `photon.komoot.io` (OpenStreetMap) |
 | Itinéraire | OSRM public — `router.project-osrm.org` (démo, sans trafic) |
 | Radars (base officielle) | `app/src/main/assets/radars_france.json`, généré par `tools/convert_radars.py` |
 | Limitations de vitesse, radars complémentaires | Overpass API — `overpass-api.de` (tags OSM `maxspeed`, nœuds `highway=speed_camera`) |
@@ -242,9 +257,9 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 ## Prochaines étapes (hors de cette première passe)
 
-1. Recherche de lieux (Photon) et favoris Maison / Travail.
-2. Alerte radar sur Android Auto.
-3. Trafic TomTom : bordures orange / rouge sur le tracé.
-4. Véhicule 3D (Filament) à la place de la flèche 2D.
-5. Thème Minecraft, fanfare « Mission Passed ».
-6. Service au premier plan pour continuer le guidage écran éteint.
+1. Alerte radar sur Android Auto.
+2. Trafic TomTom : bordures orange / rouge sur le tracé.
+3. Véhicule 3D (Filament) à la place de la flèche 2D.
+4. Thème Minecraft, fanfare « Mission Passed ».
+5. Service au premier plan pour continuer le guidage écran éteint.
+6. Menu Paramètres (thème, 2D / 3D, audio, radars, gestion des favoris).

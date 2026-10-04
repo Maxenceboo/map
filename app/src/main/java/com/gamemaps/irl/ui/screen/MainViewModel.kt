@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamemaps.irl.data.location.LocationRepository
+import com.gamemaps.irl.data.places.SavedPlacesRepository
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.data.search.PlaceSearch
 import com.gamemaps.irl.data.settings.AudioPreferences
@@ -38,6 +39,7 @@ class MainViewModel(
     private val speedLimitRepository: SpeedLimitRepository,
     private val radarRepository: RadarRepository,
     private val audioPreferences: AudioPreferences,
+    private val savedPlacesRepository: SavedPlacesRepository,
 ) : ViewModel() {
 
     private val search = MutableStateFlow(SearchUiState())
@@ -57,8 +59,9 @@ class MainViewModel(
         navigationEngine.state,
         driving,
         audioPreferences.muted,
-    ) { searchState, navigation, drivingState, muted ->
-        MainUiState(search = searchState, navigation = navigation, driving = drivingState, isMuted = muted)
+        savedPlacesRepository.saved,
+    ) { searchState, navigation, drivingState, muted, saved ->
+        MainUiState(search = searchState, navigation = navigation, driving = drivingState, isMuted = muted, savedPlaces = saved)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())
 
     init {
@@ -86,6 +89,12 @@ class MainViewModel(
     fun onToggleMute() {
         audioPreferences.toggleMuted()
     }
+
+    fun onSetHome(place: Place) = savedPlacesRepository.setHome(place)
+
+    fun onSetWork(place: Place) = savedPlacesRepository.setWork(place)
+
+    fun onToggleFavorite(place: Place) = savedPlacesRepository.toggleFavorite(place)
 
     /** Attend 350 ms sans frappe avant d'interroger le géocodeur ; annule la requête précédente. */
     @OptIn(FlowPreview::class)
@@ -121,6 +130,7 @@ class MainViewModel(
                     speedLimitRepository = container.speedLimitRepository,
                     radarRepository = container.radarRepository,
                     audioPreferences = container.audioPreferences,
+                    savedPlacesRepository = container.savedPlacesRepository,
                 )
             }
         }

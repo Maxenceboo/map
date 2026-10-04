@@ -24,10 +24,17 @@ import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
  * Aperçu avant le départ : destination, distance, durée, heure d'arrivée,
- * bouton DÉMARRER pleine largeur (règle §2.3) et ANNULER.
+ * enregistrement (Maison / Travail / Favori), bouton DÉMARRER pleine largeur (règle §2.3) et ANNULER.
  */
 @Composable
-fun PreviewPanel(preview: PreviewModel, onStart: () -> Unit, onCancel: () -> Unit, modifier: Modifier = Modifier) {
+fun PreviewPanel(
+    preview: PreviewModel,
+    saveState: PlaceSaveState,
+    saveCallbacks: PlaceSaveCallbacks,
+    onStart: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     CockpitPanel(modifier.fillMaxWidth()) {
         Column {
             Text(preview.destinationName, style = CockpitTypography.Street, color = CockpitColors.Text)
@@ -41,6 +48,8 @@ fun PreviewPanel(preview: PreviewModel, onStart: () -> Unit, onCancel: () -> Uni
                 Metric(preview.arrivalTime, "ARRIVÉE")
             }
             Spacer(Modifier.height(12.dp))
+            PlaceSaveActions(saveState, saveCallbacks)
+            Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ActionButton("ANNULER", CockpitColors.Panel, CockpitColors.TextMuted, onCancel, Modifier.weight(1f))
                 ActionButton("DÉMARRER", CockpitColors.Route, Color.Black, onStart, Modifier.weight(2f))

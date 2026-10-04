@@ -24,6 +24,7 @@ class CarSearchScreen(
     private val container: AppContainer,
 ) : Screen(carContext) {
 
+    private var query = ""
     private var results: List<Place> = emptyList()
     private var isLoading = false
     private var searchJob: Job? = null
@@ -42,16 +43,25 @@ class CarSearchScreen(
             .setShowKeyboardByDefault(true)
 
         // Un SearchTemplate ne peut pas être "en chargement" et avoir une liste à la fois.
-        if (isLoading) {
-            builder.setLoading(true)
-        } else {
-            builder.setItemList(PlaceListBuilder.build(results, maxItems, ::onPlaceSelected))
+        when {
+            isLoading -> builder.setLoading(true)
+            query.isBlank() -> builder.setItemList(
+                PlaceListBuilder.buildSaved(container.savedPlacesRepository.saved.value, maxItems, ::onPlaceSelected),
+            )
+            else -> builder.setItemList(PlaceListBuilder.build(results, maxItems, ::onPlaceSelected))
         }
         return builder.build()
     }
 
     private fun search(text: String) {
+        query = text
         searchJob?.cancel()
+        if (text.isBlank()) {
+            results = emptyList()
+            isLoading = false
+            invalidate()
+            return
+        }
         searchJob = lifecycleScope.launch {
             delay(DEBOUNCE_MS)
             isLoading = true

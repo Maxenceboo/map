@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.map.MapController
 import com.gamemaps.irl.map.theme.MapTheme
 import com.gamemaps.irl.navigation.NavigationState
@@ -30,6 +31,8 @@ import com.gamemaps.irl.ui.hud.ArrivalPanel
 import com.gamemaps.irl.ui.hud.GpsStatusDot
 import com.gamemaps.irl.ui.hud.ManeuverBanner
 import com.gamemaps.irl.ui.hud.MuteButton
+import com.gamemaps.irl.ui.hud.PlaceSaveCallbacks
+import com.gamemaps.irl.ui.hud.PlaceSaveState
 import com.gamemaps.irl.ui.hud.PreviewPanel
 import com.gamemaps.irl.ui.hud.RecenterButton
 import com.gamemaps.irl.ui.hud.toPreviewModel
@@ -39,6 +42,7 @@ import com.gamemaps.irl.ui.hud.StatusBanner
 import com.gamemaps.irl.ui.hud.toHudModel
 import com.gamemaps.irl.ui.map.MapViewHost
 import com.gamemaps.irl.ui.permissions.LocationPermissionEffect
+import com.gamemaps.irl.ui.search.SavedPlacesShortcuts
 import com.gamemaps.irl.ui.search.SearchBar
 import com.gamemaps.irl.ui.search.SearchResultsList
 import com.gamemaps.irl.ui.theme.CockpitColors
@@ -77,6 +81,9 @@ fun MainScreen(viewModel: MainViewModel, onLocationPermissionGranted: () -> Unit
                 onToggleMute = viewModel::onToggleMute,
                 onConfirmRoute = viewModel::onConfirmRoute,
                 onRecenter = { mapController?.recenter() },
+                onSetHome = viewModel::onSetHome,
+                onSetWork = viewModel::onSetWork,
+                onToggleFavorite = viewModel::onToggleFavorite,
             ),
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(12.dp),
         )
@@ -99,9 +106,13 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, modifier: Modi
                     modifier = Modifier.fillMaxWidth(),
                     trailing = { GpsStatusDot(state.driving.gpsQuality) },
                 )
+                if (query.isBlank()) {
+                    SavedPlacesShortcuts(saved = state.savedPlaces, onSelect = viewModel::onPlaceSelected)
+                }
                 if (state.search.results.isNotEmpty()) {
                     SearchResultsList(
                         results = state.search.results,
+                        near = state.driving.fix?.position,
                         onSelect = { place ->
                             query = ""
                             viewModel.onPlaceSelected(place)
@@ -127,8 +138,20 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, modifier: Modi
 private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: BottomActions, modifier: Modifier) {
     val navigation = state.navigation
     if (navigation is NavigationState.Previewing) {
+        val destination = navigation.destination
+        val saved = state.savedPlaces
         PreviewPanel(
             preview = navigation.toPreviewModel(),
+            saveState = PlaceSaveState(
+                isHome = saved.home?.id == destination.id,
+                isWork = saved.work?.id == destination.id,
+                isFavorite = saved.isFavorite(destination),
+            ),
+            saveCallbacks = PlaceSaveCallbacks(
+                onSetHome = { actions.onSetHome(destination) },
+                onSetWork = { actions.onSetWork(destination) },
+                onToggleFavorite = { actions.onToggleFavorite(destination) },
+            ),
             onStart = actions.onConfirmRoute,
             onCancel = actions.onStop,
             modifier = modifier,
@@ -158,4 +181,7 @@ private class BottomActions(
     val onToggleMute: () -> Unit,
     val onConfirmRoute: () -> Unit,
     val onRecenter: () -> Unit,
+    val onSetHome: (Place) -> Unit,
+    val onSetWork: (Place) -> Unit,
+    val onToggleFavorite: (Place) -> Unit,
 )
