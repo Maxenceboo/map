@@ -88,7 +88,12 @@ class SettingsViewModel(
         searchPlace("")
     }
 
-    /** L'endroit où se trouve le téléphone, à enregistrer comme Maison ou Travail ; null sans position GPS. */
+    fun addFavorite(place: Place) {
+        savedPlacesRepository.addFavorite(place)
+        searchPlace("")
+    }
+
+    /** L'endroit où se trouve le téléphone, à enregistrer comme Maison, Travail ou favori ; null sans position GPS. */
     fun currentPositionAsPlace(): Place? = locationRepository.fixes.value?.let { fix ->
         Place(id = "here-${fix.position.lat}-${fix.position.lng}", name = "Position enregistrée", subtitle = "", position = fix.position)
     }

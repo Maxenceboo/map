@@ -1,6 +1,7 @@
 package com.gamemaps.irl.ui.settings.sections
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
@@ -14,7 +15,7 @@ import com.gamemaps.irl.ui.settings.components.SettingsNavigationRow
 
 /**
  * Maison et Travail (un appui ouvre l'écran pour les choisir), puis les favoris.
- * Les favoris s'ajoutent depuis l'aperçu d'un trajet.
+ * Les favoris s'ajoutent ici ("Ajouter un favori") ou depuis l'aperçu d'un trajet.
  */
 @Composable
 fun PlacesSection(saved: SavedPlaces, open: (SettingsSection) -> Unit, onRemoveFavorite: (Place) -> Unit) {
@@ -24,9 +25,7 @@ fun PlacesSection(saved: SavedPlaces, open: (SettingsSection) -> Unit, onRemoveF
     }
 
     SettingsGroup("Favoris") {
-        if (saved.favorites.isEmpty()) {
-            SettingsInfoRow(Icons.Filled.Star, "Aucun favori", "Cherchez un lieu puis touchez « Ajouter aux favoris » dans l'aperçu du trajet")
-        }
+        SettingsNavigationRow(Icons.Filled.Add, "Ajouter un favori", null) { open(SettingsSection.PLACE_FAVORITE) }
         saved.favorites.forEach { place ->
             SettingsInfoRow(Icons.Filled.Star, place.name, place.subtitle.ifBlank { null }, "Retirer") { onRemoveFavorite(place) }
         }

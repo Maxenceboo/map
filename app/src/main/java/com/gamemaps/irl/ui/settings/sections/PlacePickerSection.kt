@@ -26,10 +26,10 @@ import com.gamemaps.irl.ui.settings.components.SettingsOptionRow
 import com.gamemaps.irl.ui.theme.CockpitColors
 
 /**
- * Choix de l'adresse de Maison ou de Travail : le lieu actuel (avec "Retirer"),
+ * Choix d'une adresse pour Maison, Travail ou un nouveau favori : le lieu actuel (avec "Retirer"),
  * puis une recherche d'adresse ou la position où se trouve le téléphone.
  *
- * @param current lieu déjà enregistré, ou null.
+ * @param current lieu déjà enregistré, ou null (toujours null pour un nouveau favori).
  * @param onUseCurrentPosition null tant que le GPS n'a pas de position.
  */
 @Composable
@@ -39,7 +39,7 @@ fun PlacePickerSection(
     onSearch: (String) -> Unit,
     onPick: (Place) -> Unit,
     onUseCurrentPosition: (() -> Unit)?,
-    onClear: () -> Unit,
+    onClear: () -> Unit = {},
 ) {
     // Texte gardé localement : mis à jour immédiatement à chaque frappe.
     var query by rememberSaveable { mutableStateOf("") }

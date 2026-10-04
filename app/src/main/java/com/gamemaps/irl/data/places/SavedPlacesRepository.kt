@@ -26,6 +26,11 @@ class SavedPlacesRepository(context: Context) {
 
     fun removeFavorite(place: Place) = update { saved -> saved.copy(favorites = saved.favorites.filterNot { it.id == place.id }) }
 
+    /** Ajoute le lieu en tête des favoris ; ne fait rien s'il y est déjà. */
+    fun addFavorite(place: Place) = update { saved ->
+        if (saved.isFavorite(place)) saved else saved.copy(favorites = listOf(place) + saved.favorites)
+    }
+
     /** Ajoute le lieu aux favoris, ou l'en retire s'il y est déjà. */
     fun toggleFavorite(place: Place) = update { saved ->
         if (saved.isFavorite(place)) {

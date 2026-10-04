@@ -86,6 +86,13 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
                     onUseCurrentPosition = { viewModel.currentPositionAsPlace()?.let(viewModel::setHome); backToPlaces() }.takeIf { state.hasPosition },
                     onClear = viewModel::clearHome,
                 )
+                SettingsSection.PLACE_FAVORITE -> PlacePickerSection(
+                    current = null,
+                    results = state.placeResults,
+                    onSearch = viewModel::searchPlace,
+                    onPick = { viewModel.addFavorite(it); backToPlaces() },
+                    onUseCurrentPosition = { viewModel.currentPositionAsPlace()?.let(viewModel::addFavorite); backToPlaces() }.takeIf { state.hasPosition },
+                )
                 SettingsSection.PLACE_WORK -> PlacePickerSection(
                     current = state.savedPlaces.work,
                     results = state.placeResults,
