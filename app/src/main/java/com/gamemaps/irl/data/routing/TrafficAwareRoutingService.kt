@@ -8,19 +8,19 @@ import kotlinx.coroutines.CancellationException
  * sinon le moteur de secours (OSRM). Si le premier échoue (réseau, clé refusée, quota dépassé),
  * on retombe sur le second : le conducteur a toujours un itinéraire.
  *
- * @param withTraffic null quand aucune clé TomTom n'est installée.
+ * @param withTraffic interrogé à chaque calcul ; null quand aucune clé TomTom n'est enregistrée.
  * @param trafficEnabled réglage "Trafic en temps réel" des Paramètres.
  */
 class TrafficAwareRoutingService(
-    private val withTraffic: RoutingService?,
+    private val withTraffic: () -> RoutingService?,
     private val fallback: RoutingService,
     private val trafficEnabled: () -> Boolean,
 ) : RoutingService {
 
     override suspend fun route(from: LatLng, to: LatLng): Route {
-        if (withTraffic == null || !trafficEnabled()) return fallback.route(from, to)
+        val trafficRouting = withTraffic().takeIf { trafficEnabled() } ?: return fallback.route(from, to)
         return try {
-            withTraffic.route(from, to)
+            trafficRouting.route(from, to)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

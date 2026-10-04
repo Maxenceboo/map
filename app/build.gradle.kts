@@ -1,17 +1,7 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
-
-// Secrets locaux (local.properties n'est pas versionné) : la clé TomTom n'est jamais écrite dans le code.
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
-}
-val tomTomApiKey: String = localProperties.getProperty("tomtom.apiKey", "").trim()
-require(tomTomApiKey.all { it.isLetterOrDigit() }) { "tomtom.apiKey : lettres et chiffres uniquement" }
 
 android {
     namespace = "com.gamemaps.irl"
@@ -23,8 +13,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0-native"
-        // Vide = pas de trafic : l'app calcule ses itinéraires avec OSRM.
-        buildConfigField("String", "TOMTOM_API_KEY", "\"$tomTomApiKey\"")
     }
 
     buildTypes {
@@ -41,7 +29,6 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 }
 

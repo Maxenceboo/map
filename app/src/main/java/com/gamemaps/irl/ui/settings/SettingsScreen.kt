@@ -64,7 +64,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
                 SettingsSection.VEHICLE_COLOR -> VehicleColorSection(state.settings.vehicleColor) { color -> viewModel.update { it.copy(vehicleColor = color) } }
                 SettingsSection.AUDIO -> AudioSection(state.settings, state.isMuted, viewModel::toggleMuted, viewModel::update)
                 SettingsSection.RADARS -> RadarSection(state.settings, viewModel::update)
-                SettingsSection.TRAFFIC -> TrafficSettingsSection(state.settings, viewModel::update)
+                SettingsSection.TRAFFIC -> TrafficSettingsSection(state.settings, state.maskedTomTomKey, viewModel::update, viewModel::saveTomTomKey, viewModel::clearTomTomKey)
                 SettingsSection.PLACES -> PlacesSection(state.savedPlaces, viewModel::clearHome, viewModel::clearWork, viewModel::removeFavorite)
                 SettingsSection.ABOUT -> AboutSection()
             }

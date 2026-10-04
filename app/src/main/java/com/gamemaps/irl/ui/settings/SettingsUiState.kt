@@ -8,4 +8,6 @@ data class SettingsUiState(
     val settings: AppSettings = AppSettings(),
     val savedPlaces: SavedPlaces = SavedPlaces(),
     val isMuted: Boolean = false,
+    /** Clé TomTom enregistrée, masquée pour l'affichage ; null s'il n'y en a pas. */
+    val maskedTomTomKey: String? = null,
 )

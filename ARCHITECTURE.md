@@ -93,11 +93,12 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `routing/Route.kt` / `RouteStep.kt` | Itinéraire et ses étapes. |
 | `routing/ManeuverType.kt` | Types de manœuvres (indépendants du moteur). |
 | `routing/RoutingService.kt` | Interface de calcul d'itinéraire. |
-| `routing/TrafficAwareRoutingService.kt` | TomTom si une clé est installée et le trafic activé, sinon OSRM ; repli sur OSRM si TomTom échoue. |
+| `routing/TrafficAwareRoutingService.kt` | TomTom si une clé est enregistrée et le trafic activé, sinon OSRM ; repli sur OSRM si TomTom échoue. |
 | `routing/osrm/OsrmClient.kt` | Appel au serveur OSRM. |
 | `routing/osrm/OsrmResponseParser.kt` | JSON OSRM → `Route`. |
 | `routing/osrm/OsrmManeuverMapper.kt` | Manœuvres OSRM → `ManeuverType`. |
-| `routing/tomtom/TomTomApiKey.kt` | Clé d'API lue dans `local.properties` à la compilation (jamais dans le code). |
+| `routing/tomtom/TomTomKeyStore.kt` | Clé d'API collée dans les Paramètres, gardée sur le téléphone (ni dans le code, ni dans l'APK, ni dans les sauvegardes). |
+| `routing/tomtom/TomTomKeyFormat.kt` | Nettoie, contrôle et masque la clé saisie. |
 | `routing/tomtom/TomTomClient.kt` | Appel à TomTom : trajet le plus rapide compte tenu des bouchons. |
 | `routing/tomtom/TomTomResponseParser.kt` | JSON TomTom → `Route` (tracé, durée, retard). |
 | `routing/tomtom/TomTomStepBuilder.kt` | Instructions TomTom → étapes placées le long du tracé. |
@@ -262,6 +263,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `SettingsUiState.kt` | Ce qu'affiche le menu. |
 | `sections/*.kt` | Un fichier par écran du menu. |
 | `components/SettingsHeader.kt` | « ← Retour » + titre. |
+| `components/TomTomKeyField.kt` | Champ masqué + COLLER / ENREGISTRER pour la clé TomTom. |
 | `components/SettingsRows.kt` | Lignes : sous-menu ›, interrupteur, choix ✓, info avec action. |
 
 ### `car/` — Android Auto
@@ -326,14 +328,11 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 ## Activer le trafic TomTom
 
 1. Créer une clé gratuite sur <https://developer.tomtom.com> (produit *Routing API*).
-2. Ajouter dans `local.properties`, à la racine du projet (fichier ignoré par git) :
-   ```properties
-   tomtom.apiKey=VOTRE_CLE
-   ```
-3. Recompiler. *Paramètres > Trafic* affiche alors « Clé TomTom installée ».
+2. Copier la clé, puis dans l'app : *Paramètres > Trafic* → COLLER → ENREGISTRER.
 
-Sans clé, tout fonctionne avec OSRM, simplement sans bouchons. La clé est copiée dans l'APK :
-ne pas diffuser un APK compilé avec sa clé personnelle.
+La clé reste dans le stockage privé de l'app sur le téléphone (`res/xml/backup_rules.xml` l'exclut des
+sauvegardes). Elle n'est ni dans le code ni dans l'APK : l'APK peut être partagé sans risque.
+Sans clé, tout fonctionne avec OSRM, simplement sans bouchons.
 
 ## Prochaines étapes
 

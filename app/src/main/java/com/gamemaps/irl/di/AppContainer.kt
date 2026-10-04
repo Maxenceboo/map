@@ -15,7 +15,7 @@ import com.gamemaps.irl.data.radar.official.OfficialRadarDatabase
 import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.routing.TrafficAwareRoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
-import com.gamemaps.irl.data.routing.tomtom.TomTomApiKey
+import com.gamemaps.irl.data.routing.tomtom.TomTomKeyStore
 import com.gamemaps.irl.data.routing.tomtom.TomTomClient
 import com.gamemaps.irl.data.places.SavedPlacesRepository
 import com.gamemaps.irl.data.search.HybridPlaceSearch
@@ -60,9 +60,11 @@ class AppContainer(context: Context) {
     val audioPreferences = AudioPreferences(context)
     val settingsRepository = SettingsRepository(context)
 
-    /** TomTom (avec trafic) si une clé est installée et le réglage actif, sinon OSRM. */
+    val tomTomKeyStore = TomTomKeyStore(context)
+
+    /** TomTom (avec trafic) si une clé est enregistrée et le réglage actif, sinon OSRM. */
     val routingService: RoutingService = TrafficAwareRoutingService(
-        withTraffic = TomTomApiKey.value?.let { key -> TomTomClient(httpClient, key) },
+        withTraffic = { tomTomKeyStore.key.value?.let { key -> TomTomClient(httpClient, key) } },
         fallback = OsrmClient(httpClient),
         trafficEnabled = { settingsRepository.settings.value.traffic },
     )

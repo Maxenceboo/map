@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ : la clé TomTom ne part ni dans la sauvegarde Google ni lors d'un transfert d'appareil. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="tomtom_key.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="tomtom_key.xml" />
+    </device-transfer>
+</data-extraction-rules>

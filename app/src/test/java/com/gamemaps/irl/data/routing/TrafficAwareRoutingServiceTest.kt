@@ -19,21 +19,21 @@ class TrafficAwareRoutingServiceTest {
 
     @Test
     fun `trafic activé - itinéraire avec trafic`() = runTest {
-        assertSame(trafficRoute, TrafficAwareRoutingService(withTraffic, fallback) { true }.route(from, to))
+        assertSame(trafficRoute, TrafficAwareRoutingService({ withTraffic }, fallback) { true }.route(from, to))
     }
 
     @Test
     fun `trafic désactivé dans les paramètres - moteur de secours`() = runTest {
-        assertSame(plainRoute, TrafficAwareRoutingService(withTraffic, fallback) { false }.route(from, to))
+        assertSame(plainRoute, TrafficAwareRoutingService({ withTraffic }, fallback) { false }.route(from, to))
     }
 
     @Test
     fun `pas de clé - moteur de secours`() = runTest {
-        assertSame(plainRoute, TrafficAwareRoutingService(null, fallback) { true }.route(from, to))
+        assertSame(plainRoute, TrafficAwareRoutingService({ null }, fallback) { true }.route(from, to))
     }
 
     @Test
     fun `le moteur avec trafic échoue - on retombe sur le moteur de secours`() = runTest {
-        assertSame(plainRoute, TrafficAwareRoutingService(failing, fallback) { true }.route(from, to))
+        assertSame(plainRoute, TrafficAwareRoutingService({ failing }, fallback) { true }.route(from, to))
     }
 }
