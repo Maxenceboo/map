@@ -221,29 +221,32 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `screen/KeepScreenOnEffect.kt` | Écran toujours allumé tant que l'app est affichée. |
 | `map/MapViewHost.kt` | MapView dans Compose. |
 | `map/MapViewLifecycleObserver.kt` | Cycle de vie de la MapView. |
-| `hud/HudModel.kt` | Textes prêts à afficher pour le guidage. |
-| `hud/ManeuverBanner.kt` | Flèche + distance + instruction (haut). |
-| `hud/SpeedPanel.kt` | Vitesse (bas gauche), rouge clignotant en excès. |
+| `hud/HudModel.kt` | Contenu du guidage prêt à afficher (manœuvre, distances, heures). |
+| `hud/ManeuverBanner.kt` | Haut : flèche sur fond jaune, distance, instruction. |
+| `hud/ManeuverIcon.kt` | Dessin vectoriel de la manœuvre (flèche, demi-tour, rond-point avec n° de sortie). |
+| `hud/ManeuverArrowShape.kt` | Tracé de chaque flèche sur une grille 24 × 24. |
+| `hud/SpeedGauge.kt` | Compteur rond (bas gauche), rouge en excès, panneau de limitation accroché. |
 | `hud/SpeedLimitSign.kt` | Panneau rond blanc / rouge de limitation. |
-| `hud/RadarAlertBanner.kt` | Bandeau « RADAR FEU ROUGE · 450 m » ; tout rouge clignotant sous 300 m. |
-| `hud/ArrivalPanel.kt` | Heure d'arrivée, restant, "Arrêter" (bas droite). |
+| `hud/RadarAlertBanner.kt` | Alerte « 450 m · Radar feu rouge » ; toute la carte clignote en rouge sous 300 m. |
+| `hud/TripBar.kt` | Barre du bas en guidage : arrêter, heure d'arrivée, temps et distance restants, son. |
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
-| `hud/StatusBanner.kt` | Messages (calcul, erreur). |
+| `hud/StatusBanner.kt` | Message du haut : attente (indicateur qui tourne) ou erreur (croix pour fermer). |
 | `hud/MissionPassedOverlay.kt` | Écran « MISSION ACCOMPLIE » doré, bilan du trajet. |
-| `hud/MuteButton.kt` | Bouton 🔊 / 🔇. |
-| `hud/MenuButton.kt` | Bouton ☰ (ouvre les Paramètres). |
+| `hud/MuteButton.kt` | Bouton rond du son (hors guidage). |
 | `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
 | `hud/PreviewModel.kt` | Textes de l'aperçu. |
 | `hud/PlaceSaveActions.kt` | Boutons Maison / Travail / Favori de l'aperçu. |
-| `hud/RecenterButton.kt` | « ◎ RECENTRER » quand la carte a été déplacée. |
-| `search/SearchBar.kt` | Champ "Où aller ?". |
-| `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3) : icône, adresse, distance. |
-| `search/PlaceIcons.kt` | Pictogramme par catégorie (🚉 ⛽ 🛒 🏨…). |
+| `hud/RecenterButton.kt` | Bouton rond jaune « viseur » quand la carte a été déplacée. |
+| `search/SearchBar.kt` | Barre "Où aller ?" avec le bouton du menu (Paramètres) intégré. |
+| `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3) : repère, adresse, distance. |
 | `search/SavedPlacesShortcuts.kt` | Raccourcis Maison / Travail / favoris sous la barre de recherche. |
 | `search/SearchUiState.kt` | État de la recherche. |
-| `components/CockpitPanel.kt` | Conteneur flat sombre à bordure fine (§2.1). |
+| `components/CockpitPanel.kt` | Carte du HUD + formes partagées (`HudShapes`). |
+| `components/HudSurface.kt` | Apparence commune : fond opaque et ombre, sans bordure. |
+| `components/HudIconButton.kt` | Bouton rond avec icône. |
+| `icons/HudIcons.kt` | Icônes vectorielles maison (son, viseur, mallette). |
 | `permissions/LocationPermissionEffect.kt` | Demande ce qui manque : localisation, notifications (Android 13+). |
-| `theme/CockpitColors.kt`, `CockpitTypography.kt`, `GameMapsTheme.kt` | Design system cockpit. |
+| `theme/CockpitColors.kt`, `CockpitTypography.kt`, `GameMapsTheme.kt` | Design system : surfaces bleu nuit, accent jaune, police système. |
 
 ### `service/` — Guidage en arrière-plan
 | Fichier | Rôle |

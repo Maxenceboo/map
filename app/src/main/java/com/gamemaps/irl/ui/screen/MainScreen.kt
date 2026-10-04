@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,10 +25,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.map.MapController
 import com.gamemaps.irl.navigation.NavigationState
-import com.gamemaps.irl.ui.hud.ArrivalPanel
 import com.gamemaps.irl.ui.hud.GpsStatusDot
 import com.gamemaps.irl.ui.hud.ManeuverBanner
-import com.gamemaps.irl.ui.hud.MenuButton
 import com.gamemaps.irl.ui.hud.MissionPassedOverlay
 import com.gamemaps.irl.navigation.trip.toMissionPassedModel
 import com.gamemaps.irl.ui.hud.MuteButton
@@ -39,7 +36,8 @@ import com.gamemaps.irl.ui.hud.PreviewPanel
 import com.gamemaps.irl.ui.hud.RecenterButton
 import com.gamemaps.irl.ui.hud.toPreviewModel
 import com.gamemaps.irl.ui.hud.RadarAlertBanner
-import com.gamemaps.irl.ui.hud.SpeedPanel
+import com.gamemaps.irl.ui.hud.SpeedGauge
+import com.gamemaps.irl.ui.hud.TripBar
 import com.gamemaps.irl.ui.hud.StatusBanner
 import com.gamemaps.irl.ui.hud.toHudModel
 import com.gamemaps.irl.ui.map.MapViewHost
@@ -49,7 +47,6 @@ import com.gamemaps.irl.ui.settings.SettingsScreen
 import com.gamemaps.irl.ui.settings.SettingsViewModel
 import com.gamemaps.irl.ui.search.SearchBar
 import com.gamemaps.irl.ui.search.SearchResultsList
-import com.gamemaps.irl.ui.theme.CockpitColors
 
 /**
  * Écran principal du téléphone : carte plein écran + HUD superposé (cahier des charges §2.2).
@@ -107,19 +104,16 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (val navigation = state.navigation) {
             is NavigationState.Idle -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    MenuButton(onClick = onOpenSettings)
-                    Spacer(Modifier.width(8.dp))
-                    SearchBar(
-                        query = query,
-                        onQueryChange = {
-                            query = it
-                            viewModel.onQueryChange(it)
-                        },
-                        modifier = Modifier.weight(1f),
-                        trailing = { GpsStatusDot(state.driving.gpsQuality) },
-                    )
-                }
+                SearchBar(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                        viewModel.onQueryChange(it)
+                    },
+                    onMenuClick = onOpenSettings,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailing = { GpsStatusDot(state.driving.gpsQuality) },
+                )
                 if (query.isBlank()) {
                     SavedPlacesShortcuts(saved = state.savedPlaces, onSelect = viewModel::onPlaceSelected)
                 }
@@ -141,7 +135,7 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings
                 ManeuverBanner(navigation.toHudModel())
             is NavigationState.Arrived -> Unit // Écran plein "Mission accomplie" (voir MainScreen).
             is NavigationState.Failed ->
-                StatusBanner("Échec : ${navigation.message}", color = CockpitColors.Danger, onDismiss = viewModel::onStopNavigation)
+                StatusBanner(navigation.message, onDismiss = viewModel::onStopNavigation)
         }
         state.driving.radarAlert?.let { RadarAlertBanner(it) }
     }
@@ -171,19 +165,19 @@ private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: Bottom
         )
         return
     }
-    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        if (!isFollowing) {
-            RecenterButton(onClick = actions.onRecenter)
-            Spacer(Modifier.height(12.dp))
-        }
+    // Compteur à gauche, boutons ronds à droite ; pendant le guidage, la barre de trajet en dessous.
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            SpeedPanel(speedKmh = state.driving.fix?.speedKmh ?: 0, limitKmh = state.driving.speedLimitKmh)
+            SpeedGauge(speedKmh = state.driving.fix?.speedKmh ?: 0, limitKmh = state.driving.speedLimitKmh)
             Box(Modifier.weight(1f))
-            MuteButton(isMuted = state.isMuted, onToggle = actions.onToggleMute)
-            if (navigation is NavigationState.Navigating) {
-                Spacer(Modifier.width(8.dp))
-                ArrivalPanel(hud = navigation.toHudModel(), onStop = actions.onStop)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (!isFollowing) RecenterButton(onClick = actions.onRecenter)
+                // Pendant le guidage, le bouton du son est dans la barre de trajet.
+                if (navigation !is NavigationState.Navigating) MuteButton(isMuted = state.isMuted, onToggle = actions.onToggleMute)
             }
+        }
+        if (navigation is NavigationState.Navigating) {
+            TripBar(hud = navigation.toHudModel(), isMuted = state.isMuted, onStop = actions.onStop, onToggleMute = actions.onToggleMute)
         }
     }
 }

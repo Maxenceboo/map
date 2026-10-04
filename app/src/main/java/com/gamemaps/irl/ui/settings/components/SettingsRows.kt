@@ -62,7 +62,7 @@ fun SettingsToggleRow(icon: String, title: String, description: String?, checked
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.Black,
-                checkedTrackColor = CockpitColors.Route,
+                checkedTrackColor = CockpitColors.Accent,
                 uncheckedThumbColor = CockpitColors.TextMuted,
                 uncheckedTrackColor = CockpitColors.Panel,
                 uncheckedBorderColor = CockpitColors.Border,
@@ -76,10 +76,10 @@ fun SettingsToggleRow(icon: String, title: String, description: String?, checked
 fun SettingsOptionRow(title: String, description: String?, selected: Boolean, onClick: () -> Unit) {
     RowContainer(onClick) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = CockpitTypography.Street, color = if (selected) CockpitColors.Route else CockpitColors.Text)
+            Text(title, style = CockpitTypography.Street, color = if (selected) CockpitColors.Accent else CockpitColors.Text)
             description?.let { Text(it, style = CockpitTypography.Caption, color = CockpitColors.TextMuted) }
         }
-        if (selected) Text("✓", style = CockpitTypography.Street, color = CockpitColors.Route)
+        if (selected) Text("✓", style = CockpitTypography.Street, color = CockpitColors.Accent)
     }
 }
 

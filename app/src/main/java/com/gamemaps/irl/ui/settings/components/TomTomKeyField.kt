@@ -55,11 +55,11 @@ fun TomTomKeyField(onSave: (String) -> Boolean) {
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = CockpitColors.Text,
                 unfocusedTextColor = CockpitColors.Text,
-                focusedBorderColor = CockpitColors.Route,
+                focusedBorderColor = CockpitColors.Accent,
                 unfocusedBorderColor = CockpitColors.Border,
-                focusedLabelColor = CockpitColors.Route,
+                focusedLabelColor = CockpitColors.Accent,
                 unfocusedLabelColor = CockpitColors.TextMuted,
-                cursorColor = CockpitColors.Route,
+                cursorColor = CockpitColors.Accent,
             ),
         )
         if (rejected) {
@@ -69,7 +69,7 @@ fun TomTomKeyField(onSave: (String) -> Boolean) {
             KeyButton("COLLER", CockpitColors.Panel, CockpitColors.Text, Modifier.weight(1f)) {
                 clipboard.getText()?.text?.let { text = it.trim(); rejected = false }
             }
-            KeyButton("ENREGISTRER", CockpitColors.Route, Color.Black, Modifier.weight(1f)) {
+            KeyButton("ENREGISTRER", CockpitColors.Accent, Color.Black, Modifier.weight(1f)) {
                 if (onSave(text)) text = "" else rejected = true
             }
         }

@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 fun GameMapsTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = CockpitColors.Route,
+            primary = CockpitColors.Accent,
             background = CockpitColors.Black,
             surface = CockpitColors.Panel,
             onSurface = CockpitColors.Text,

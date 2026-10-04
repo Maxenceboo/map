@@ -1,7 +1,6 @@
 package com.gamemaps.irl.ui.hud
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,20 +10,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gamemaps.irl.ui.components.CockpitPanel
+import com.gamemaps.irl.ui.components.HudShapes
 import com.gamemaps.irl.ui.theme.CockpitColors
 import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
- * Aperçu avant le départ : destination, distance, durée, heure d'arrivée,
- * enregistrement (Maison / Travail / Favori), bouton DÉMARRER pleine largeur (règle §2.3) et ANNULER.
+ * Aperçu avant le départ : destination, durée en grand, distance et heure d'arrivée,
+ * enregistrement (Maison / Travail / Favori), puis Annuler et Démarrer (règle §2.3 : bouton principal large).
  */
 @Composable
 fun PreviewPanel(
@@ -35,50 +37,48 @@ fun PreviewPanel(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    CockpitPanel(modifier.fillMaxWidth()) {
+    CockpitPanel(modifier.fillMaxWidth(), padding = 18.dp) {
         Column {
-            Text(preview.destinationName, style = CockpitTypography.Street, color = CockpitColors.Text)
+            Text(preview.destinationName, style = CockpitTypography.Street, color = CockpitColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (preview.destinationSubtitle.isNotBlank()) {
-                Text(preview.destinationSubtitle, style = CockpitTypography.Caption, color = CockpitColors.TextMuted)
+                Text(preview.destinationSubtitle, style = CockpitTypography.Caption, color = CockpitColors.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Metric(preview.duration, "DURÉE")
-                Metric(preview.distance, "DISTANCE")
-                Metric(preview.arrivalTime, "ARRIVÉE")
+            Spacer(Modifier.height(14.dp))
+
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(preview.duration, style = CockpitTypography.Distance, color = CockpitColors.Accent)
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    "${preview.distance} · arrivée ${preview.arrivalTime}",
+                    style = CockpitTypography.Metric,
+                    color = CockpitColors.TextMuted,
+                    modifier = Modifier.padding(bottom = 5.dp),
+                )
             }
             preview.trafficDelay?.let { delay ->
-                Spacer(Modifier.height(8.dp))
                 Text(delay, style = CockpitTypography.Caption, color = CockpitColors.Warning)
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
+
             PlaceSaveActions(saveState, saveCallbacks)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
+
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("ANNULER", CockpitColors.Panel, CockpitColors.TextMuted, onCancel, Modifier.weight(1f))
-                ActionButton("DÉMARRER", CockpitColors.Route, Color.Black, onStart, Modifier.weight(2f))
+                ActionButton("Annuler", CockpitColors.PanelRaised, CockpitColors.Text, onCancel, Modifier.weight(1f))
+                ActionButton("Démarrer", CockpitColors.Accent, CockpitColors.OnAccent, onStart, Modifier.weight(2f))
             }
         }
     }
 }
 
 @Composable
-private fun Metric(value: String, label: String) {
-    Column {
-        Text(value, style = CockpitTypography.Metric, color = CockpitColors.Text)
-        Text(label, style = CockpitTypography.Caption, color = CockpitColors.TextMuted)
-    }
-}
-
-@Composable
 private fun ActionButton(text: String, background: Color, textColor: Color, onClick: () -> Unit, modifier: Modifier) {
-    val shape = RoundedCornerShape(8.dp)
     Box(
         modifier = modifier
-            .background(background, shape)
-            .border(1.dp, CockpitColors.Border, shape)
+            .clip(HudShapes.Button)
+            .background(background)
             .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
+            .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = CockpitTypography.Metric, color = textColor)

@@ -19,7 +19,7 @@ fun SettingsHeader(title: String, backLabel: String, onBack: () -> Unit) {
         Text(
             text = "← $backLabel",
             style = CockpitTypography.Metric,
-            color = CockpitColors.Route,
+            color = CockpitColors.Accent,
             modifier = Modifier.clickable(onClick = onBack).padding(horizontal = 16.dp, vertical = 14.dp),
         )
         Text(

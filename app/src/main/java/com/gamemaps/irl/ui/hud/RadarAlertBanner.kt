@@ -6,14 +6,17 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,44 +28,49 @@ import com.gamemaps.irl.core.format.DistanceFormatter
 import com.gamemaps.irl.navigation.radar.RadarAlert
 import com.gamemaps.irl.navigation.radar.RadarAlertLevel
 import com.gamemaps.irl.navigation.radar.RadarTypeText
+import com.gamemaps.irl.ui.components.CockpitPanel
 import com.gamemaps.irl.ui.theme.CockpitColors
 import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
- * Bandeau d'alerte radar (cahier des charges §6.2) : type, distance, vitesse contrôlée.
- * - Avertissement : bordure rouge qui clignote.
- * - Urgent (< 300 m) : tout le bandeau clignote en rouge.
+ * Alerte radar (cahier des charges §6.2) : type, route, distance, vitesse contrôlée.
+ * - Avertissement : carte sombre, pastille rouge.
+ * - Urgent (< 300 m) : toute la carte clignote en rouge.
  */
 @Composable
 fun RadarAlertBanner(alert: RadarAlert, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(8.dp)
     val urgent = alert.level == RadarAlertLevel.URGENT
     val transition = rememberInfiniteTransition(label = "radar")
     val pulse by transition.animateColor(
         initialValue = CockpitColors.Danger,
         targetValue = CockpitColors.Panel,
-        animationSpec = infiniteRepeatable(tween(durationMillis = if (urgent) 300 else 500), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(durationMillis = 350), RepeatMode.Reverse),
         label = "radar-pulse",
     )
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(if (urgent) pulse else CockpitColors.Panel, shape)
-            .border(2.dp, if (urgent) CockpitColors.Danger else pulse, shape)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = listOfNotNull(RadarTypeText.banner(alert.radar.type), alert.radar.road).joinToString(" · "),
-                style = CockpitTypography.Caption,
-                color = if (urgent) Color.White else CockpitColors.Danger,
-            )
-            Text(DistanceFormatter.format(alert.distanceMeters), style = CockpitTypography.Distance, color = CockpitColors.Text)
-        }
-        alert.radar.maxSpeedKmh?.let {
-            Spacer(Modifier.width(12.dp))
-            SpeedLimitSign(it)
+
+    CockpitPanel(modifier.fillMaxWidth(), color = if (urgent) pulse else CockpitColors.Panel, padding = 12.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(48.dp).background(if (urgent) Color.White else CockpitColors.Danger, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Filled.Warning, contentDescription = null, tint = if (urgent) CockpitColors.Danger else Color.White, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(DistanceFormatter.format(alert.distanceMeters), style = CockpitTypography.Distance, color = CockpitColors.Text)
+                Text(title(alert), style = CockpitTypography.Metric, color = if (urgent) Color.White else CockpitColors.TextMuted)
+            }
+            alert.radar.maxSpeedKmh?.let {
+                Spacer(Modifier.width(12.dp))
+                SpeedLimitSign(it)
+            }
         }
     }
+}
+
+/** "Radar feu rouge · A10" : le type en minuscules (première lettre exceptée), puis la route. */
+private fun title(alert: RadarAlert): String {
+    val type = RadarTypeText.banner(alert.radar.type).lowercase().replaceFirstChar { it.uppercase() }
+    return listOfNotNull(type, alert.radar.road).joinToString(" · ")
 }
