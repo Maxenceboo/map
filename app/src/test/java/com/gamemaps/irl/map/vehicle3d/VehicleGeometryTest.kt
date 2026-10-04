@@ -42,11 +42,25 @@ class VehicleGeometryTest {
     }
 
     @Test
-    fun `deux faisceaux devant une voiture, un seul pour une moto`() {
-        val carBeams = VehicleGeometry.headlightBeams(SportCar.model, center, 0.0, 1.0)
-        assertEquals(2, carBeams.size)
-        assertTrue(carBeams.all { beam -> beam.all { it.lat > center.lat } }) // tout est devant (au nord)
-        assertEquals(1, VehicleGeometry.headlightBeams(VehicleKind.MOTO.model, center, 0.0, 1.0).size)
+    fun `deux phares pour une voiture, un seul pour une moto`() {
+        // Trois lueurs emboîtées par optique.
+        assertEquals(6, HeadlightBeams.glow(SportCar.model).size)
+        assertEquals(3, HeadlightBeams.glow(VehicleKind.MOTO.model).size)
+    }
+
+    @Test
+    fun `la lumière est devant le véhicule et son bout est arrondi`() {
+        val shapes = HeadlightBeams.glow(SportCar.model) + HeadlightBeams.volume(SportCar.model)
+        val placed = VehicleGeometry.placeBeams(shapes, center, bearingDegrees = 0.0, scale = 1.0)
+        assertTrue(placed.all { beam -> beam.ring.all { it.lat > center.lat } }) // tout est au nord, donc devant
+        assertTrue(HeadlightBeams.glow(SportCar.model).all { it.footprint.size > 10 }) // un arc, pas un trapèze
+    }
+
+    @Test
+    fun `le volume du faisceau s'aplatit en s'éloignant du phare`() {
+        val tops = HeadlightBeams.volume(VehicleKind.MOTO.model).map { it.topMeters }
+        assertEquals(tops.sortedDescending(), tops)
+        assertTrue(tops.all { it > 0.0 })
     }
 
     @Test

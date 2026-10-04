@@ -22,21 +22,16 @@ object VehicleGeometry {
             )
         }
 
-    /**
-     * Faisceaux des phares projetés au sol (cahier des charges §3.4, "nappe d'impact lumineuse") :
-     * un trapèze par optique, étroit au départ et large [BEAM_LENGTH_METERS] plus loin.
-     */
-    fun headlightBeams(model: VehicleModel, center: LatLng, bearingDegrees: Double, scale: Double): List<List<LatLng>> {
-        val origins = if (model.headlightX == 0.0) listOf(0.0) else listOf(-model.headlightX, model.headlightX)
-        return origins.map { x ->
-            listOf(
-                GroundPoint(x - BEAM_NEAR_HALF_WIDTH, model.frontZ),
-                GroundPoint(x + BEAM_NEAR_HALF_WIDTH, model.frontZ),
-                GroundPoint(x + BEAM_FAR_HALF_WIDTH, model.frontZ + BEAM_LENGTH_METERS),
-                GroundPoint(x - BEAM_FAR_HALF_WIDTH, model.frontZ + BEAM_LENGTH_METERS),
-            ).map { toLatLng(it, center, bearingDegrees, scale) }
+    /** Lumière des phares (voir [HeadlightBeams]), placée devant le véhicule comme ses pièces. */
+    fun placeBeams(shapes: List<BeamShape>, center: LatLng, bearingDegrees: Double, scale: Double): List<PlacedBeam> =
+        shapes.map { shape ->
+            PlacedBeam(
+                ring = shape.footprint.map { toLatLng(it, center, bearingDegrees, scale) },
+                baseMeters = shape.baseMeters * scale,
+                topMeters = shape.topMeters * scale,
+                opacity = shape.opacity,
+            )
         }
-    }
 
     /**
      * Le cap est mesuré dans le sens horaire depuis le nord :
@@ -52,8 +47,4 @@ object VehicleGeometry {
         val longitude = center.lng + Math.toDegrees(east / (GeoMath.EARTH_RADIUS_METERS * cos(Math.toRadians(center.lat))))
         return LatLng(latitude, longitude)
     }
-
-    private const val BEAM_LENGTH_METERS = 11.0
-    private const val BEAM_NEAR_HALF_WIDTH = 0.25
-    private const val BEAM_FAR_HALF_WIDTH = 1.9
 }

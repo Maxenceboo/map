@@ -182,8 +182,10 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `VehicleColor.kt` | Couleurs de carrosserie. |
 | `VehiclePalette.kt` | Couleur de chaque rôle (la carrosserie prend la couleur choisie). |
 | `VehicleScale.kt` | Agrandit le modèle selon le zoom pour garder la même taille à l'écran. |
-| `VehicleGeometry.kt` | Pose le modèle sur la carte : rotation selon le cap, mètres → latitude / longitude, faisceaux des phares. |
+| `VehicleGeometry.kt` | Pose le modèle sur la carte : rotation selon le cap, mètres → latitude / longitude. |
 | `PlacedPart.kt` | Une pièce une fois posée sur la carte. |
+| `HeadlightBeams.kt` | Lumière des phares : lueur arrondie au sol + volume translucide. |
+| `PlacedBeam.kt` | Un morceau de lumière une fois posé sur la carte. |
 | `Vehicle3DLayer.kt` | Calques MapLibre : volumes du véhicule + faisceaux au sol, mis à jour à chaque position et à chaque zoom. |
 
 ### `audio/` — Sons et guidage vocal
