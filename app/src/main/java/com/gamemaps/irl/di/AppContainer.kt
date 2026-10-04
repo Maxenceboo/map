@@ -8,6 +8,8 @@ import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
 import com.gamemaps.irl.data.search.BanGeocoder
 import com.gamemaps.irl.data.search.PlaceSearch
+import com.gamemaps.irl.data.speedlimit.OverpassClient
+import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.navigation.NavigationEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,4 +35,8 @@ class AppContainer(context: Context) {
     val locationRepository = LocationRepository(AndroidLocationSource(context.applicationContext), appScope)
 
     val navigationEngine = NavigationEngine(appScope, locationRepository, routingService)
+
+    /** Démarrée tout de suite : elle attend simplement les premières positions GPS. */
+    val speedLimitRepository = SpeedLimitRepository(appScope, locationRepository, OverpassClient(httpClient))
+        .apply { start() }
 }

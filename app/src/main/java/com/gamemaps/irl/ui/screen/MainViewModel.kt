@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.data.search.PlaceSearch
+import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.di.AppContainer
 import com.gamemaps.irl.navigation.NavigationEngine
 import com.gamemaps.irl.ui.search.SearchUiState
@@ -32,6 +33,7 @@ class MainViewModel(
     private val placeSearch: PlaceSearch,
     private val navigationEngine: NavigationEngine,
     private val locationRepository: LocationRepository,
+    private val speedLimitRepository: SpeedLimitRepository,
 ) : ViewModel() {
 
     private val search = MutableStateFlow(SearchUiState())
@@ -41,8 +43,9 @@ class MainViewModel(
         search,
         navigationEngine.state,
         locationRepository.fixes,
-    ) { searchState, navigation, fix ->
-        MainUiState(search = searchState, navigation = navigation, fix = fix)
+        speedLimitRepository.limitKmh,
+    ) { searchState, navigation, fix, speedLimit ->
+        MainUiState(search = searchState, navigation = navigation, fix = fix, speedLimitKmh = speedLimit)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())
 
     init {
@@ -91,7 +94,12 @@ class MainViewModel(
 
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                MainViewModel(container.placeSearch, container.navigationEngine, container.locationRepository)
+                MainViewModel(
+                    placeSearch = container.placeSearch,
+                    navigationEngine = container.navigationEngine,
+                    locationRepository = container.locationRepository,
+                    speedLimitRepository = container.speedLimitRepository,
+                )
             }
         }
     }

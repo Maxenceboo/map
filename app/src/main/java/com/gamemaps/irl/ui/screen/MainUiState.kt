@@ -10,6 +10,7 @@ data class MainUiState(
     val search: SearchUiState = SearchUiState(),
     val navigation: NavigationState = NavigationState.Idle,
     val fix: GpsFix? = null,
+    val speedLimitKmh: Int? = null,
 ) {
     val gpsQuality: GpsQuality get() = GpsQuality.from(fix)
 }

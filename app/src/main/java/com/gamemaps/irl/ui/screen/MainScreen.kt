@@ -94,7 +94,7 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, modifier: Modi
 @Composable
 private fun BottomArea(state: MainUiState, onStop: () -> Unit, modifier: Modifier) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        SpeedPanel(speedKmh = state.fix?.speedKmh ?: 0)
+        SpeedPanel(speedKmh = state.fix?.speedKmh ?: 0, limitKmh = state.speedLimitKmh)
         Box(Modifier.weight(1f))
         val navigation = state.navigation
         if (navigation is NavigationState.Navigating) {
