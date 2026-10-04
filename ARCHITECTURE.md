@@ -147,14 +147,33 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `layers/RouteLayer.kt` | Tracé violet + liseré. |
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
-| `layers/VehicleMarkerLayer.kt` | Marqueur du véhicule orienté selon le cap. |
+| `layers/VehicleMarkerLayer.kt` | Marqueur 2D du véhicule orienté selon le cap (masqué quand un modèle 3D est affiché). |
 | `layers/VehicleIconFactory.kt` | Flèche GTA ou sprite pixel-art (cochon Minecraft) selon le thème. |
-| `layers/VehicleArrowBitmap.kt` | Dessin de la flèche GTA (provisoire avant la 3D). |
+| `layers/VehicleArrowBitmap.kt` | Dessin de la flèche GTA (modèle « Flèche »). |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
 | `layers/RadarLayer.kt` | Icônes des radars sur la carte (une par type). |
 | `layers/RadarIconBitmap.kt` | Dessin des icônes : appareil photo, feu tricolore. |
 | `camera/FollowCamera.kt` | Suivi incliné, pause au doigt (`isFollowing`), recentrage, vue d'ensemble d'un trajet. |
 | `camera/CameraConfig.kt` | Réglages téléphone / voiture, variante 2D vue de dessus. |
+
+### `map/vehicle3d/` — Véhicule 3D
+Le véhicule est un assemblage de volumes (`fill-extrusion` MapLibre), comme les bâtiments :
+pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android Auto.
+
+| Fichier | Rôle |
+| :--- | :--- |
+| `VehiclePart.kt` | Une pièce : contour au sol (mètres, +Z vers l'avant, +X à droite), hauteur basse / haute, rôle. |
+| `PartRole.kt` | Rôle d'une pièce (carrosserie, vitre, pneu, feu arrière…) : il décide de sa couleur. |
+| `VehicleShapes.kt` | Formes de base : boîte, carrosserie effilée, symétrie gauche / droite, quatre roues. |
+| `VehicleModel.kt` | Un véhicule = liste de pièces + position des phares. |
+| `models/SportCar.kt`, `MuscleCar.kt`, `Suv.kt`, `FormulaOne.kt`, `Motorbike.kt` | Un fichier par modèle. |
+| `VehicleKind.kt` | Catalogue proposé dans les Paramètres (« Flèche » = pas de 3D). |
+| `VehicleColor.kt` | Couleurs de carrosserie. |
+| `VehiclePalette.kt` | Couleur de chaque rôle (la carrosserie prend la couleur choisie). |
+| `VehicleScale.kt` | Agrandit le modèle selon le zoom pour garder la même taille à l'écran. |
+| `VehicleGeometry.kt` | Pose le modèle sur la carte : rotation selon le cap, mètres → latitude / longitude, faisceaux des phares. |
+| `PlacedPart.kt` | Une pièce une fois posée sur la carte. |
+| `Vehicle3DLayer.kt` | Calques MapLibre : volumes du véhicule + faisceaux au sol, mis à jour à chaque position et à chaque zoom. |
 
 ### `audio/` — Sons et guidage vocal
 | Fichier | Rôle |
@@ -227,7 +246,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | :--- | :--- |
 | `SettingsScreen.kt` | Menu plein écran, navigation entre sections, bouton retour. |
 | `SettingsViewModel.kt` | Lit et modifie réglages, son et lieux enregistrés. |
-| `SettingsSection.kt` | Racine, Thème, Perspective, Audio, Radars, Lieux, À propos. |
+| `SettingsSection.kt` | Racine, Thème, Perspective, Véhicule (> Modèle, Couleur), Audio, Radars, Lieux, À propos. |
 | `SettingsUiState.kt` | Ce qu'affiche le menu. |
 | `sections/*.kt` | Un fichier par écran du menu. |
 | `components/SettingsHeader.kt` | « ← Retour » + titre. |
@@ -293,5 +312,4 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 ## Prochaines étapes (hors de cette première passe)
 
-1. Trafic TomTom : bordures orange / rouge sur le tracé.
-2. Véhicule 3D (Filament) à la place de la flèche 2D.
+1. Trafic TomTom : bordures orange / rouge sur le tracé (clé d'API à fournir, jamais écrite dans le code).

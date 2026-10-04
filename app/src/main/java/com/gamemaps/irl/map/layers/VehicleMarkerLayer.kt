@@ -48,6 +48,11 @@ class VehicleMarkerLayer(private val style: Style, private val icon: Bitmap) {
         )
     }
 
+    /** Masqué quand un véhicule 3D est affiché à la place. */
+    fun setVisible(visible: Boolean) {
+        style.getLayer(LAYER_ID)?.setProperties(PropertyFactory.visibility(if (visible) Property.VISIBLE else Property.NONE))
+    }
+
     fun update(fix: GpsFix) {
         val feature = Feature.fromGeometry(fix.position.toGeoJsonPoint())
         feature.addNumberProperty(BEARING_PROPERTY, fix.bearingDegrees ?: 0f)

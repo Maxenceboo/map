@@ -131,6 +131,7 @@ class NavigationCarScreen(
         val settings = container.settingsRepository.settings.value
         controller.applyTheme(settings.theme)
         controller.applyCameraConfig(CameraConfig.CAR.forPerspective(settings.perspective))
+        controller.applyVehicle(settings.vehicle, settings.vehicleColor, settings.headlights)
         val route = (navigation as? NavigationState.Navigating)?.route ?: (navigation as? NavigationState.Previewing)?.route
         controller.showRoute(route)
         controller.showRadars(container.radarRepository.radars.value)

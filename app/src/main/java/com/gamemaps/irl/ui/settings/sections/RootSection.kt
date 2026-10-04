@@ -15,6 +15,7 @@ fun RootSection(state: SettingsUiState, open: (SettingsSection) -> Unit) {
     SettingsGroupTitle("Carte")
     SettingsNavigationRow("🎨", "Thème", settings.theme.label) { open(SettingsSection.THEME) }
     SettingsNavigationRow("🎥", "Perspective", settings.perspective.label) { open(SettingsSection.PERSPECTIVE) }
+    SettingsNavigationRow("🚗", "Véhicule", settings.vehicle.label) { open(SettingsSection.VEHICLE) }
 
     SettingsGroupTitle("Navigation")
     SettingsNavigationRow("🔊", "Audio", if (state.isMuted) "Son coupé" else "Son actif") { open(SettingsSection.AUDIO) }

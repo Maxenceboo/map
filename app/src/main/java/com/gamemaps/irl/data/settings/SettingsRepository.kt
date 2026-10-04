@@ -18,6 +18,9 @@ class SettingsRepository(context: Context) {
         prefs.edit()
             .putString(KEY_THEME, newValue.theme.name)
             .putString(KEY_PERSPECTIVE, newValue.perspective.name)
+            .putString(KEY_VEHICLE, newValue.vehicle.name)
+            .putString(KEY_VEHICLE_COLOR, newValue.vehicleColor.name)
+            .putBoolean(KEY_HEADLIGHTS, newValue.headlights)
             .putBoolean(KEY_VOICE, newValue.voiceGuidance)
             .putBoolean(KEY_RADAR_BEEPS, newValue.radarBeeps)
             .putBoolean(KEY_SPEEDING_BEEP, newValue.speedingBeep)
@@ -31,6 +34,9 @@ class SettingsRepository(context: Context) {
         return AppSettings(
             theme = enumOrDefault(prefs.getString(KEY_THEME, null), defaults.theme),
             perspective = enumOrDefault(prefs.getString(KEY_PERSPECTIVE, null), defaults.perspective),
+            vehicle = enumOrDefault(prefs.getString(KEY_VEHICLE, null), defaults.vehicle),
+            vehicleColor = enumOrDefault(prefs.getString(KEY_VEHICLE_COLOR, null), defaults.vehicleColor),
+            headlights = prefs.getBoolean(KEY_HEADLIGHTS, defaults.headlights),
             voiceGuidance = prefs.getBoolean(KEY_VOICE, defaults.voiceGuidance),
             radarBeeps = prefs.getBoolean(KEY_RADAR_BEEPS, defaults.radarBeeps),
             speedingBeep = prefs.getBoolean(KEY_SPEEDING_BEEP, defaults.speedingBeep),
@@ -46,6 +52,9 @@ class SettingsRepository(context: Context) {
         const val FILE_NAME = "settings"
         const val KEY_THEME = "theme"
         const val KEY_PERSPECTIVE = "perspective"
+        const val KEY_VEHICLE = "vehicle"
+        const val KEY_VEHICLE_COLOR = "vehicle_color"
+        const val KEY_HEADLIGHTS = "headlights"
         const val KEY_VOICE = "voice_guidance"
         const val KEY_RADAR_BEEPS = "radar_beeps"
         const val KEY_SPEEDING_BEEP = "speeding_beep"

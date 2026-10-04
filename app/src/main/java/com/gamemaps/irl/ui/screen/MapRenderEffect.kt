@@ -26,6 +26,9 @@ fun MapRenderEffect(controller: MapController?, state: MainUiState) {
     LaunchedEffect(controller, state.settings.perspective) {
         controller?.applyCameraConfig(CameraConfig.PHONE.forPerspective(state.settings.perspective))
     }
+    LaunchedEffect(controller, state.settings.vehicle, state.settings.vehicleColor, state.settings.headlights) {
+        controller?.applyVehicle(state.settings.vehicle, state.settings.vehicleColor, state.settings.headlights)
+    }
     LaunchedEffect(controller, fix) {
         if (fix != null) controller?.showVehicle(fix)
     }

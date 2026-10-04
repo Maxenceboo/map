@@ -23,6 +23,9 @@ import com.gamemaps.irl.ui.settings.sections.PlacesSection
 import com.gamemaps.irl.ui.settings.sections.RadarSection
 import com.gamemaps.irl.ui.settings.sections.RootSection
 import com.gamemaps.irl.ui.settings.sections.ThemeSection
+import com.gamemaps.irl.ui.settings.sections.VehicleColorSection
+import com.gamemaps.irl.ui.settings.sections.VehicleModelSection
+import com.gamemaps.irl.ui.settings.sections.VehicleSection
 import com.gamemaps.irl.ui.theme.CockpitColors
 
 /**
@@ -34,7 +37,7 @@ import com.gamemaps.irl.ui.theme.CockpitColors
 fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var section by rememberSaveable { mutableStateOf(SettingsSection.ROOT) }
-    val goBack = { if (section == SettingsSection.ROOT) onClose() else section = SettingsSection.ROOT }
+    val goBack = { section.parent?.let { section = it } ?: onClose() }
 
     BackHandler(onBack = goBack)
 
@@ -47,7 +50,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
     ) {
         SettingsHeader(
             title = section.title,
-            backLabel = if (section == SettingsSection.ROOT) "Carte" else "Paramètres",
+            backLabel = section.parent?.title ?: "Carte",
             onBack = goBack,
         )
         Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -55,6 +58,9 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
                 SettingsSection.ROOT -> RootSection(state) { section = it }
                 SettingsSection.THEME -> ThemeSection(state.settings.theme) { theme -> viewModel.update { it.copy(theme = theme) } }
                 SettingsSection.PERSPECTIVE -> PerspectiveSection(state.settings.perspective) { p -> viewModel.update { it.copy(perspective = p) } }
+                SettingsSection.VEHICLE -> VehicleSection(state.settings, open = { section = it }, onUpdate = viewModel::update)
+                SettingsSection.VEHICLE_MODEL -> VehicleModelSection(state.settings.vehicle) { kind -> viewModel.update { it.copy(vehicle = kind) } }
+                SettingsSection.VEHICLE_COLOR -> VehicleColorSection(state.settings.vehicleColor) { color -> viewModel.update { it.copy(vehicleColor = color) } }
                 SettingsSection.AUDIO -> AudioSection(state.settings, state.isMuted, viewModel::toggleMuted, viewModel::update)
                 SettingsSection.RADARS -> RadarSection(state.settings, viewModel::update)
                 SettingsSection.PLACES -> PlacesSection(state.savedPlaces, viewModel::clearHome, viewModel::clearWork, viewModel::removeFavorite)

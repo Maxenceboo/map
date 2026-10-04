@@ -15,6 +15,9 @@ import com.gamemaps.irl.map.layers.VehicleMarkerLayer
 import com.gamemaps.irl.map.theme.MapTheme
 import com.gamemaps.irl.map.theme.MapThemeApplier
 import com.gamemaps.irl.map.theme.ThemeTextureInstaller
+import com.gamemaps.irl.map.vehicle3d.Vehicle3DLayer
+import com.gamemaps.irl.map.vehicle3d.VehicleColor
+import com.gamemaps.irl.map.vehicle3d.VehicleKind
 import kotlinx.coroutines.flow.StateFlow
 import org.maplibre.android.maps.Style
 
@@ -29,15 +32,20 @@ class MapController internal constructor(
     private val destinationLayer: DestinationLayer,
     private val radarLayer: RadarLayer,
     private val vehicleLayer: VehicleMarkerLayer,
+    private val vehicle3DLayer: Vehicle3DLayer,
     private val camera: FollowCamera,
 ) {
     private var currentTheme: MapTheme? = null
+    private var vehicleKind = VehicleKind.ARROW
+    private var vehicleColor = VehicleColor.YELLOW
+    private var headlights = true
 
     /** false quand l'utilisateur a déplacé la carte : afficher le bouton RECENTRER. */
     val isFollowing: StateFlow<Boolean> get() = camera.isFollowing
 
     fun showVehicle(fix: GpsFix) {
         vehicleLayer.update(fix)
+        vehicle3DLayer.update(fix)
         camera.follow(fix)
     }
 
@@ -69,6 +77,31 @@ class MapController internal constructor(
         routeLayer.applyPalette(theme.palette)
         vehicleLayer.setIcon(VehicleIconFactory.create(context, theme), rotates = theme.textures.vehicleSprite == null)
         destinationLayer.setIcon(DestinationPinBitmap.create(theme.palette))
+        refreshVehicle()
+    }
+
+    /** Véhicule choisi dans Paramètres > Véhicule : modèle 3D (ou flèche), couleur, phares. */
+    fun applyVehicle(kind: VehicleKind, color: VehicleColor, headlights: Boolean) {
+        vehicleKind = kind
+        vehicleColor = color
+        this.headlights = headlights
+        refreshVehicle()
+    }
+
+    /** À appeler pendant les mouvements de caméra : le véhicule 3D garde sa taille à l'écran. */
+    fun onCameraMoved() {
+        vehicle3DLayer.onCameraMoved()
+    }
+
+    /**
+     * Un seul véhicule visible à la fois : le modèle 3D s'il y en a un, sinon l'icône plate.
+     * Un thème à sprite (cochon Minecraft) garde son sprite, quel que soit le modèle choisi.
+     */
+    private fun refreshVehicle() {
+        val themeHasSprite = currentTheme?.textures?.vehicleSprite != null
+        val model = vehicleKind.model.takeUnless { themeHasSprite }
+        vehicle3DLayer.configure(model, vehicleColor, headlights)
+        vehicleLayer.setVisible(model == null)
     }
 
     /** 3D cockpit ou 2D vue de dessus. */
