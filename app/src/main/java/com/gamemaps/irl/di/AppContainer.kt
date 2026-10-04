@@ -4,11 +4,12 @@ import android.content.Context
 import com.gamemaps.irl.data.location.AndroidLocationSource
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.network.HttpClientFactory
+import com.gamemaps.irl.data.osm.OverpassClient
+import com.gamemaps.irl.data.radar.RadarRepository
 import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
 import com.gamemaps.irl.data.search.BanGeocoder
 import com.gamemaps.irl.data.search.PlaceSearch
-import com.gamemaps.irl.data.speedlimit.OverpassClient
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.navigation.NavigationEngine
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,8 @@ class AppContainer(context: Context) {
 
     private val httpClient = HttpClientFactory.create()
 
+    private val overpassClient = OverpassClient(httpClient)
+
     val placeSearch: PlaceSearch = BanGeocoder(httpClient)
 
     val routingService: RoutingService = OsrmClient(httpClient)
@@ -36,7 +39,8 @@ class AppContainer(context: Context) {
 
     val navigationEngine = NavigationEngine(appScope, locationRepository, routingService)
 
-    /** Démarrée tout de suite : elle attend simplement les premières positions GPS. */
-    val speedLimitRepository = SpeedLimitRepository(appScope, locationRepository, OverpassClient(httpClient))
-        .apply { start() }
+    // Démarrés tout de suite : ils attendent simplement les premières positions GPS.
+    val speedLimitRepository = SpeedLimitRepository(appScope, locationRepository, overpassClient).apply { start() }
+
+    val radarRepository = RadarRepository(appScope, locationRepository, overpassClient).apply { start() }
 }

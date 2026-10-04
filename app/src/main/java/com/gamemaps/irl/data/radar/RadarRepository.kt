@@ -1,4 +1,4 @@
-package com.gamemaps.irl.data.speedlimit
+package com.gamemaps.irl.data.radar
 
 import android.util.Log
 import com.gamemaps.irl.core.geo.BoundingBox
@@ -6,6 +6,8 @@ import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.osm.OverpassClient
 import com.gamemaps.irl.data.osm.OverpassQueries
+import com.gamemaps.irl.navigation.radar.RadarAlert
+import com.gamemaps.irl.navigation.radar.RadarAlertDetector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -16,21 +18,24 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 /**
- * Limitation de vitesse de la route actuelle (km/h), null si inconnue.
+ * Radars autour du véhicule et alerte en cours.
  *
- * Charge les routes d'une zone de ~1 km autour du véhicule, puis cherche localement à chaque
- * position GPS. Recharge une nouvelle zone quand on approche du bord de la précédente.
+ * Charge les radars d'une zone de ~10 km de côté (peu de données : quelques dizaines de points),
+ * et en recharge une nouvelle quand on approche du bord.
  */
-class SpeedLimitRepository(
+class RadarRepository(
     private val scope: CoroutineScope,
     private val location: LocationRepository,
     private val overpass: OverpassClient,
+    private val detector: RadarAlertDetector = RadarAlertDetector(),
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    private val _limitKmh = MutableStateFlow<Int?>(null)
-    val limitKmh: StateFlow<Int?> = _limitKmh.asStateFlow()
+    private val _radars = MutableStateFlow<List<Radar>>(emptyList())
+    val radars: StateFlow<List<Radar>> = _radars.asStateFlow()
 
-    private var index: SpeedLimitIndex? = null
+    private val _alert = MutableStateFlow<RadarAlert?>(null)
+    val alert: StateFlow<RadarAlert?> = _alert.asStateFlow()
+
     private var loadedArea: BoundingBox? = null
     private var loadJob: Job? = null
     private var lastFailureMillis: Long? = null
@@ -42,7 +47,7 @@ class SpeedLimitRepository(
     }
 
     private fun onFix(fix: GpsFix) {
-        _limitKmh.value = index?.limitAt(fix.position, fix.bearingDegrees)
+        _alert.value = detector.detect(fix, _radars.value)
         if (needsNewArea(fix)) loadArea(fix)
     }
 
@@ -58,27 +63,25 @@ class SpeedLimitRepository(
         val area = BoundingBox.around(fix.position, AREA_RADIUS_METERS)
         loadJob = scope.launch {
             try {
-                val roads = OverpassResponseParser.parse(overpass.run(OverpassQueries.roadsWithMaxSpeed(area)))
-                Log.i(TAG, "Zone chargée : ${roads.size} routes avec limitation")
-                val newIndex = SpeedLimitIndex(roads)
-                index = newIndex
+                val radars = RadarResponseParser.parse(overpass.run(OverpassQueries.speedCameras(area)))
+                Log.i(TAG, "Zone chargée : ${radars.size} radars")
+                _radars.value = radars
                 loadedArea = area
                 lastFailureMillis = null
-                _limitKmh.value = newIndex.limitAt(fix.position, fix.bearingDegrees)
+                _alert.value = detector.detect(fix, radars)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                // Serveur saturé ou réseau absent : on réessaiera plus tard sans bloquer le reste.
-                Log.w(TAG, "Chargement des limitations impossible : ${e.message}")
+                Log.w(TAG, "Chargement des radars impossible : ${e.message}")
                 lastFailureMillis = clock()
             }
         }
     }
 
     private companion object {
-        const val TAG = "SpeedLimit"
-        const val AREA_RADIUS_METERS = 600.0
-        const val REFRESH_MARGIN_METERS = 150.0
+        const val TAG = "Radar"
+        const val AREA_RADIUS_METERS = 5_000.0
+        const val REFRESH_MARGIN_METERS = 1_500.0
         const val RETRY_DELAY_MS = 30_000L
     }
 }

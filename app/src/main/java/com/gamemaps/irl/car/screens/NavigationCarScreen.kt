@@ -48,6 +48,7 @@ class NavigationCarScreen(
         })
         observeNavigation()
         observeLocation()
+        observeRadars()
     }
 
     override fun onGetTemplate(): Template {
@@ -82,9 +83,16 @@ class NavigationCarScreen(
         }
     }
 
+    private fun observeRadars() {
+        lifecycleScope.launch {
+            container.radarRepository.radars.collect { mapController?.showRadars(it) }
+        }
+    }
+
     private fun refreshMap() {
         val controller = mapController ?: return
         controller.showRoute((navigation as? NavigationState.Navigating)?.route)
+        controller.showRadars(container.radarRepository.radars.value)
         container.locationRepository.fixes.value?.let(controller::showVehicle)
     }
 

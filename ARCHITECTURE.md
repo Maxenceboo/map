@@ -80,11 +80,15 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `routing/osrm/OsrmResponseParser.kt` | JSON OSRM → `Route`. |
 | `routing/osrm/OsrmManeuverMapper.kt` | Manœuvres OSRM → `ManeuverType`. |
 | `speedlimit/SpeedLimitRepository.kt` | Limitation de la route actuelle (`StateFlow`), recharge la zone en approchant du bord. |
-| `speedlimit/OverpassClient.kt` | Routes avec `maxspeed` d'une zone de ~1 km (API Overpass / OSM). |
 | `speedlimit/OverpassResponseParser.kt` | JSON Overpass → `RoadSegment`. |
 | `speedlimit/MaxSpeedParser.kt` | "50", "FR:urban", "30 mph" → km/h. |
 | `speedlimit/SpeedLimitIndex.kt` | Route la plus proche, départagée par le cap aux carrefours. |
 | `speedlimit/RoadSegment.kt` | Une route OSM et sa limitation. |
+| `osm/OverpassClient.kt` | Appels à l'API Overpass (OSM) : une requête à la fois, nouvelles tentatives si surcharge. |
+| `osm/OverpassQueries.kt` | Requêtes Overpass : routes avec `maxspeed`, radars. |
+| `radar/Radar.kt` | Un radar (position, vitesse contrôlée). |
+| `radar/RadarResponseParser.kt` | JSON Overpass → `Radar`. |
+| `radar/RadarRepository.kt` | Radars d'une zone de ~10 km + alerte en cours (`StateFlow`). |
 
 ### `navigation/` — Le guidage
 | Fichier | Rôle |
@@ -96,6 +100,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `OffRouteDetector.kt` | > 35 m du tracé pendant > 3 s ⇒ recalcul (§5.3). |
 | `ArrivalDetector.kt` | < 30 m de l'arrivée ⇒ arrivé. |
 | `SpeedingDetector.kt` | Excès de vitesse : limite + 3 km/h (§6.3). |
+| `radar/RadarAlertDetector.kt` | Radar à < 800 m devant, cône de ±30° (§6.2). |
+| `radar/RadarAlert.kt` | Le radar concerné et sa distance. |
 | `instructions/InstructionTextBuilder.kt` | "Au rond-point, prenez la 2e sortie vers D1010". |
 | `instructions/ManeuverGlyphs.kt` | Flèche ↰ ↱ ↻ pour chaque manœuvre. |
 
@@ -113,6 +119,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `layers/VehicleMarkerLayer.kt` | Marqueur du véhicule orienté selon le cap. |
 | `layers/VehicleArrowBitmap.kt` | Dessin de la flèche GTA (provisoire avant la 3D). |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
+| `layers/RadarLayer.kt` | Icônes des radars sur la carte. |
+| `layers/RadarIconBitmap.kt` | Dessin de l'icône radar. |
 | `camera/FollowCamera.kt` | Caméra poursuite inclinée (saut à la 1re position, puis glissement linéaire). |
 | `camera/CameraConfig.kt` | Réglages téléphone / voiture. |
 
@@ -122,6 +130,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `screen/MainScreen.kt` | Carte plein écran + HUD (§2.2). |
 | `screen/MainViewModel.kt` | Recherche avec anti-rebond, démarrage / arrêt du guidage. |
 | `screen/MainUiState.kt` | Tout l'état de l'écran. |
+| `screen/DrivingState.kt` | Position, limitation, radars (avec ou sans guidage). |
 | `screen/MapRenderEffect.kt` | Pousse position et tracé vers la carte. |
 | `map/MapViewHost.kt` | MapView dans Compose. |
 | `map/MapViewLifecycleObserver.kt` | Cycle de vie de la MapView. |
@@ -129,6 +138,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `hud/ManeuverBanner.kt` | Flèche + distance + instruction (haut). |
 | `hud/SpeedPanel.kt` | Vitesse (bas gauche), rouge clignotant en excès. |
 | `hud/SpeedLimitSign.kt` | Panneau rond blanc / rouge de limitation. |
+| `hud/RadarAlertBanner.kt` | Bandeau rouge clignotant « RADAR 450 m ». |
 | `hud/ArrivalPanel.kt` | Heure d'arrivée, restant, "Arrêter" (bas droite). |
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
 | `hud/StatusBanner.kt` | Messages (calcul, erreur, arrivée). |
@@ -174,7 +184,7 @@ Les templates (manœuvre, boutons) sont dessinés **par Android Auto** par-dessu
 | Fond de carte | OpenFreeMap (tuiles OpenStreetMap) |
 | Recherche d'adresses | Base Adresse Nationale — `data.geopf.fr/geocodage` |
 | Itinéraire | OSRM public — `router.project-osrm.org` (démo, sans trafic) |
-| Limitations de vitesse | Overpass API — `overpass-api.de` (tags OSM `maxspeed`) |
+| Limitations de vitesse, radars | Overpass API — `overpass-api.de` (tags OSM `maxspeed`, nœuds `highway=speed_camera`) |
 
 ## Construire, tester, lancer
 
@@ -194,9 +204,9 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 ## Prochaines étapes (hors de cette première passe)
 
-1. Radars français (base embarquée) + bips.
-2. Trafic TomTom : bordures orange / rouge sur le tracé.
-3. Véhicule 3D (Filament) à la place de la flèche 2D.
-4. Thème Minecraft, favoris (Maison / Travail), audio procédural.
-5. Service au premier plan pour continuer le guidage écran éteint.
-6. Bip d'excès de vitesse (avec le moteur audio).
+1. Bips (radar, excès de vitesse) avec le moteur audio.
+2. Alerte radar sur Android Auto.
+3. Trafic TomTom : bordures orange / rouge sur le tracé.
+4. Véhicule 3D (Filament) à la place de la flèche 2D.
+5. Thème Minecraft, favoris (Maison / Travail), fanfare « Mission Passed ».
+6. Service au premier plan pour continuer le guidage écran éteint.

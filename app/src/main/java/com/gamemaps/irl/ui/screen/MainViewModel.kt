@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.data.search.PlaceSearch
+import com.gamemaps.irl.data.radar.RadarRepository
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.di.AppContainer
 import com.gamemaps.irl.navigation.NavigationEngine
@@ -34,18 +35,23 @@ class MainViewModel(
     private val navigationEngine: NavigationEngine,
     private val locationRepository: LocationRepository,
     private val speedLimitRepository: SpeedLimitRepository,
+    private val radarRepository: RadarRepository,
 ) : ViewModel() {
 
     private val search = MutableStateFlow(SearchUiState())
     private val queries = MutableStateFlow("")
 
-    val uiState: StateFlow<MainUiState> = combine(
-        search,
-        navigationEngine.state,
+    private val driving = combine(
         locationRepository.fixes,
         speedLimitRepository.limitKmh,
-    ) { searchState, navigation, fix, speedLimit ->
-        MainUiState(search = searchState, navigation = navigation, fix = fix, speedLimitKmh = speedLimit)
+        radarRepository.radars,
+        radarRepository.alert,
+    ) { fix, speedLimit, radars, radarAlert ->
+        DrivingState(fix = fix, speedLimitKmh = speedLimit, radars = radars, radarAlert = radarAlert)
+    }
+
+    val uiState: StateFlow<MainUiState> = combine(search, navigationEngine.state, driving) { searchState, navigation, drivingState ->
+        MainUiState(search = searchState, navigation = navigation, driving = drivingState)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())
 
     init {
@@ -99,6 +105,7 @@ class MainViewModel(
                     navigationEngine = container.navigationEngine,
                     locationRepository = container.locationRepository,
                     speedLimitRepository = container.speedLimitRepository,
+                    radarRepository = container.radarRepository,
                 )
             }
         }

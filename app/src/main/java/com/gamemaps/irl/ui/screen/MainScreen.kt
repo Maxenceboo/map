@@ -24,6 +24,7 @@ import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.ui.hud.ArrivalPanel
 import com.gamemaps.irl.ui.hud.GpsStatusDot
 import com.gamemaps.irl.ui.hud.ManeuverBanner
+import com.gamemaps.irl.ui.hud.RadarAlertBanner
 import com.gamemaps.irl.ui.hud.SpeedPanel
 import com.gamemaps.irl.ui.hud.StatusBanner
 import com.gamemaps.irl.ui.hud.toHudModel
@@ -73,7 +74,7 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, modifier: Modi
                     query = state.search.query,
                     onQueryChange = viewModel::onQueryChange,
                     modifier = Modifier.fillMaxWidth(),
-                    trailing = { GpsStatusDot(state.gpsQuality) },
+                    trailing = { GpsStatusDot(state.driving.gpsQuality) },
                 )
                 if (state.search.results.isNotEmpty()) {
                     SearchResultsList(results = state.search.results, onSelect = viewModel::onPlaceSelected)
@@ -88,13 +89,14 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, modifier: Modi
             is NavigationState.Failed ->
                 StatusBanner("Échec : ${navigation.message}", color = CockpitColors.Danger, onDismiss = viewModel::onStopNavigation)
         }
+        state.driving.radarAlert?.let { RadarAlertBanner(it) }
     }
 }
 
 @Composable
 private fun BottomArea(state: MainUiState, onStop: () -> Unit, modifier: Modifier) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        SpeedPanel(speedKmh = state.fix?.speedKmh ?: 0, limitKmh = state.speedLimitKmh)
+        SpeedPanel(speedKmh = state.driving.fix?.speedKmh ?: 0, limitKmh = state.driving.speedLimitKmh)
         Box(Modifier.weight(1f))
         val navigation = state.navigation
         if (navigation is NavigationState.Navigating) {

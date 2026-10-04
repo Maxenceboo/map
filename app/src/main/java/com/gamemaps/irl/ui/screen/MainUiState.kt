@@ -1,7 +1,5 @@
 package com.gamemaps.irl.ui.screen
 
-import com.gamemaps.irl.data.location.GpsFix
-import com.gamemaps.irl.data.location.GpsQuality
 import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.ui.search.SearchUiState
 
@@ -9,8 +7,5 @@ import com.gamemaps.irl.ui.search.SearchUiState
 data class MainUiState(
     val search: SearchUiState = SearchUiState(),
     val navigation: NavigationState = NavigationState.Idle,
-    val fix: GpsFix? = null,
-    val speedLimitKmh: Int? = null,
-) {
-    val gpsQuality: GpsQuality get() = GpsQuality.from(fix)
-}
+    val driving: DrivingState = DrivingState(),
+)

@@ -2,6 +2,8 @@ package com.gamemaps.irl.map
 
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.map.camera.FollowCamera
+import com.gamemaps.irl.map.layers.RadarIconBitmap
+import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
 import com.gamemaps.irl.map.layers.VehicleArrowBitmap
 import com.gamemaps.irl.map.layers.VehicleMarkerLayer
@@ -28,9 +30,11 @@ object MapSetup {
         configureUi(map, interactive)
         map.setStyle(Style.Builder().fromUri(MapStyleSource.BASE_STYLE_URL)) { style ->
             MapThemeApplier.apply(style, theme.palette)
+            // Ordre d'empilement : tracé, puis radars, puis véhicule tout en haut.
             val routeLayer = RouteLayer(style, theme.palette).apply { install() }
+            val radarLayer = RadarLayer(style, RadarIconBitmap.create()).apply { install() }
             val vehicleLayer = VehicleMarkerLayer(style, VehicleArrowBitmap.create(theme.palette)).apply { install() }
-            onReady(MapController(routeLayer, vehicleLayer, FollowCamera(map, viewHeightPx, cameraConfig)))
+            onReady(MapController(routeLayer, radarLayer, vehicleLayer, FollowCamera(map, viewHeightPx, cameraConfig)))
         }
     }
 
