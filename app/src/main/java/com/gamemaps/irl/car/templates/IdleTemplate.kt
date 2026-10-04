@@ -9,7 +9,7 @@ object IdleTemplate {
     fun build(onSearch: () -> Unit, isMuted: Boolean, onToggleMute: () -> Unit): Template = NavigationTemplate.Builder()
         .setActionStrip(
             CarActions.strip(
-                CarActions.button("Où aller ?", onSearch),
+                CarActions.search(onSearch),
                 CarActions.muteToggle(isMuted, onToggleMute),
             ),
         )

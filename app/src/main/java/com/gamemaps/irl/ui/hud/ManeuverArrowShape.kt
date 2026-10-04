@@ -6,6 +6,7 @@ import com.gamemaps.irl.data.routing.ManeuverType
 /**
  * Tracé d'une flèche de manœuvre sur une grille 24 × 24 (x vers la droite, y vers le bas).
  * La flèche part du bas (là où est le conducteur) et finit par la pointe.
+ * Partagé par le HUD du téléphone ([ManeuverIcon]) et les icônes d'Android Auto.
  *
  * @property points sommets de la ligne, dessinés pour un virage à gauche.
  * @property mirrored true pour la version "à droite" (symétrie horizontale).

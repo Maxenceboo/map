@@ -10,7 +10,7 @@ object CarStepMapper {
 
     fun map(step: RouteStep): Step {
         val maneuverBuilder = Maneuver.Builder(CarManeuverMapper.type(step.maneuver, step.roundaboutExit))
-            .setIcon(ManeuverIconFactory.icon(step.maneuver))
+            .setIcon(ManeuverIconFactory.icon(step.maneuver, step.roundaboutExit))
         val exit = step.roundaboutExit
         if (exit != null && exit >= 1) maneuverBuilder.setRoundaboutExitNumber(exit)
 

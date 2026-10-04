@@ -9,6 +9,9 @@ object CarActions {
     fun button(title: String, onClick: () -> Unit): Action =
         Action.Builder().setTitle(title).setOnClickListener { onClick() }.build()
 
+    /** Ouvre la recherche de destination (clavier ou dictée). */
+    fun search(onClick: () -> Unit): Action = button("Où aller ?", onClick)
+
     /** Bascule son / muet : le titre indique l'action disponible. */
     fun muteToggle(isMuted: Boolean, onToggle: () -> Unit): Action =
         button(if (isMuted) "Son" else "Muet", onToggle)

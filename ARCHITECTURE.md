@@ -141,7 +141,6 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `radar/RadarAlertLevel.kt` | Avertissement / urgent. |
 | `radar/RadarTypeText.kt` | Libellés par type ("RADAR FEU ROUGE", "Radar tronçon"). |
 | `instructions/InstructionTextBuilder.kt` | "Au rond-point, prenez la 2e sortie vers D1010". |
-| `instructions/ManeuverGlyphs.kt` | Flèche ↰ ↱ ↻ pour chaque manœuvre. |
 
 ### `map/` — Carte MapLibre (partagée téléphone + voiture)
 | Fichier | Rôle |
@@ -273,8 +272,10 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 ### `car/` — Android Auto
 | Fichier | Rôle |
 | :--- | :--- |
+| `intent/NavigationRequestParser.kt` | Lit une demande de l'assistant (`geo:…`) : un point ou un texte à chercher. |
+| `intent/NavigationRequest.kt` | Les deux formes de demande. |
 | `GameMapsCarAppService.kt` | Service déclaré dans le manifeste ; Android Auto s'y connecte. |
-| `GameMapsCarSession.kt` | Une connexion voiture ; crée le premier écran. |
+| `GameMapsCarSession.kt` | Une connexion voiture ; crée le premier écran et traite les demandes de l'assistant. |
 | `screens/NavigationCarScreen.kt` | Écran principal : carte + template selon l'état du guidage. |
 | `screens/CarSearchScreen.kt` | Recherche de destination (clavier / voix de la voiture). |
 | `surface/CarMapSurface.kt` | **Carte MapLibre sur l'écran de la voiture** (écran virtuel + Presentation). |
@@ -292,7 +293,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `mapping/CarStepMapper.kt` | `RouteStep` → `Step` Android Auto. |
 | `mapping/CarDistanceMapper.kt` | Mètres → `Distance`. |
 | `mapping/CarTravelEstimateMapper.kt` | Restant + heure d'arrivée. |
-| `mapping/ManeuverIconFactory.kt` | Icône de manœuvre (mise en cache). |
+| `mapping/ManeuverIconFactory.kt` | Icône de manœuvre : mêmes flèches vectorielles que le téléphone (mise en cache). |
 
 ## Comment la carte arrive dans la voiture
 

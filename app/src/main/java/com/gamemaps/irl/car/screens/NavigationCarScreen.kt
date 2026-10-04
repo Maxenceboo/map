@@ -71,6 +71,7 @@ class NavigationCarScreen(
             is NavigationState.Navigating -> NavigatingTemplate.build(
                 state = state,
                 isMuted = audio.muted.value,
+                onSearch = ::openSearch,
                 onToggleMute = audio::toggleMuted,
                 onStop = engine::stop,
             )

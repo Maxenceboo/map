@@ -12,16 +12,17 @@ import com.gamemaps.irl.navigation.NavigationState
 
 /**
  * Guidage actif : carte avec, par-dessus, la manœuvre (gérée par Android Auto),
- * l'estimation d'arrivée et le bouton "Arrêter".
+ * l'estimation d'arrivée et les boutons : changer de destination, son, arrêter.
  */
 object NavigatingTemplate {
 
-    /** Fond violet de la carte de manœuvre, couleur de l'itinéraire (§5.2). */
-    private val ROUTE_PURPLE = Color.parseColor("#7e22ce")
+    /** Fond de la carte de manœuvre : le bleu nuit des surfaces du HUD (la flèche est jaune). */
+    private val PANEL = Color.parseColor("#1F2630")
 
     fun build(
         state: NavigationState.Navigating,
         isMuted: Boolean,
+        onSearch: () -> Unit,
         onToggleMute: () -> Unit,
         onStop: () -> Unit,
     ): Template {
@@ -37,11 +38,13 @@ object NavigatingTemplate {
         return NavigationTemplate.Builder()
             .setNavigationInfo(routingInfo)
             .setDestinationTravelEstimate(CarTravelEstimateMapper.map(progress))
-            .setBackgroundColor(CarColor.createCustom(ROUTE_PURPLE, ROUTE_PURPLE))
+            .setBackgroundColor(CarColor.createCustom(PANEL, PANEL))
             .setActionStrip(
                 CarActions.strip(
+                    CarActions.search(onSearch),
                     CarActions.muteToggle(isMuted, onToggleMute),
-                    CarActions.button("Arrêter", onStop),
+                    // Libellé court : avec trois boutons, "Arrêter" est tronqué par l'écran de la voiture.
+                    CarActions.button("Stop", onStop),
                 ),
             )
             .build()
