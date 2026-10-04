@@ -279,4 +279,3 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 2. Véhicule 3D (Filament) à la place de la flèche 2D.
 3. Thème Minecraft, fanfare « Mission Passed ».
 4. Service au premier plan pour continuer le guidage écran éteint.
-5. Thème Minecraft dans le menu Paramètres.
