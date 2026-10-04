@@ -280,6 +280,8 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `sections/*.kt` | Un fichier par écran du menu. |
 | `components/SettingsHeader.kt` | Bouton retour rond + titre. |
 | `components/SettingsInputs.kt` | Champ de texte et curseur de réglage. |
+| `components/VehiclePreview.kt` | Aperçu 3D d'un véhicule (vue de trois quarts arrière), sans la carte. |
+| `components/ThemePreview.kt` | Aperçu d'un thème : une mini-carte peinte avec ses couleurs. |
 | `components/ColorPickerRow.kt` | Couleur réglable : grille de couleurs prêtes + code `#RRGGBB`. |
 | `sections/DevThemeSections.kt`, `DevVehicleSections.kt` | Listes et éditeurs du mode développeur. |
 | `components/SettingsGroup.kt` | Carte arrondie qui regroupe les lignes d'un même sujet. |

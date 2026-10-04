@@ -18,6 +18,7 @@ import com.gamemaps.irl.ui.settings.components.SettingsGroup
 import com.gamemaps.irl.ui.settings.components.SettingsNavigationRow
 import com.gamemaps.irl.ui.settings.components.SettingsOptionRow
 import com.gamemaps.irl.ui.settings.components.SettingsToggleRow
+import com.gamemaps.irl.ui.settings.components.VehiclePreview
 import com.gamemaps.irl.ui.theme.CockpitColors
 
 /** Paramètres > Véhicule : deux sous-menus (modèle, couleur) et l'interrupteur des phares. */
@@ -37,19 +38,25 @@ fun VehicleSection(settings: AppSettings, open: (SettingsSection) -> Unit, onUpd
 /**
  * Paramètres > Véhicule > Modèle : liste verticale (pas de grille de cartes, règle §2.3).
  * [kinds] : les véhicules de l'app, suivis de ceux créés en mode développeur.
+ * Chaque ligne montre le véhicule en 3D, dans la couleur de carrosserie choisie.
  */
 @Composable
-fun VehicleModelSection(current: VehicleKind, kinds: List<VehicleKind>, onSelect: (VehicleKind) -> Unit) {
+fun VehicleModelSection(current: VehicleKind, kinds: List<VehicleKind>, color: VehicleColor, onSelect: (VehicleKind) -> Unit) {
     val (custom, builtIn) = kinds.partition { it.isCustom }
-    VehicleGroup(null, builtIn, current, onSelect)
-    if (custom.isNotEmpty()) VehicleGroup("Mes véhicules", custom, current, onSelect)
+    VehicleGroup(null, builtIn, current, color, onSelect)
+    if (custom.isNotEmpty()) VehicleGroup("Mes véhicules", custom, current, color, onSelect)
 }
 
 @Composable
-private fun VehicleGroup(title: String?, kinds: List<VehicleKind>, current: VehicleKind, onSelect: (VehicleKind) -> Unit) {
+private fun VehicleGroup(title: String?, kinds: List<VehicleKind>, current: VehicleKind, color: VehicleColor, onSelect: (VehicleKind) -> Unit) {
     SettingsGroup(title) {
         kinds.forEach { kind ->
-            SettingsOptionRow(kind.label, kind.description, selected = kind.id == current.id) { onSelect(kind) }
+            SettingsOptionRow(
+                title = kind.label,
+                description = kind.description,
+                selected = kind.id == current.id,
+                leading = { VehiclePreview(kind.model, color, Modifier.size(width = 76.dp, height = 56.dp)) },
+            ) { onSelect(kind) }
         }
     }
 }

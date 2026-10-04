@@ -3,7 +3,10 @@ package com.gamemaps.irl.ui.settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -16,9 +19,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gamemaps.irl.data.custom.CustomVehicleBuilder
+import com.gamemaps.irl.ui.components.HudShapes
 import com.gamemaps.irl.ui.settings.components.SettingsHeader
+import com.gamemaps.irl.ui.settings.components.ThemePreview
+import com.gamemaps.irl.ui.settings.components.VehiclePreview
 import com.gamemaps.irl.ui.settings.sections.AboutSection
 import com.gamemaps.irl.ui.settings.sections.AudioSection
 import com.gamemaps.irl.ui.settings.sections.DevThemeEditSection
@@ -69,6 +77,16 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
             backLabel = section.parent?.title ?: "Carte",
             onBack = goBack,
         )
+        // Éditeurs du mode développeur : l'aperçu reste en haut pendant qu'on fait défiler les réglages.
+        when (section) {
+            SettingsSection.DEV_VEHICLE_EDIT -> state.customVehicles.firstOrNull { it.id == editingId }?.let { vehicle ->
+                PinnedPreview { VehiclePreview(CustomVehicleBuilder.build(vehicle), state.settings.vehicleColor, Modifier.fillMaxSize().padding(8.dp)) }
+            }
+            SettingsSection.DEV_THEME_EDIT -> state.customThemes.firstOrNull { it.id == editingId }?.let { theme ->
+                PinnedPreview { ThemePreview(theme.palette, Modifier.fillMaxSize()) }
+            }
+            else -> Unit
+        }
         Column(
             modifier = Modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -78,7 +96,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
                 SettingsSection.THEME -> ThemeSection(state.settings.theme, state.allThemes) { theme -> viewModel.update { it.copy(theme = theme) } }
                 SettingsSection.PERSPECTIVE -> PerspectiveSection(state.settings.perspective) { p -> viewModel.update { it.copy(perspective = p) } }
                 SettingsSection.VEHICLE -> VehicleSection(state.settings, open = { section = it }, onUpdate = viewModel::update)
-                SettingsSection.VEHICLE_MODEL -> VehicleModelSection(state.settings.vehicle, state.allVehicles) { kind -> viewModel.update { it.copy(vehicle = kind) } }
+                SettingsSection.VEHICLE_MODEL -> VehicleModelSection(state.settings.vehicle, state.allVehicles, state.settings.vehicleColor) { kind -> viewModel.update { it.copy(vehicle = kind) } }
                 SettingsSection.VEHICLE_COLOR -> VehicleColorSection(state.settings.vehicleColor) { color -> viewModel.update { it.copy(vehicleColor = color) } }
                 SettingsSection.AUDIO -> AudioSection(state.settings, state.isMuted, viewModel::toggleMuted, viewModel::update)
                 SettingsSection.RADARS -> RadarSection(state.settings, viewModel::update)
@@ -141,4 +159,17 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
             }
         }
     }
+}
+
+/** Carte d'aperçu fixée sous le titre d'un éditeur. */
+@Composable
+private fun PinnedPreview(content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            .fillMaxWidth()
+            .height(170.dp)
+            .clip(HudShapes.Card)
+            .background(CockpitColors.Panel),
+    ) { content() }
 }
