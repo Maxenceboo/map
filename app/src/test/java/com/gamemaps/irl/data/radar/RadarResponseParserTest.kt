@@ -18,6 +18,8 @@ class RadarResponseParserTest {
 
         val radars = RadarResponseParser.parse(json)
         assertEquals(2, radars.size) // le nœud 12 n'a pas de coordonnées
+        assertEquals("osm_10", radars[0].id)
+        assertEquals(RadarType.SPEED, radars[0].type)
         assertEquals(90, radars[0].maxSpeedKmh)
         assertEquals(44.86, radars[0].position.lat, 1e-9)
         assertNull(radars[1].maxSpeedKmh)

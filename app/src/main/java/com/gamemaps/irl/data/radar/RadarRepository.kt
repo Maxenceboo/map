@@ -6,6 +6,7 @@ import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.osm.OverpassClient
 import com.gamemaps.irl.data.osm.OverpassQueries
+import com.gamemaps.irl.data.radar.official.OfficialRadarDatabase
 import com.gamemaps.irl.navigation.radar.RadarAlert
 import com.gamemaps.irl.navigation.radar.RadarAlertDetector
 import kotlinx.coroutines.CancellationException
@@ -20,15 +21,16 @@ import kotlinx.coroutines.launch
 /**
  * Radars autour du véhicule et alerte en cours.
  *
- * Charge les radars d'une zone de ~10 km de côté (peu de données : quelques dizaines de points),
- * et en recharge une nouvelle quand on approche du bord.
+ * Pour chaque zone de ~10 km de côté :
+ * 1. la base officielle embarquée (hors ligne, toujours disponible) ;
+ * 2. complétée par OpenStreetMap (radars récents, étranger) quand le réseau le permet.
  */
 class RadarRepository(
     private val scope: CoroutineScope,
     private val location: LocationRepository,
+    private val official: OfficialRadarDatabase,
     private val overpass: OverpassClient,
     private val detector: RadarAlertDetector = RadarAlertDetector(),
-    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val _radars = MutableStateFlow<List<Radar>>(emptyList())
     val radars: StateFlow<List<Radar>> = _radars.asStateFlow()
@@ -38,7 +40,6 @@ class RadarRepository(
 
     private var loadedArea: BoundingBox? = null
     private var loadJob: Job? = null
-    private var lastFailureMillis: Long? = null
 
     fun start() {
         scope.launch {
@@ -53,8 +54,6 @@ class RadarRepository(
 
     private fun needsNewArea(fix: GpsFix): Boolean {
         if (loadJob?.isActive == true) return false
-        val failure = lastFailureMillis
-        if (failure != null && clock() - failure < RETRY_DELAY_MS) return false
         val area = loadedArea ?: return true
         return !area.shrink(REFRESH_MARGIN_METERS).contains(fix.position)
     }
@@ -62,26 +61,34 @@ class RadarRepository(
     private fun loadArea(fix: GpsFix) {
         val area = BoundingBox.around(fix.position, AREA_RADIUS_METERS)
         loadJob = scope.launch {
-            try {
-                val radars = RadarResponseParser.parse(overpass.run(OverpassQueries.speedCameras(area)))
-                Log.i(TAG, "Zone chargée : ${radars.size} radars")
-                _radars.value = radars
-                loadedArea = area
-                lastFailureMillis = null
-                _alert.value = detector.detect(fix, radars)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "Chargement des radars impossible : ${e.message}")
-                lastFailureMillis = clock()
-            }
+            val officialRadars = official.inArea(area)
+            publish(officialRadars, fix) // Affichage immédiat, sans attendre le réseau.
+            val osmRadars = loadOsm(area)
+            val merged = RadarMerger.merge(officialRadars, osmRadars)
+            Log.i(TAG, "Zone chargée : ${officialRadars.size} radars officiels + ${merged.size - officialRadars.size} OSM")
+            publish(merged, fix)
+            loadedArea = area
         }
+    }
+
+    /** OSM est un complément : en cas d'échec, on garde simplement la base officielle. */
+    private suspend fun loadOsm(area: BoundingBox): List<Radar> = try {
+        RadarResponseParser.parse(overpass.run(OverpassQueries.speedCameras(area)))
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w(TAG, "Radars OSM indisponibles : ${e.message}")
+        emptyList()
+    }
+
+    private fun publish(radars: List<Radar>, fix: GpsFix) {
+        _radars.value = radars
+        _alert.value = detector.detect(fix, radars)
     }
 
     private companion object {
         const val TAG = "Radar"
         const val AREA_RADIUS_METERS = 5_000.0
         const val REFRESH_MARGIN_METERS = 1_500.0
-        const val RETRY_DELAY_MS = 30_000L
     }
 }

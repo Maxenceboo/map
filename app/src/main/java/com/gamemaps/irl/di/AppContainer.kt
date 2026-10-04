@@ -11,6 +11,7 @@ import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.network.HttpClientFactory
 import com.gamemaps.irl.data.osm.OverpassClient
 import com.gamemaps.irl.data.radar.RadarRepository
+import com.gamemaps.irl.data.radar.official.OfficialRadarDatabase
 import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
 import com.gamemaps.irl.data.search.BanGeocoder
@@ -48,7 +49,12 @@ class AppContainer(context: Context) {
     // Démarrés tout de suite : ils attendent simplement les premières positions GPS.
     val speedLimitRepository = SpeedLimitRepository(appScope, locationRepository, overpassClient).apply { start() }
 
-    val radarRepository = RadarRepository(appScope, locationRepository, overpassClient).apply { start() }
+    val radarRepository = RadarRepository(
+        scope = appScope,
+        location = locationRepository,
+        official = OfficialRadarDatabase(context.assets),
+        overpass = overpassClient,
+    ).apply { start() }
 
     val audioPreferences = AudioPreferences(context)
 
