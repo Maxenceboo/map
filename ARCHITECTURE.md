@@ -251,6 +251,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `hud/PlaceSaveActions.kt` | Pastille « Ajouter aux favoris » de l'aperçu. |
 | `hud/RecenterButton.kt` | Bouton rond jaune « viseur » quand la carte a été déplacée. |
 | `search/SearchBar.kt` | Barre "Où aller ?" avec le bouton du menu (Paramètres) intégré. |
+| `search/PlaceIcons.kt` | Icône vectorielle d'un résultat selon sa catégorie (gare, station-service, restaurant…). |
 | `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3) : repère, adresse, distance. |
 | `search/SavedPlacesShortcuts.kt` | Raccourcis Maison / Travail / favoris sous la barre de recherche. |
 | `search/SearchUiState.kt` | État de la recherche. |
@@ -361,5 +362,5 @@ Sans clé, tout fonctionne avec OSRM, simplement sans bouchons.
 
 ## Prochaines étapes
 
-1. Recalcul périodique pendant le trajet pour rafraîchir les bouchons (aujourd'hui : au départ et à chaque recalcul).
-2. Calque de trafic sur toutes les routes de la carte (tuiles TomTom Traffic Flow).
+1. Calque de trafic sur toutes les routes de la carte (tuiles TomTom Traffic Flow).
+2. Mode hors ligne (carte, recherche et itinéraire ont besoin du réseau).

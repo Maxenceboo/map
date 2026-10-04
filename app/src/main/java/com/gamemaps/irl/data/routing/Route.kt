@@ -11,6 +11,7 @@ import com.gamemaps.irl.data.traffic.TrafficSection
  * @property steps manœuvres dans l'ordre (la première est DEPART, la dernière ARRIVE).
  * @property durationSeconds durée estimée par le moteur de routage (bouchons compris s'il les connaît).
  * @property trafficSections portions ralenties ; vide sans trafic en temps réel.
+ * @property hasLiveTraffic true si l'itinéraire tient compte du trafic du moment : il est alors recalculé de temps en temps pendant le trajet.
  * @property trafficDelaySeconds temps perdu dans les bouchons, déjà compté dans [durationSeconds].
  */
 data class Route(
@@ -19,6 +20,7 @@ data class Route(
     val durationSeconds: Double,
     val trafficSections: List<TrafficSection> = emptyList(),
     val trafficDelaySeconds: Double = 0.0,
+    val hasLiveTraffic: Boolean = false,
 ) {
     /** Distances cumulées le long du tracé (calculées une seule fois). */
     val cumulativeDistances: DoubleArray by lazy { PolylineProjector.cumulativeDistances(geometry) }

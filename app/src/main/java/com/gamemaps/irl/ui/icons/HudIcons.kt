@@ -135,6 +135,64 @@ object HudIcons {
     /** Flèche de navigation : les itinéraires. */
     val Navigation: ImageVector by lazy { icon("Navigation", "M12,2L4.5,20.29l0.71,0.71L12,18l6.79,3 0.71,-0.71z") }
 
+    val Train: ImageVector by lazy {
+        icon(
+            "Train",
+            "M12,2c-4,0 -8,0.5 -8,4v9.5C4,17.43 5.57,19 7.5,19L6,20.5v0.5h2.23l2,-2H14l2,2h2v-0.5L16.5,19c1.93,0 3.5,-1.57 3.5,-3.5V6c0,-3.5 -3.58,-4 -8,-4z" +
+                "M7.5,17C6.67,17 6,16.33 6,15.5S6.67,14 7.5,14 9,14.67 9,15.5 8.33,17 7.5,17z" +
+                "M11,10H6V6h5v4z" +
+                "M13,10V6h5v4h-5z" +
+                "M16.5,17c-0.83,0 -1.5,-0.67 -1.5,-1.5s0.67,-1.5 1.5,-1.5 1.5,0.67 1.5,1.5 -0.67,1.5 -1.5,1.5z",
+        )
+    }
+
+    /** Pompe à essence : stations-service et bornes de recharge. */
+    val Fuel: ImageVector by lazy {
+        icon(
+            "Fuel",
+            "M19.77,7.23l0.01,-0.01 -3.72,-3.72L15,4.56l2.11,2.11c-0.94,0.36 -1.61,1.26 -1.61,2.33 0,1.38 1.12,2.5 2.5,2.5 0.36,0 0.69,-0.08 1,-0.21v7.21c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V14c0,-1.1 -0.9,-2 -2,-2h-1V5c0,-1.1 -0.9,-2 -2,-2H6c-1.1,0 -2,0.9 -2,2v16h10v-7.5h1.5v5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V9c0,-0.69 -0.28,-1.32 -0.73,-1.77z" +
+                "M12,10H6V5h6v5z" +
+                "M18,10c-0.55,0 -1,-0.45 -1,-1s0.45,-1 1,-1 1,0.45 1,1 -0.45,1 -1,1z",
+        )
+    }
+
+    /** Couverts : restaurants, cafés, bars. */
+    val Restaurant: ImageVector by lazy {
+        icon(
+            "Restaurant",
+            "M11,9H9V2H7v7H5V2H3v7c0,2.12 1.66,3.84 3.75,3.97V22h2.5v-9.03C11.34,12.84 13,11.12 13,9V2h-2v7z" +
+                "M16,6v8h2.5v8H21V2c-2.76,0 -5,2.24 -5,4z",
+        )
+    }
+
+    /** Lit : hôtels et hébergements. */
+    val Hotel: ImageVector by lazy {
+        icon(
+            "Hotel",
+            "M7,13c1.66,0 3,-1.34 3,-3S8.66,7 7,7s-3,1.34 -3,3 1.34,3 3,3z" +
+                "M19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0,-2.21 -1.79,-4 -4,-4z",
+        )
+    }
+
+    val Parking: ImageVector by lazy {
+        icon(
+            "Parking",
+            "M13,3H6v18h4v-6h3c3.31,0 6,-2.69 6,-6s-2.69,-6 -6,-6z" +
+                "M13.2,11H10V7h3.2c1.1,0 2,0.9 2,2s-0.9,2 -2,2z",
+        )
+    }
+
+    /** Immeubles : villes et villages. */
+    val City: ImageVector by lazy {
+        icon(
+            "City",
+            "M15,11V5l-3,-3 -3,3v2H3v14h18V11h-6z" +
+                "M7,19H5v-2h2v2z M7,15H5v-2h2v2z M7,11H5V9h2v2z" +
+                "M13,19h-2v-2h2v2z M13,15h-2v-2h2v2z M13,11h-2V9h2v2z M13,7h-2V5h2v2z" +
+                "M19,19h-2v-2h2v2z M19,15h-2v-2h2v2z",
+        )
+    }
+
     private fun icon(name: String, pathData: String): ImageVector =
         ImageVector.Builder(name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
             .addPath(pathData = addPathNodes(pathData), fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd)

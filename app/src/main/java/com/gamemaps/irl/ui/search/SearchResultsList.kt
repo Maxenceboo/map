@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -33,7 +31,7 @@ import com.gamemaps.irl.ui.components.hudSurface
 import com.gamemaps.irl.ui.theme.CockpitColors
 import com.gamemaps.irl.ui.theme.CockpitTypography
 
-/** Liste verticale des résultats (règle §2.3) : repère, nom, adresse, distance à droite. */
+/** Liste verticale des résultats (règle §2.3) : icône de catégorie, nom, adresse, distance à droite. */
 @Composable
 fun SearchResultsList(results: List<Place>, near: LatLng?, onSelect: (Place) -> Unit, modifier: Modifier = Modifier) {
     LazyColumn(
@@ -56,7 +54,7 @@ private fun PlaceRow(place: Place, near: LatLng?, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(38.dp).background(CockpitColors.PanelRaised, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(Icons.Filled.Place, contentDescription = null, tint = CockpitColors.Accent, modifier = Modifier.size(20.dp))
+            Icon(PlaceIcons.iconFor(place), contentDescription = null, tint = CockpitColors.Accent, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {

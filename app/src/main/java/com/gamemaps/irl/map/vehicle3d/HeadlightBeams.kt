@@ -17,7 +17,7 @@ data class BeamShape(
 
 /**
  * Lumière des phares (cahier des charges §3.4), en deux couches par optique :
- * - une lueur au sol : trois gouttes arrondies emboîtées, de plus en plus lumineuses vers le centre ;
+ * - une lueur au sol : des gouttes arrondies emboîtées, de plus en plus lumineuses vers le centre ;
  * - un volume translucide : trois tranches qui partent de la hauteur du phare et descendent
  *   vers la route, pour donner l'épaisseur d'un faisceau.
  */
@@ -26,12 +26,19 @@ object HeadlightBeams {
     private const val NEAR_HALF_WIDTH = 0.22
     private const val ARC_STEPS = 12
 
+    // Beaucoup de gouttes fines et peu opaques : leurs bords ne se voient plus, on obtient un dégradé.
+    private const val GLOW_STEPS = 9
+    private const val GLOW_OUTER_LENGTH = 13.0
+    private const val GLOW_INNER_LENGTH = 7.5
+    private const val GLOW_OUTER_WIDTH = 2.6
+    private const val GLOW_INNER_WIDTH = 1.0
+    private const val GLOW_STEP_OPACITY = 0.035
+
     /** Longueur, demi-largeur au bout, opacité : du halo extérieur au cœur du faisceau. */
-    private val GLOW_LAYERS = listOf(
-        Triple(13.0, 2.6, 0.08),
-        Triple(10.5, 1.9, 0.10),
-        Triple(8.0, 1.2, 0.14),
-    )
+    private val GLOW_LAYERS = (0 until GLOW_STEPS).map { step ->
+        val t = step / (GLOW_STEPS - 1.0) // 0 = halo extérieur, 1 = cœur
+        Triple(GLOW_OUTER_LENGTH + (GLOW_INNER_LENGTH - GLOW_OUTER_LENGTH) * t, GLOW_OUTER_WIDTH + (GLOW_INNER_WIDTH - GLOW_OUTER_WIDTH) * t, GLOW_STEP_OPACITY)
+    }
 
     private const val VOLUME_LENGTH = 7.0
     private const val VOLUME_HALF_WIDTH = 1.0

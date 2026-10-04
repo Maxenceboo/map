@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
  *   (ou démarre directement si `autoStart`, utilisé par Android Auto).
  * - [confirm] : le conducteur valide l'aperçu, le guidage commence.
  * - À chaque position GPS : met à jour la progression, détecte l'arrivée et la sortie de route.
+ * - Avec un itinéraire qui tient compte du trafic : il est recalculé en silence toutes les
+ *   [trafficRefreshMillis], pour suivre l'évolution des bouchons.
  * - [stop] : arrête tout et revient à [NavigationState.Idle].
  *
  * Le téléphone et Android Auto observent le même [state].
@@ -36,12 +38,17 @@ class NavigationEngine(
     private val offRouteDetector: OffRouteDetector = OffRouteDetector(),
     private val arrivalDetector: ArrivalDetector = ArrivalDetector(),
     private val clock: () -> Long = System::currentTimeMillis,
+    private val trafficRefreshMillis: Long = 5 * 60_000L,
 ) {
     private val _state = MutableStateFlow<NavigationState>(NavigationState.Idle)
     val state: StateFlow<NavigationState> = _state.asStateFlow()
 
     private var routeJob: Job? = null
     private var trackingJob: Job? = null
+    private var refreshJob: Job? = null
+
+    /** Heure du dernier calcul d'itinéraire (réussi ou non), pour espacer les rafraîchissements du trafic. */
+    private var routeComputedAt = 0L
     private val tripRecorder = TripRecorder()
 
     fun start(destination: Place, autoStart: Boolean = false) {
@@ -68,6 +75,7 @@ class NavigationEngine(
     fun stop() {
         routeJob?.cancel()
         trackingJob?.cancel()
+        refreshJob?.cancel()
         offRouteDetector.reset()
         _state.value = NavigationState.Idle
     }
@@ -75,6 +83,7 @@ class NavigationEngine(
     private suspend fun computeRoute(destination: Place, origin: LatLng, autoStart: Boolean) {
         try {
             val route = routing.route(origin, destination.position)
+            routeComputedAt = clock()
             offRouteDetector.reset()
             // Un recalcul en cours de route repart directement en guidage, sans nouvel aperçu.
             val isReroute = _state.value is NavigationState.Navigating
@@ -110,6 +119,36 @@ class NavigationEngine(
 
         if (!current.isRerouting && offRouteDetector.update(progress.distanceFromRouteMeters, fix.timeMillis, fix.speedMetersPerSecond)) {
             reroute(current.destination, fix.position)
+        } else if (shouldRefreshTraffic(current)) {
+            refreshTraffic(current.destination, fix.position)
+        }
+    }
+
+    private fun shouldRefreshTraffic(current: NavigationState.Navigating): Boolean =
+        current.route.hasLiveTraffic && !current.isRerouting && refreshJob?.isActive != true &&
+            clock() - routeComputedAt >= trafficRefreshMillis
+
+    /**
+     * Recalcule l'itinéraire depuis la position actuelle sans rien afficher ni annoncer.
+     * En cas d'échec (réseau), on garde l'itinéraire en cours et on réessaiera plus tard.
+     */
+    private fun refreshTraffic(destination: Place, origin: LatLng) {
+        routeComputedAt = clock()
+        refreshJob = scope.launch {
+            val fresh = try {
+                routing.route(origin, destination.position)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return@launch
+            }
+            // Pendant le calcul, le conducteur a pu arriver, s'arrêter ou sortir de la route : on ne touche alors à rien.
+            _state.update { state ->
+                val navigating = state as? NavigationState.Navigating
+                if (navigating == null || navigating.isRerouting || navigating.destination != destination) return@update state
+                val position = location.fixes.value?.position ?: origin
+                navigating.copy(route = fresh, progress = progressCalculator.compute(fresh, position))
+            }
         }
     }
 

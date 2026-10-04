@@ -118,4 +118,56 @@ class NavigationEngineTest {
         assertEquals(ManeuverType.ARRIVE, navigating.progress.nextStep?.maneuver)
         scope.cancel()
     }
+
+    @Test
+    fun `avec le trafic, l'itinéraire est rafraîchi en silence pendant le trajet`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        var now = 0L
+        var calls = 0
+        val location = LocationRepository(LocationSource { gps }, scope).apply { start() }
+        val routing = RoutingService { _, _ ->
+            calls++
+            TestFixtures.lShapedRoute().copy(hasLiveTraffic = true)
+        }
+        val engine = NavigationEngine(scope, location, routing, clock = { now }, trafficRefreshMillis = 300_000L)
+
+        engine.start(TestFixtures.PLACE)
+        gps.emit(TestFixtures.fix(TestFixtures.START))
+        engine.confirm()
+        assertEquals(1, calls)
+
+        // Trop tôt : pas de nouveau calcul.
+        now = 120_000L
+        gps.emit(TestFixtures.fix(TestFixtures.START, timeMillis = now))
+        assertEquals(1, calls)
+
+        // Cinq minutes après le premier calcul : un rafraîchissement, sans passer par "recalcul".
+        now = 301_000L
+        gps.emit(TestFixtures.fix(TestFixtures.START, timeMillis = now))
+        assertEquals(2, calls)
+        val state = engine.state.value as NavigationState.Navigating
+        assertTrue(!state.isRerouting)
+        scope.cancel()
+    }
+
+    @Test
+    fun `sans trafic, pas de rafraîchissement`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        var now = 0L
+        var calls = 0
+        val location = LocationRepository(LocationSource { gps }, scope).apply { start() }
+        val routing = RoutingService { _, _ ->
+            calls++
+            TestFixtures.lShapedRoute()
+        }
+        val engine = NavigationEngine(scope, location, routing, clock = { now }, trafficRefreshMillis = 300_000L)
+
+        engine.start(TestFixtures.PLACE)
+        gps.emit(TestFixtures.fix(TestFixtures.START))
+        engine.confirm()
+        now = 900_000L
+        gps.emit(TestFixtures.fix(TestFixtures.START, timeMillis = now))
+        assertEquals(1, calls)
+        scope.cancel()
+    }
 }

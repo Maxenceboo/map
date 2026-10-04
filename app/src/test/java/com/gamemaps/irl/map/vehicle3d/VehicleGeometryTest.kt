@@ -43,9 +43,9 @@ class VehicleGeometryTest {
 
     @Test
     fun `deux phares pour une voiture, un seul pour une moto`() {
-        // Trois lueurs emboîtées par optique.
-        assertEquals(6, HeadlightBeams.glow(SportCar.model).size)
-        assertEquals(3, HeadlightBeams.glow(VehicleKind.MOTO.model).size)
+        val perHeadlight = HeadlightBeams.glow(VehicleKind.MOTO.model).size
+        assertTrue(perHeadlight >= 3) // plusieurs lueurs emboîtées par optique
+        assertEquals(2 * perHeadlight, HeadlightBeams.glow(SportCar.model).size)
     }
 
     @Test

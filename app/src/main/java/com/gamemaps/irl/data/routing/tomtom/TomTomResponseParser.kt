@@ -32,6 +32,7 @@ object TomTomResponseParser {
             durationSeconds = durationSeconds,
             trafficSections = TomTomTrafficParser.parse(route.optJSONArray("sections").objects(), geometry.lastIndex),
             trafficDelaySeconds = summary.optDouble("trafficDelayInSeconds", 0.0),
+            hasLiveTraffic = true,
         )
     }
 }
