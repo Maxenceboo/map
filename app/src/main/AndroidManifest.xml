@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Guidage écran éteint : service au premier plan de type localisation + sa notification -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Android Auto : templates de navigation + droit de dessiner la carte sur la Surface -->
     <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
     <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
@@ -41,6 +46,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Guidage en arrière-plan (écran éteint, autre app au premier plan) -->
+        <service
+            android:name=".service.NavigationForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!-- Voiture : service de navigation Android Auto -->
         <service

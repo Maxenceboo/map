@@ -201,8 +201,17 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `search/SavedPlacesShortcuts.kt` | Raccourcis Maison / Travail / favoris sous la barre de recherche. |
 | `search/SearchUiState.kt` | État de la recherche. |
 | `components/CockpitPanel.kt` | Conteneur flat sombre à bordure fine (§2.1). |
-| `permissions/LocationPermissionEffect.kt` | Demande la localisation. |
+| `permissions/LocationPermissionEffect.kt` | Demande ce qui manque : localisation, notifications (Android 13+). |
 | `theme/CockpitColors.kt`, `CockpitTypography.kt`, `GameMapsTheme.kt` | Design system cockpit. |
+
+### `service/` — Guidage en arrière-plan
+| Fichier | Rôle |
+| :--- | :--- |
+| `NavigationForegroundService.kt` | Service au premier plan (localisation) pendant un trajet : GPS et voix continuent écran éteint. |
+| `NavigationServiceController.kt` | Démarre le service au début du trajet, l'arrête à la fin. |
+| `notification/NavigationNotificationContent.kt` | Textes : "180 m · Tournez à droite…", "Arrivée 17:47 · 57 km · 1 h 05". |
+| `notification/NavigationNotificationBuilder.kt` | Notification permanente, bouton "Arrêter". |
+| `notification/NavigationNotificationChannel.kt` | Canal "Guidage" silencieux. |
 
 ### `ui/settings/` — Menu Paramètres (listes verticales, §2.3)
 | Fichier | Rôle |
@@ -278,4 +287,3 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 1. Trafic TomTom : bordures orange / rouge sur le tracé.
 2. Véhicule 3D (Filament) à la place de la flèche 2D.
 3. Thème Minecraft, fanfare « Mission Passed ».
-4. Service au premier plan pour continuer le guidage écran éteint.

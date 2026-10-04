@@ -22,6 +22,7 @@ import com.gamemaps.irl.data.search.PlaceSearch
 import com.gamemaps.irl.data.settings.AudioPreferences
 import com.gamemaps.irl.data.settings.SettingsRepository
 import com.gamemaps.irl.navigation.radar.RadarAlert
+import com.gamemaps.irl.service.NavigationServiceController
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -78,6 +79,8 @@ class AppContainer(context: Context) {
             .stateIn(appScope, SharingStarted.Eagerly, null)
 
     init {
+        NavigationServiceController(context.applicationContext, appScope, navigationEngine.state).start()
+
         val focus = NavigationAudioFocus(context)
         AudioController(
             scope = appScope,
