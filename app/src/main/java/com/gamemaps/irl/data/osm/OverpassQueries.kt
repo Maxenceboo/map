@@ -1,13 +1,15 @@
 package com.gamemaps.irl.data.osm
 
+import com.gamemaps.irl.data.speedlimit.DefaultSpeedLimits
+
 import com.gamemaps.irl.core.geo.BoundingBox
 
 /** Requêtes Overpass QL utilisées par l'application. */
 object OverpassQueries {
 
-    /** Routes ayant une vitesse maximale renseignée, avec leur géométrie. */
-    fun roadsWithMaxSpeed(box: BoundingBox): String =
-        "[out:json][timeout:15];way(${bbox(box)})[highway][maxspeed];out tags geom;"
+    /** Routes ouvertes aux voitures, avec leurs étiquettes (dont `maxspeed` s'il est renseigné) et leur géométrie. */
+    fun drivableRoads(box: BoundingBox): String =
+        "[out:json][timeout:15];way(${bbox(box)})[highway~\"^(${DefaultSpeedLimits.DRIVABLE.joinToString("|")})$\"];out tags geom;"
 
     /** Radars automatiques (nœuds `highway=speed_camera`). */
     fun speedCameras(box: BoundingBox): String =

@@ -2,6 +2,7 @@ package com.gamemaps.irl.data.osm
 
 import com.gamemaps.irl.core.geo.BoundingBox
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OverpassQueriesTest {
@@ -14,9 +15,8 @@ class OverpassQueriesTest {
             "[out:json][timeout:15];node(44.0,-1.0,45.0,0.5)[highway=speed_camera];out;",
             OverpassQueries.speedCameras(box),
         )
-        assertEquals(
-            "[out:json][timeout:15];way(44.0,-1.0,45.0,0.5)[highway][maxspeed];out tags geom;",
-            OverpassQueries.roadsWithMaxSpeed(box),
-        )
+        val roads = OverpassQueries.drivableRoads(box)
+        assertTrue(roads.startsWith("[out:json][timeout:15];way(44.0,-1.0,45.0,0.5)[highway~\"^(motorway|"))
+        assertTrue(roads.endsWith("|living_street)$\"];out tags geom;"))
     }
 }

@@ -164,7 +164,7 @@ private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: Bottom
     // Compteur à gauche, boutons ronds à droite ; pendant le guidage, la barre de trajet en dessous.
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            SpeedGauge(speedKmh = state.driving.fix?.speedKmh ?: 0, limitKmh = state.driving.speedLimitKmh)
+            SpeedGauge(speedKmh = state.driving.fix?.speedKmh ?: 0, limit = state.driving.speedLimit)
             Box(Modifier.weight(1f))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (!isFollowing) RecenterButton(onClick = actions.onRecenter)

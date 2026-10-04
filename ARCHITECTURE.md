@@ -111,6 +111,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `speedlimit/SpeedLimitRepository.kt` | Limitation de la route actuelle (`StateFlow`), recharge la zone en approchant du bord. |
 | `speedlimit/OverpassResponseParser.kt` | JSON Overpass → `RoadSegment`. |
 | `speedlimit/MaxSpeedParser.kt` | "50", "FR:urban", "30 mph" → km/h. |
+| `speedlimit/DefaultSpeedLimits.kt` | Limitation estimée d'après le type de route quand aucun panneau n'est renseigné. |
+| `speedlimit/SpeedLimit.kt` | Limitation affichée : valeur + « estimée » ou non. |
 | `speedlimit/SpeedLimitIndex.kt` | Route la plus proche, départagée par le cap aux carrefours. |
 | `speedlimit/RoadSegment.kt` | Une route OSM et sa limitation. |
 | `osm/OverpassClient.kt` | Appels à l'API Overpass (OSM) : une requête à la fois, nouvelles tentatives si surcharge. |

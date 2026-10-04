@@ -15,25 +15,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** Panneau européen de limitation : fond blanc, bordure rouge, chiffre noir. */
+/**
+ * Panneau européen de limitation : fond blanc, bordure rouge, chiffre noir.
+ * [estimated] : la limitation est déduite du type de route ; la bordure est grise et le chiffre précédé de "~".
+ */
 @Composable
-fun SpeedLimitSign(limitKmh: Int, modifier: Modifier = Modifier) {
+fun SpeedLimitSign(limitKmh: Int, modifier: Modifier = Modifier, estimated: Boolean = false) {
     Box(
         modifier = modifier
             .size(46.dp)
             .shadow(4.dp, CircleShape)
             .background(Color.White, CircleShape)
-            .border(5.dp, SIGN_RED, CircleShape),
+            .border(5.dp, if (estimated) SIGN_GREY else SIGN_RED, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = limitKmh.toString(),
+            text = if (estimated) "~$limitKmh" else limitKmh.toString(),
             color = Color.Black,
             fontWeight = FontWeight.Bold,
-            fontSize = if (limitKmh >= 100) 14.sp else 17.sp,
+            fontSize = if (limitKmh >= 100 || estimated) 13.sp else 17.sp,
         )
     }
 }
 
 /** Rouge des panneaux routiers. */
 private val SIGN_RED = Color(0xFFD9121A)
+
+/** Bordure d'une limitation estimée. */
+private val SIGN_GREY = Color(0xFF8A929C)

@@ -7,4 +7,6 @@ data class RoadSegment(
     val wayId: Long,
     val maxSpeedKmh: Int,
     val points: List<LatLng>,
+    /** true si [maxSpeedKmh] est déduit du type de route, faute de panneau renseigné. */
+    val estimated: Boolean = false,
 )

@@ -52,11 +52,11 @@ class MainViewModel(
 
     private val driving = combine(
         locationRepository.fixes,
-        speedLimitRepository.limitKmh,
+        speedLimitRepository.limit,
         radarRepository.radars,
         radarAlerts,
     ) { fix, speedLimit, radars, radarAlert ->
-        DrivingState(fix = fix, speedLimitKmh = speedLimit, radars = radars, radarAlert = radarAlert)
+        DrivingState(fix = fix, speedLimit = speedLimit, radars = radars, radarAlert = radarAlert)
     }
 
     private val preferences = combine(audioPreferences.muted, savedPlacesRepository.saved, settingsRepository.settings, ::Triple)

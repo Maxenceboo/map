@@ -15,9 +15,12 @@ class SpeedLimitIndex(private val roads: List<RoadSegment>) {
 
     private val cumulative = roads.map { PolylineProjector.cumulativeDistances(it.points) }
 
-    fun limitAt(position: LatLng, bearingDegrees: Float?): Int? {
+    fun limitAt(position: LatLng, bearingDegrees: Float?): Int? = roadAt(position, bearingDegrees)?.maxSpeedKmh
+
+    /** La route sur laquelle on roule, ou null si aucune n'est assez proche. */
+    fun roadAt(position: LatLng, bearingDegrees: Float?): RoadSegment? {
         var bestScore = Double.MAX_VALUE
-        var bestLimit: Int? = null
+        var best: RoadSegment? = null
         roads.forEachIndexed { index, road ->
             val projection = PolylineProjector.project(position, road.points, cumulative[index]) ?: return@forEachIndexed
             if (projection.distanceToLineMeters > MAX_DISTANCE_METERS) return@forEachIndexed
@@ -28,10 +31,10 @@ class SpeedLimitIndex(private val roads: List<RoadSegment>) {
             val score = projection.distanceToLineMeters + headingPenalty(bearingDegrees, segmentBearing)
             if (score < bestScore) {
                 bestScore = score
-                bestLimit = road.maxSpeedKmh
+                best = road
             }
         }
-        return bestLimit
+        return best
     }
 
     /** Une route se parcourt dans les deux sens : on compare les directions modulo 180°. */

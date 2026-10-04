@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 /**
- * Limitation de vitesse de la route actuelle (km/h), null si inconnue.
+ * Limitation de vitesse de la route actuelle, null si inconnue.
+ * [limit] donne la limitation affichée (panneau renseigné ou estimation) ;
+ * [limitKmh] ne donne que les limitations renseignées : c'est elle qui déclenche le bip d'excès.
  *
  * Charge les routes d'une zone de ~1 km autour du véhicule, puis cherche localement à chaque
  * position GPS. Recharge une nouvelle zone quand on approche du bord de la précédente.
@@ -27,6 +29,9 @@ class SpeedLimitRepository(
     private val overpass: OverpassClient,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
+    private val _limit = MutableStateFlow<SpeedLimit?>(null)
+    val limit: StateFlow<SpeedLimit?> = _limit.asStateFlow()
+
     private val _limitKmh = MutableStateFlow<Int?>(null)
     val limitKmh: StateFlow<Int?> = _limitKmh.asStateFlow()
 
@@ -42,7 +47,7 @@ class SpeedLimitRepository(
     }
 
     private fun onFix(fix: GpsFix) {
-        _limitKmh.value = index?.limitAt(fix.position, fix.bearingDegrees)
+        publish(index, fix)
         if (needsNewArea(fix)) loadArea(fix)
     }
 
@@ -58,13 +63,13 @@ class SpeedLimitRepository(
         val area = BoundingBox.around(fix.position, AREA_RADIUS_METERS)
         loadJob = scope.launch {
             try {
-                val roads = OverpassResponseParser.parse(overpass.run(OverpassQueries.roadsWithMaxSpeed(area)))
-                Log.i(TAG, "Zone chargée : ${roads.size} routes avec limitation")
+                val roads = OverpassResponseParser.parse(overpass.run(OverpassQueries.drivableRoads(area)))
+                Log.i(TAG, "Zone chargée : ${roads.size} routes, dont ${roads.count { !it.estimated }} avec limitation renseignée")
                 val newIndex = SpeedLimitIndex(roads)
                 index = newIndex
                 loadedArea = area
                 lastFailureMillis = null
-                _limitKmh.value = newIndex.limitAt(fix.position, fix.bearingDegrees)
+                publish(newIndex, fix)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -73,6 +78,12 @@ class SpeedLimitRepository(
                 lastFailureMillis = clock()
             }
         }
+    }
+
+    private fun publish(index: SpeedLimitIndex?, fix: GpsFix) {
+        val road = index?.roadAt(fix.position, fix.bearingDegrees)
+        _limit.value = road?.let { SpeedLimit(it.maxSpeedKmh, it.estimated) }
+        _limitKmh.value = road?.takeUnless { it.estimated }?.maxSpeedKmh
     }
 
     private companion object {
