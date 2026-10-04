@@ -208,6 +208,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `screens/CarSearchScreen.kt` | Recherche de destination (clavier / voix de la voiture). |
 | `surface/CarMapSurface.kt` | **Carte MapLibre sur l'écran de la voiture** (écran virtuel + Presentation). |
 | `trip/CarTripReporter.kt` | Informe Android Auto du guidage en cours (`NavigationManager`). |
+| `alerts/CarRadarAlerter.kt` | Alerte radar par-dessus la carte (API ≥ 5), sinon message court. |
+| `alerts/CarRadarAlertPolicy.kt` | Quand afficher / réafficher (urgent) / retirer l'alerte. |
 | `templates/IdleTemplate.kt` | Pas de guidage : bouton "Où aller ?". |
 | `templates/CalculatingTemplate.kt` | Chargement. |
 | `templates/PreviewTemplate.kt` | Trajet choisi sur le téléphone : Démarrer / Annuler. |
@@ -257,9 +259,8 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 ## Prochaines étapes (hors de cette première passe)
 
-1. Alerte radar sur Android Auto.
-2. Trafic TomTom : bordures orange / rouge sur le tracé.
-3. Véhicule 3D (Filament) à la place de la flèche 2D.
-4. Thème Minecraft, fanfare « Mission Passed ».
-5. Service au premier plan pour continuer le guidage écran éteint.
-6. Menu Paramètres (thème, 2D / 3D, audio, radars, gestion des favoris).
+1. Trafic TomTom : bordures orange / rouge sur le tracé.
+2. Véhicule 3D (Filament) à la place de la flèche 2D.
+3. Thème Minecraft, fanfare « Mission Passed ».
+4. Service au premier plan pour continuer le guidage écran éteint.
+5. Menu Paramètres (thème, 2D / 3D, audio, radars, gestion des favoris).

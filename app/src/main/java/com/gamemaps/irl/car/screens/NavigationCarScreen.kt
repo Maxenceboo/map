@@ -7,6 +7,7 @@ import androidx.car.app.model.Template
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.gamemaps.irl.car.alerts.CarRadarAlerter
 import com.gamemaps.irl.car.surface.CarMapSurface
 import com.gamemaps.irl.car.templates.CalculatingTemplate
 import com.gamemaps.irl.car.templates.IdleTemplate
@@ -38,6 +39,7 @@ class NavigationCarScreen(
     private var mapController: MapController? = null
 
     private val tripReporter = CarTripReporter(carContext, onStopRequested = engine::stop)
+    private val radarAlerter = CarRadarAlerter(carContext)
     private val mapSurface = CarMapSurface(carContext, MapTheme.GTA_RADAR) { controller ->
         mapController = controller
         refreshMap()
@@ -104,6 +106,9 @@ class NavigationCarScreen(
     private fun observeRadars() {
         lifecycleScope.launch {
             container.radarRepository.radars.collect { mapController?.showRadars(it) }
+        }
+        lifecycleScope.launch {
+            container.radarRepository.alert.collect(radarAlerter::onAlert)
         }
     }
 
