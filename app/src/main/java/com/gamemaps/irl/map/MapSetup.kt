@@ -2,6 +2,8 @@ package com.gamemaps.irl.map
 
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.map.camera.FollowCamera
+import com.gamemaps.irl.map.layers.DestinationLayer
+import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
 import com.gamemaps.irl.map.layers.VehicleArrowBitmap
@@ -29,11 +31,14 @@ object MapSetup {
         configureUi(map, interactive)
         map.setStyle(Style.Builder().fromUri(MapStyleSource.BASE_STYLE_URL)) { style ->
             MapThemeApplier.apply(style, theme.palette)
-            // Ordre d'empilement : tracé, puis radars, puis véhicule tout en haut.
+            // Ordre d'empilement : tracé, destination, radars, puis véhicule tout en haut.
             val routeLayer = RouteLayer(style, theme.palette).apply { install() }
+            val destinationLayer = DestinationLayer(style, DestinationPinBitmap.create(theme.palette)).apply { install() }
             val radarLayer = RadarLayer(style).apply { install() }
             val vehicleLayer = VehicleMarkerLayer(style, VehicleArrowBitmap.create(theme.palette)).apply { install() }
-            onReady(MapController(routeLayer, radarLayer, vehicleLayer, FollowCamera(map, viewHeightPx, cameraConfig)))
+            val camera = FollowCamera(map, viewHeightPx, cameraConfig)
+            if (interactive) pauseFollowingOnUserGesture(map, camera)
+            onReady(MapController(routeLayer, destinationLayer, radarLayer, vehicleLayer, camera))
         }
     }
 
@@ -42,5 +47,12 @@ object MapSetup {
         map.uiSettings.isLogoEnabled = false
         // L'attribution OpenStreetMap reste visible : elle est obligatoire (licence ODbL).
         if (!interactive) map.uiSettings.setAllGesturesEnabled(false)
+    }
+
+    /** Un glissement / pincement du doigt met le suivi en pause (les mouvements programmés, non). */
+    private fun pauseFollowingOnUserGesture(map: MapLibreMap, camera: FollowCamera) {
+        map.addOnCameraMoveStartedListener { reason ->
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) camera.pause()
+        }
     }
 }

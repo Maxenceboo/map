@@ -63,7 +63,9 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `location/AndroidLocationSource.kt` | Implémentation via le `LocationManager` Android. |
 | `location/LocationMapper.kt` | `Location` Android → `GpsFix`. |
 | `location/HeadingStabilizer.kt` | Garde le dernier cap fiable à l'arrêt (anti-toupie). |
-| `location/LocationRepository.kt` | Position partagée (`StateFlow`) pour toute l'app. |
+| `location/SpeedSmoother.kt` | Vitesse lissée, 0 sous 3 km/h (pas de vitesse fantôme). |
+| `location/StationaryPositionFilter.kt` | Position figée à l'arrêt (ignore le bruit GPS de quelques mètres). |
+| `location/LocationRepository.kt` | Position partagée (`StateFlow`) pour toute l'app, filtrée (vitesse, arrêt, cap). |
 | `location/LocationPermissions.kt` | Liste et vérification des permissions. |
 | `settings/AudioPreferences.kt` | Son coupé ou non, mémorisé. |
 | `network/HttpClientFactory.kt` | Client OkHttp unique. |
@@ -98,8 +100,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 ### `navigation/` — Le guidage
 | Fichier | Rôle |
 | :--- | :--- |
-| `NavigationState.kt` | Idle → Calculating → Navigating → Arrived / Failed. |
-| `NavigationEngine.kt` | Lance le calcul, suit le GPS, recalcule, détecte l'arrivée. |
+| `NavigationState.kt` | Idle → Calculating → Previewing → Navigating → Arrived / Failed. |
+| `NavigationEngine.kt` | Calcul, aperçu puis `confirm()`, suivi GPS, recalcul, arrivée. Départ direct (`autoStart`) depuis la voiture. |
 | `RouteProgress.kt` | Où on en est : prochaine manœuvre, distance, temps restant. |
 | `RouteProgressCalculator.kt` | Calcule `RouteProgress` à partir d'une position. |
 | `OffRouteDetector.kt` | > 35 m du tracé pendant > 3 s, en roulant ⇒ recalcul (§5.3). |
@@ -116,19 +118,21 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | Fichier | Rôle |
 | :--- | :--- |
 | `MapSetup.kt` | Charge le style, applique le thème, installe les calques. |
-| `MapController.kt` | Façade : `showVehicle(fix)` et `showRoute(route)`. |
+| `MapController.kt` | Façade : véhicule, tracé + destination, radars, vue d'ensemble, recentrage. |
 | `MapLibreConversions.kt` | Notre `LatLng` → types MapLibre / GeoJSON. |
 | `style/MapStyleSource.kt` | URL du fond de carte OpenFreeMap. |
 | `theme/MapTheme.kt` | Thèmes GTA V Radar et Waze nocturne (§4). |
 | `theme/MapPalette.kt` | Couleurs d'un thème. |
 | `theme/MapThemeApplier.kt` | Repeint chaque calque du style selon la palette. |
 | `layers/RouteLayer.kt` | Tracé violet + liseré. |
+| `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
+| `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
 | `layers/VehicleMarkerLayer.kt` | Marqueur du véhicule orienté selon le cap. |
 | `layers/VehicleArrowBitmap.kt` | Dessin de la flèche GTA (provisoire avant la 3D). |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
 | `layers/RadarLayer.kt` | Icônes des radars sur la carte (une par type). |
 | `layers/RadarIconBitmap.kt` | Dessin des icônes : appareil photo, feu tricolore. |
-| `camera/FollowCamera.kt` | Caméra poursuite inclinée (saut à la 1re position, puis glissement linéaire). |
+| `camera/FollowCamera.kt` | Suivi incliné, pause au doigt (`isFollowing`), recentrage, vue d'ensemble d'un trajet. |
 | `camera/CameraConfig.kt` | Réglages téléphone / voiture. |
 
 ### `audio/` — Sons et guidage vocal
@@ -158,7 +162,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `screen/MainViewModel.kt` | Recherche avec anti-rebond, démarrage / arrêt du guidage. |
 | `screen/MainUiState.kt` | Tout l'état de l'écran. |
 | `screen/DrivingState.kt` | Position, limitation, radars (avec ou sans guidage). |
-| `screen/MapRenderEffect.kt` | Pousse position et tracé vers la carte. |
+| `screen/MapRenderEffect.kt` | Pousse position, tracé, radars et cadrage (aperçu / suivi) vers la carte. |
+| `screen/KeepScreenOnEffect.kt` | Écran toujours allumé tant que l'app est affichée. |
 | `map/MapViewHost.kt` | MapView dans Compose. |
 | `map/MapViewLifecycleObserver.kt` | Cycle de vie de la MapView. |
 | `hud/HudModel.kt` | Textes prêts à afficher pour le guidage. |
@@ -170,6 +175,9 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
 | `hud/StatusBanner.kt` | Messages (calcul, erreur, arrivée). |
 | `hud/MuteButton.kt` | Bouton 🔊 / 🔇. |
+| `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
+| `hud/PreviewModel.kt` | Textes de l'aperçu. |
+| `hud/RecenterButton.kt` | « ◎ RECENTRER » quand la carte a été déplacée. |
 | `search/SearchBar.kt` | Champ "Où aller ?". |
 | `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3). |
 | `search/SearchUiState.kt` | État de la recherche. |
@@ -188,6 +196,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `trip/CarTripReporter.kt` | Informe Android Auto du guidage en cours (`NavigationManager`). |
 | `templates/IdleTemplate.kt` | Pas de guidage : bouton "Où aller ?". |
 | `templates/CalculatingTemplate.kt` | Chargement. |
+| `templates/PreviewTemplate.kt` | Trajet choisi sur le téléphone : Démarrer / Annuler. |
 | `templates/NavigatingTemplate.kt` | Manœuvre + estimation d'arrivée + "Arrêter". |
 | `templates/MessageTemplates.kt` | Arrivée, erreur, permission. |
 | `templates/PlaceListBuilder.kt` | Résultats de recherche. |
@@ -233,10 +242,9 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 ## Prochaines étapes (hors de cette première passe)
 
-1. Aperçu avant départ, bouton recentrer, écran toujours allumé, vitesse lissée.
-2. Recherche de lieux (Photon) et favoris Maison / Travail.
-3. Alerte radar sur Android Auto.
-4. Trafic TomTom : bordures orange / rouge sur le tracé.
-5. Véhicule 3D (Filament) à la place de la flèche 2D.
-6. Thème Minecraft, fanfare « Mission Passed ».
-7. Service au premier plan pour continuer le guidage écran éteint.
+1. Recherche de lieux (Photon) et favoris Maison / Travail.
+2. Alerte radar sur Android Auto.
+3. Trafic TomTom : bordures orange / rouge sur le tracé.
+4. Véhicule 3D (Filament) à la place de la flèche 2D.
+5. Thème Minecraft, fanfare « Mission Passed ».
+6. Service au premier plan pour continuer le guidage écran éteint.

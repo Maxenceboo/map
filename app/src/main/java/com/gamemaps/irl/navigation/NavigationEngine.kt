@@ -19,7 +19,9 @@ import kotlinx.coroutines.launch
 /**
  * Cerveau du guidage, unique pour toute l'application.
  *
- * - [start] : calcule l'itinéraire depuis la position actuelle puis suit le conducteur.
+ * - [start] : calcule l'itinéraire depuis la position actuelle, puis l'affiche en aperçu
+ *   (ou démarre directement si `autoStart`, utilisé par Android Auto).
+ * - [confirm] : le conducteur valide l'aperçu, le guidage commence.
  * - À chaque position GPS : met à jour la progression, détecte l'arrivée et la sortie de route.
  * - [stop] : arrête tout et revient à [NavigationState.Idle].
  *
@@ -39,16 +41,24 @@ class NavigationEngine(
     private var routeJob: Job? = null
     private var trackingJob: Job? = null
 
-    fun start(destination: Place) {
+    fun start(destination: Place, autoStart: Boolean = false) {
         stop()
         _state.value = NavigationState.Calculating(destination)
         routeJob = scope.launch {
             val origin = location.fixes.filterNotNull().first().position
-            computeRoute(destination, origin)
+            computeRoute(destination, origin, autoStart)
         }
         trackingJob = scope.launch {
             location.fixes.filterNotNull().collect(::onFix)
         }
+    }
+
+    /** Passe de l'aperçu au guidage, en partant de la position actuelle. */
+    fun confirm() {
+        val preview = _state.value as? NavigationState.Previewing ?: return
+        val position = location.fixes.value?.position ?: preview.route.geometry.first()
+        offRouteDetector.reset()
+        _state.value = NavigationState.Navigating(preview.destination, preview.route, progressCalculator.compute(preview.route, position))
     }
 
     fun stop() {
@@ -58,11 +68,17 @@ class NavigationEngine(
         _state.value = NavigationState.Idle
     }
 
-    private suspend fun computeRoute(destination: Place, origin: LatLng) {
+    private suspend fun computeRoute(destination: Place, origin: LatLng, autoStart: Boolean) {
         try {
             val route = routing.route(origin, destination.position)
             offRouteDetector.reset()
-            _state.value = NavigationState.Navigating(destination, route, progressCalculator.compute(route, origin))
+            // Un recalcul en cours de route repart directement en guidage, sans nouvel aperçu.
+            val isReroute = _state.value is NavigationState.Navigating
+            _state.value = if (autoStart || isReroute) {
+                NavigationState.Navigating(destination, route, progressCalculator.compute(route, origin))
+            } else {
+                NavigationState.Previewing(destination, route)
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -94,6 +110,6 @@ class NavigationEngine(
     private fun reroute(destination: Place, origin: LatLng) {
         _state.update { (it as? NavigationState.Navigating)?.copy(isRerouting = true) ?: it }
         routeJob?.cancel()
-        routeJob = scope.launch { computeRoute(destination, origin) }
+        routeJob = scope.launch { computeRoute(destination, origin, autoStart = true) }
     }
 }

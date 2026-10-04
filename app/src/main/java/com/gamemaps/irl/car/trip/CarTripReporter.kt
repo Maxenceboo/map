@@ -27,8 +27,8 @@ class CarTripReporter(carContext: CarContext, onStopRequested: () -> Unit) {
 
     fun onStateChanged(state: NavigationState) {
         if (state !is NavigationState.Navigating) {
-            // Calculating : on garde l'état courant ; tout le reste termine le guidage.
-            if (state !is NavigationState.Calculating) end()
+            // Calcul ou aperçu : on garde l'état courant ; tout le reste termine le guidage.
+            if (state !is NavigationState.Calculating && state !is NavigationState.Previewing) end()
             return
         }
         if (!started) {

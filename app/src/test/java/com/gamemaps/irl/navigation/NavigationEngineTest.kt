@@ -5,6 +5,7 @@ import com.gamemaps.irl.core.geo.LatLng
 import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.location.LocationSource
+import com.gamemaps.irl.data.routing.ManeuverType
 import com.gamemaps.irl.data.routing.RoutingException
 import com.gamemaps.irl.data.routing.RoutingService
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,9 @@ class NavigationEngineTest {
         assertTrue(engine.state.value is NavigationState.Calculating)
 
         gps.emit(TestFixtures.fix(TestFixtures.START))
+        assertTrue(engine.state.value is NavigationState.Previewing)
+
+        engine.confirm()
         assertTrue(engine.state.value is NavigationState.Navigating)
 
         gps.emit(TestFixtures.fix(TestFixtures.END))
@@ -68,12 +72,46 @@ class NavigationEngineTest {
         }
         val farAway = LatLng(TestFixtures.START.lat, -0.5900) // ~800 m à l'ouest du tracé
 
-        engine.start(TestFixtures.PLACE)
+        engine.start(TestFixtures.PLACE, autoStart = true)
         gps.emit(TestFixtures.fix(TestFixtures.START, timeMillis = 0))
         gps.emit(TestFixtures.fix(farAway, timeMillis = 1_000))
         gps.emit(TestFixtures.fix(farAway, timeMillis = 4_500))
 
         assertEquals(2, routeRequests)
+        scope.cancel()
+    }
+
+    @Test
+    fun `pendant l'aperçu, rouler ne déclenche ni arrivée ni recalcul`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        var routeRequests = 0
+        val engine = engine(scope) { _, _ ->
+            routeRequests++
+            TestFixtures.lShapedRoute()
+        }
+
+        engine.start(TestFixtures.PLACE)
+        gps.emit(TestFixtures.fix(TestFixtures.START, timeMillis = 0))
+        gps.emit(TestFixtures.fix(LatLng(TestFixtures.START.lat, -0.5900), timeMillis = 10_000))
+        gps.emit(TestFixtures.fix(TestFixtures.END, timeMillis = 20_000))
+
+        assertTrue(engine.state.value is NavigationState.Previewing)
+        assertEquals(1, routeRequests)
+        scope.cancel()
+    }
+
+    @Test
+    fun `le départ part de la position actuelle`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val engine = engine(scope) { _, _ -> TestFixtures.lShapedRoute() }
+
+        engine.start(TestFixtures.PLACE)
+        gps.emit(TestFixtures.fix(TestFixtures.START))
+        gps.emit(TestFixtures.fix(TestFixtures.CORNER)) // on a avancé pendant l'aperçu
+        engine.confirm()
+
+        val navigating = engine.state.value as NavigationState.Navigating
+        assertEquals(ManeuverType.ARRIVE, navigating.progress.nextStep?.maneuver)
         scope.cancel()
     }
 }

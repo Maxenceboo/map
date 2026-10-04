@@ -12,6 +12,7 @@ import com.gamemaps.irl.car.templates.CalculatingTemplate
 import com.gamemaps.irl.car.templates.IdleTemplate
 import com.gamemaps.irl.car.templates.MessageTemplates
 import com.gamemaps.irl.car.templates.NavigatingTemplate
+import com.gamemaps.irl.car.templates.PreviewTemplate
 import com.gamemaps.irl.car.trip.CarTripReporter
 import com.gamemaps.irl.data.location.LocationPermissions
 import com.gamemaps.irl.di.AppContainer
@@ -62,6 +63,7 @@ class NavigationCarScreen(
                 onToggleMute = audio::toggleMuted,
             )
             is NavigationState.Calculating -> CalculatingTemplate.build(onStop = engine::stop)
+            is NavigationState.Previewing -> PreviewTemplate.build(state, onStart = engine::confirm, onCancel = engine::stop)
             is NavigationState.Navigating -> NavigatingTemplate.build(
                 state = state,
                 isMuted = audio.muted.value,
@@ -71,7 +73,7 @@ class NavigationCarScreen(
             is NavigationState.Arrived -> MessageTemplates.arrived(state.destination.name, onDone = engine::stop)
             is NavigationState.Failed -> MessageTemplates.failed(
                 reason = state.message,
-                onRetry = { engine.start(state.destination) },
+                onRetry = { engine.start(state.destination, autoStart = true) },
                 onDone = engine::stop,
             )
         }
@@ -107,7 +109,8 @@ class NavigationCarScreen(
 
     private fun refreshMap() {
         val controller = mapController ?: return
-        controller.showRoute((navigation as? NavigationState.Navigating)?.route)
+        val route = (navigation as? NavigationState.Navigating)?.route ?: (navigation as? NavigationState.Previewing)?.route
+        controller.showRoute(route)
         controller.showRadars(container.radarRepository.radars.value)
         container.locationRepository.fixes.value?.let(controller::showVehicle)
     }

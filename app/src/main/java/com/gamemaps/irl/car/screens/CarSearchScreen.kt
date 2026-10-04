@@ -69,7 +69,7 @@ class CarSearchScreen(
     }
 
     private fun onPlaceSelected(place: Place) {
-        container.navigationEngine.start(place)
+        container.navigationEngine.start(place, autoStart = true)
         screenManager.pop()
     }
 

@@ -3,7 +3,12 @@ package com.gamemaps.irl.navigation
 import com.gamemaps.irl.data.routing.Route
 import com.gamemaps.irl.data.search.Place
 
-/** États possibles du guidage. Le téléphone et Android Auto affichent tous les deux cet état. */
+/**
+ * États possibles du guidage. Le téléphone et Android Auto affichent tous les deux cet état.
+ *
+ * Idle → Calculating → Previewing → Navigating → Arrived
+ *                    ↘ Failed       (Previewing est sauté si le départ est automatique)
+ */
 sealed interface NavigationState {
 
     /** Pas de destination : simple suivi de position. */
@@ -11,6 +16,9 @@ sealed interface NavigationState {
 
     /** Destination choisie, itinéraire en cours de calcul. */
     data class Calculating(val destination: Place) : NavigationState
+
+    /** Itinéraire calculé, affiché en entier : on attend que le conducteur appuie sur DÉMARRER. */
+    data class Previewing(val destination: Place, val route: Route) : NavigationState
 
     /** Guidage actif. [isRerouting] = recalcul en cours après une sortie d'itinéraire. */
     data class Navigating(

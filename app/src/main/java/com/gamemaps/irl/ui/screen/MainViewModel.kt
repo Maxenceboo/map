@@ -75,6 +75,10 @@ class MainViewModel(
         navigationEngine.start(place)
     }
 
+    fun onConfirmRoute() {
+        navigationEngine.confirm()
+    }
+
     fun onStopNavigation() {
         navigationEngine.stop()
     }
