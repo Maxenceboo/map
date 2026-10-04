@@ -30,6 +30,15 @@ class RankingTest {
     }
 
     @Test
+    fun `doublons - une ville décrite par plusieurs objets n'apparaît qu'une fois`() {
+        val center = Place("c", "Bordeaux", "33000 Bordeaux", LatLng(44.8378, -0.5792), PlaceKind.CITY)
+        val boundary = Place("b", "Bordeaux", "", LatLng(44.8590, -0.5730), PlaceKind.CITY) // ~2,4 km plus loin
+        val namesake = Place("n", "Bordeaux", "40090 Cère", LatLng(44.0, -0.53), PlaceKind.CITY) // lieu-dit des Landes
+        val result = PlaceDeduplicator.deduplicate(listOf(center, boundary, namesake))
+        assertEquals(setOf("c", "n"), result.map { it.id }.toSet())
+    }
+
+    @Test
     fun `à texte égal, le plus proche passe devant`() {
         val far = poi("far", "Leclerc", "shop:supermarket", LatLng(45.75, 4.85)) // Lyon
         val near = poi("near", "Leclerc", "shop:supermarket", LatLng(44.85, -0.60))
