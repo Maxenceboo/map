@@ -20,6 +20,7 @@ import com.gamemaps.irl.di.AppContainer
 import com.gamemaps.irl.map.MapController
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.navigation.NavigationState
+import com.gamemaps.irl.navigation.trip.toMissionPassedModel
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
@@ -73,7 +74,14 @@ class NavigationCarScreen(
                 onToggleMute = audio::toggleMuted,
                 onStop = engine::stop,
             )
-            is NavigationState.Arrived -> MessageTemplates.arrived(state.destination.name, onDone = engine::stop)
+            is NavigationState.Arrived -> {
+                val mission = state.toMissionPassedModel()
+                MessageTemplates.arrived(
+                    destinationName = mission.destinationName,
+                    summary = "${mission.distance} · ${mission.duration} · moyenne ${mission.averageSpeed}",
+                    onDone = engine::stop,
+                )
+            }
             is NavigationState.Failed -> MessageTemplates.failed(
                 reason = state.message,
                 onRetry = { engine.start(state.destination, autoStart = true) },

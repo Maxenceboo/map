@@ -1,6 +1,7 @@
 package com.gamemaps.irl.navigation
 
 import com.gamemaps.irl.TestFixtures
+import com.gamemaps.irl.core.geo.GeoMath
 import com.gamemaps.irl.core.geo.LatLng
 import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.LocationRepository
@@ -43,7 +44,10 @@ class NavigationEngineTest {
         assertTrue(engine.state.value is NavigationState.Navigating)
 
         gps.emit(TestFixtures.fix(TestFixtures.END))
-        assertEquals(NavigationState.Arrived(TestFixtures.PLACE), engine.state.value)
+        val arrived = engine.state.value as NavigationState.Arrived
+        assertEquals(TestFixtures.PLACE, arrived.destination)
+        // Deux positions GPS : départ puis arrivée, soit la diagonale du "L".
+        assertEquals(GeoMath.distanceMeters(TestFixtures.START, TestFixtures.END), arrived.stats.distanceMeters, 1.0)
 
         engine.stop()
         assertEquals(NavigationState.Idle, engine.state.value)

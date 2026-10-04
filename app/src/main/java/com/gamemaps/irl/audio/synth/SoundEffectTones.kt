@@ -25,9 +25,7 @@ object SoundEffectTones {
             Tone(0.0, 0.1, A5),
             Tone(0.08, 0.18, C6),
         )
-        SoundEffect.ARRIVAL -> listOf(C5, E5, G5, C6).mapIndexed { i, note ->
-            Tone(startSeconds = i * 0.15, durationSeconds = 0.3, startHz = note, gain = 0.25)
-        }
+        SoundEffect.MISSION_PASSED -> MissionPassedScore.tones
         SoundEffect.RADAR_WARNING -> listOf(0.0, 0.15).map { start ->
             Tone(start, 0.1, startHz = G5, endHz = C6, waveform = Waveform.TRIANGLE, gain = 0.18)
         }

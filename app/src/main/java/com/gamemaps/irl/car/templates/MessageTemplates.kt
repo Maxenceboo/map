@@ -7,8 +7,8 @@ import androidx.car.app.model.Template
 /** Écrans de message simples : arrivée, erreur, permission manquante. */
 object MessageTemplates {
 
-    fun arrived(destinationName: String, onDone: () -> Unit): Template =
-        message("Mission accomplie", "Vous êtes arrivé : $destinationName", CarActions.button("OK", onDone))
+    fun arrived(destinationName: String, summary: String, onDone: () -> Unit): Template =
+        message("Mission accomplie", "$destinationName\n$summary", CarActions.button("OK", onDone))
 
     fun failed(reason: String, onRetry: () -> Unit, onDone: () -> Unit): Template =
         message(

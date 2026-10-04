@@ -120,6 +120,9 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `RouteProgressCalculator.kt` | Calcule `RouteProgress` à partir d'une position. |
 | `OffRouteDetector.kt` | > 35 m du tracé pendant > 3 s, en roulant ⇒ recalcul (§5.3). |
 | `ArrivalDetector.kt` | < 30 m de l'arrivée ⇒ arrivé. |
+| `trip/TripRecorder.kt` | Distance réellement parcourue et durée (sauts GPS > 250 km/h ignorés). |
+| `trip/TripStats.kt` | Bilan du trajet (distance, durée, moyenne). |
+| `trip/MissionPassedModel.kt` | Bilan mis en forme (téléphone + voiture). |
 | `SpeedingDetector.kt` | Excès de vitesse : limite + 3 km/h (§6.3). |
 | `radar/RadarAlertDetector.kt` | Radar à < 800 m devant, cône de ±30° (§6.2) ; urgent sous 300 m. |
 | `radar/RadarAlert.kt` | Le radar concerné, sa distance et le niveau d'alerte. |
@@ -155,14 +158,15 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `AudioController.kt` | Écoute guidage, radars et vitesse ; joue les annonces (sauf son coupé). Un seul pour téléphone + voiture. |
 | `AudioCueFilter.kt` | Retire ce qui est désactivé dans les Paramètres (voix, bips). |
 | `cue/AudioCue.kt` | Une annonce : un son ou une phrase. |
-| `cue/SoundEffect.kt` | Liste des sons (départ, virage, arrivée, radar, excès). |
+| `cue/SoundEffect.kt` | Liste des sons (départ, virage, fanfare d'arrivée, radar, excès). |
 | `announcers/GuidanceAnnouncer.kt` | Départ, "Dans 500 mètres…", carillon + instruction avant la manœuvre, recalcul, arrivée. |
 | `announcers/RadarAnnouncer.kt` | Double bip + "Radar dans 600 mètres", puis triple bip sous 300 m. |
 | `announcers/SpeedingAnnouncer.kt` | Bip au dépassement, répété toutes les 15 s. |
 | `announcers/SpeechDistanceFormatter.kt` | "300 mètres", "1,5 kilomètres". |
 | `synth/ToneSynth.kt` | Synthétiseur : notes → échantillons PCM (aucun fichier audio). |
 | `synth/SoundEffectTones.kt` | Partition de chaque son (reprise de la version WebGL). |
-| `synth/Tone.kt`, `synth/Waveform.kt` | Une note ; formes d'onde sinus / triangle / dent de scie. |
+| `synth/MissionPassedScore.kt` | Fanfare « Mission Passed » : accord suspendu mineur → majeur, basse 55 Hz, cordes ±7 cents. |
+| `synth/Tone.kt`, `synth/Waveform.kt` | Une note (avec passe-bas optionnel) ; formes d'onde sinus / triangle / dent de scie. |
 | `playback/TonePlayer.kt` | Joue un son via `AudioTrack`. |
 | `playback/VoiceGuide.kt` | Synthèse vocale française (`TextToSpeech`). |
 | `playback/AndroidAudioOutput.kt` | Enchaîne sons et phrases (la voix attend la fin du carillon). |
@@ -188,7 +192,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `hud/RadarAlertBanner.kt` | Bandeau « RADAR FEU ROUGE · 450 m » ; tout rouge clignotant sous 300 m. |
 | `hud/ArrivalPanel.kt` | Heure d'arrivée, restant, "Arrêter" (bas droite). |
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
-| `hud/StatusBanner.kt` | Messages (calcul, erreur, arrivée). |
+| `hud/StatusBanner.kt` | Messages (calcul, erreur). |
+| `hud/MissionPassedOverlay.kt` | Écran « MISSION ACCOMPLIE » doré, bilan du trajet. |
 | `hud/MuteButton.kt` | Bouton 🔊 / 🔇. |
 | `hud/MenuButton.kt` | Bouton ☰ (ouvre les Paramètres). |
 | `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
@@ -286,4 +291,4 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 1. Trafic TomTom : bordures orange / rouge sur le tracé.
 2. Véhicule 3D (Filament) à la place de la flèche 2D.
-3. Thème Minecraft, fanfare « Mission Passed ».
+3. Thème Minecraft.

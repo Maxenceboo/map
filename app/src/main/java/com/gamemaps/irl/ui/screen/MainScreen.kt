@@ -30,6 +30,8 @@ import com.gamemaps.irl.ui.hud.ArrivalPanel
 import com.gamemaps.irl.ui.hud.GpsStatusDot
 import com.gamemaps.irl.ui.hud.ManeuverBanner
 import com.gamemaps.irl.ui.hud.MenuButton
+import com.gamemaps.irl.ui.hud.MissionPassedOverlay
+import com.gamemaps.irl.navigation.trip.toMissionPassedModel
 import com.gamemaps.irl.ui.hud.MuteButton
 import com.gamemaps.irl.ui.hud.PlaceSaveCallbacks
 import com.gamemaps.irl.ui.hud.PlaceSaveState
@@ -91,6 +93,9 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
             ),
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(12.dp),
         )
+        (state.navigation as? NavigationState.Arrived)?.let { arrived ->
+            MissionPassedOverlay(arrived.toMissionPassedModel(), onDismiss = viewModel::onStopNavigation)
+        }
         if (showSettings) SettingsScreen(settingsViewModel, onClose = { showSettings = false })
     }
 }
@@ -134,8 +139,7 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings
                 StatusBanner("Calcul de l'itinéraire vers ${navigation.destination.name}…")
             is NavigationState.Navigating ->
                 ManeuverBanner(navigation.toHudModel())
-            is NavigationState.Arrived ->
-                StatusBanner("Mission accomplie : ${navigation.destination.name}", color = CockpitColors.Route, onDismiss = viewModel::onStopNavigation)
+            is NavigationState.Arrived -> Unit // Écran plein "Mission accomplie" (voir MainScreen).
             is NavigationState.Failed ->
                 StatusBanner("Échec : ${navigation.message}", color = CockpitColors.Danger, onDismiss = viewModel::onStopNavigation)
         }

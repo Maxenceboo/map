@@ -31,7 +31,7 @@ class GuidanceAnnouncer(
             is NavigationState.Navigating -> onNavigating(state)
             is NavigationState.Arrived ->
                 if (lastState !is NavigationState.Arrived) {
-                    listOf(AudioCue.Sound(SoundEffect.ARRIVAL), AudioCue.Speech("Vous êtes arrivé à destination"))
+                    listOf(AudioCue.Sound(SoundEffect.MISSION_PASSED), AudioCue.Speech("Mission accomplie. Vous êtes arrivé à destination"))
                 } else emptyList()
             is NavigationState.Failed ->
                 if (lastState !is NavigationState.Failed) listOf(AudioCue.Speech("Itinéraire introuvable")) else emptyList()

@@ -2,6 +2,7 @@ package com.gamemaps.irl.navigation
 
 import com.gamemaps.irl.data.routing.Route
 import com.gamemaps.irl.data.search.Place
+import com.gamemaps.irl.navigation.trip.TripStats
 
 /**
  * États possibles du guidage. Le téléphone et Android Auto affichent tous les deux cet état.
@@ -28,7 +29,8 @@ sealed interface NavigationState {
         val isRerouting: Boolean = false,
     ) : NavigationState
 
-    data class Arrived(val destination: Place) : NavigationState
+    /** Destination atteinte, avec le bilan du trajet ([stats]). */
+    data class Arrived(val destination: Place, val stats: TripStats = TripStats()) : NavigationState
 
     data class Failed(val destination: Place, val message: String) : NavigationState
 }

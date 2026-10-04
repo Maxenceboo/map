@@ -5,6 +5,7 @@ import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.search.Place
+import com.gamemaps.irl.navigation.trip.TripRecorder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -34,12 +35,14 @@ class NavigationEngine(
     private val progressCalculator: RouteProgressCalculator = RouteProgressCalculator(),
     private val offRouteDetector: OffRouteDetector = OffRouteDetector(),
     private val arrivalDetector: ArrivalDetector = ArrivalDetector(),
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val _state = MutableStateFlow<NavigationState>(NavigationState.Idle)
     val state: StateFlow<NavigationState> = _state.asStateFlow()
 
     private var routeJob: Job? = null
     private var trackingJob: Job? = null
+    private val tripRecorder = TripRecorder()
 
     fun start(destination: Place, autoStart: Boolean = false) {
         stop()
@@ -58,6 +61,7 @@ class NavigationEngine(
         val preview = _state.value as? NavigationState.Previewing ?: return
         val position = location.fixes.value?.position ?: preview.route.geometry.first()
         offRouteDetector.reset()
+        tripRecorder.start(clock(), position)
         _state.value = NavigationState.Navigating(preview.destination, preview.route, progressCalculator.compute(preview.route, position))
     }
 
@@ -74,6 +78,7 @@ class NavigationEngine(
             offRouteDetector.reset()
             // Un recalcul en cours de route repart directement en guidage, sans nouvel aperçu.
             val isReroute = _state.value is NavigationState.Navigating
+            if (autoStart && !isReroute) tripRecorder.start(clock(), origin)
             _state.value = if (autoStart || isReroute) {
                 NavigationState.Navigating(destination, route, progressCalculator.compute(route, origin))
             } else {
@@ -95,9 +100,10 @@ class NavigationEngine(
     private fun onFix(fix: GpsFix) {
         val current = _state.value as? NavigationState.Navigating ?: return
         val progress = progressCalculator.compute(current.route, fix.position)
+        tripRecorder.onPosition(fix.position, fix.timeMillis)
 
         if (arrivalDetector.hasArrived(progress)) {
-            _state.value = NavigationState.Arrived(current.destination)
+            _state.value = NavigationState.Arrived(current.destination, tripRecorder.finish(clock()))
             return
         }
         _state.update { (it as? NavigationState.Navigating)?.copy(progress = progress) ?: it }

@@ -1,6 +1,7 @@
 package com.gamemaps.irl.audio.synth
 
 import kotlin.math.PI
+import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.pow
 
@@ -32,6 +33,7 @@ object ToneSynth {
         val first = (tone.startSeconds * sampleRate).toInt()
         val count = (tone.durationSeconds * sampleRate).toInt()
         var phase = 0.0
+        val lowpass = tone.lowpassHz?.let { OnePoleLowpass(it, sampleRate) }
         for (n in 0 until count) {
             val index = first + n
             if (index >= mix.size) break
@@ -39,7 +41,20 @@ object ToneSynth {
             // Glissement exponentiel de fréquence, comme exponentialRampToValueAtTime.
             val frequency = tone.startHz * (tone.endHz / tone.startHz).pow(progress)
             phase += 2 * PI * frequency / sampleRate
-            mix[index] += tone.waveform.sample(phase) * tone.gain * envelope(n.toDouble() / sampleRate, progress)
+            val raw = tone.waveform.sample(phase)
+            val filtered = lowpass?.process(raw) ?: raw
+            mix[index] += filtered * tone.gain * envelope(n.toDouble() / sampleRate, progress)
+        }
+    }
+
+    /** Filtre passe-bas du premier ordre : retire les aigus agressifs d'une dent de scie. */
+    private class OnePoleLowpass(cutoffHz: Double, sampleRate: Int) {
+        private val alpha = 1 - exp(-2 * PI * cutoffHz / sampleRate)
+        private var state = 0.0
+
+        fun process(input: Double): Double {
+            state += alpha * (input - state)
+            return state
         }
     }
 

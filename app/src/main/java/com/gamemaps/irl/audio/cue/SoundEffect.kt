@@ -8,8 +8,8 @@ enum class SoundEffect {
     /** Carillon juste avant une manœuvre. */
     TURN,
 
-    /** Arpège do-mi-sol-do : destination atteinte. */
-    ARRIVAL,
+    /** Fanfare "Mission Passed" : destination atteinte. */
+    MISSION_PASSED,
 
     /** Double bip : radar en approche. */
     RADAR_WARNING,

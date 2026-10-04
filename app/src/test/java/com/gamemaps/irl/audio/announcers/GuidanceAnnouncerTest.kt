@@ -62,7 +62,7 @@ class GuidanceAnnouncerTest {
         announcer.onState(navigatingAt(900.0))
         val arrived = NavigationState.Arrived(TestFixtures.PLACE)
         assertEquals(
-            listOf(AudioCue.Sound(SoundEffect.ARRIVAL), AudioCue.Speech("Vous êtes arrivé à destination")),
+            listOf(AudioCue.Sound(SoundEffect.MISSION_PASSED), AudioCue.Speech("Mission accomplie. Vous êtes arrivé à destination")),
             announcer.onState(arrived),
         )
         assertTrue(announcer.onState(arrived).isEmpty())
