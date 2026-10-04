@@ -234,7 +234,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `hud/MuteButton.kt` | Bouton rond du son (hors guidage). |
 | `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
 | `hud/PreviewModel.kt` | Textes de l'aperçu. |
-| `hud/PlaceSaveActions.kt` | Boutons Maison / Travail / Favori de l'aperçu. |
+| `hud/PlaceSaveActions.kt` | Pastille « Ajouter aux favoris » de l'aperçu. |
 | `hud/RecenterButton.kt` | Bouton rond jaune « viseur » quand la carte a été déplacée. |
 | `search/SearchBar.kt` | Barre "Où aller ?" avec le bouton du menu (Paramètres) intégré. |
 | `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3) : repère, adresse, distance. |

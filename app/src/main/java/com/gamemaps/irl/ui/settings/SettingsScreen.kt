@@ -22,6 +22,7 @@ import com.gamemaps.irl.ui.settings.components.SettingsHeader
 import com.gamemaps.irl.ui.settings.sections.AboutSection
 import com.gamemaps.irl.ui.settings.sections.AudioSection
 import com.gamemaps.irl.ui.settings.sections.PerspectiveSection
+import com.gamemaps.irl.ui.settings.sections.PlacePickerSection
 import com.gamemaps.irl.ui.settings.sections.PlacesSection
 import com.gamemaps.irl.ui.settings.sections.RadarSection
 import com.gamemaps.irl.ui.settings.sections.RootSection
@@ -35,12 +36,17 @@ import com.gamemaps.irl.ui.theme.CockpitColors
 /**
  * Menu Paramètres plein écran, par-dessus la carte.
  * Navigation simple : la section affichée est un état ; "Retour" (ou le bouton retour du téléphone)
- * remonte d'un niveau, puis ferme le menu.
+ * remonte d'un niveau, puis ferme le menu. [startSection] ouvre directement un écran précis.
  */
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
+fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSection: SettingsSection = SettingsSection.ROOT) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var section by rememberSaveable { mutableStateOf(SettingsSection.ROOT) }
+    var section by rememberSaveable { mutableStateOf(startSection) }
+    // Maison ou Travail choisi : on efface la recherche et on revient à la liste des lieux.
+    val backToPlaces = {
+        viewModel.searchPlace("")
+        section = SettingsSection.PLACES
+    }
     val goBack = { section.parent?.let { section = it } ?: onClose() }
 
     BackHandler(onBack = goBack)
@@ -71,7 +77,23 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
                 SettingsSection.AUDIO -> AudioSection(state.settings, state.isMuted, viewModel::toggleMuted, viewModel::update)
                 SettingsSection.RADARS -> RadarSection(state.settings, viewModel::update)
                 SettingsSection.TRAFFIC -> TrafficSettingsSection(state.settings, state.maskedTomTomKey, viewModel::update, viewModel::saveTomTomKey, viewModel::clearTomTomKey)
-                SettingsSection.PLACES -> PlacesSection(state.savedPlaces, viewModel::clearHome, viewModel::clearWork, viewModel::removeFavorite)
+                SettingsSection.PLACES -> PlacesSection(state.savedPlaces, open = { section = it }, onRemoveFavorite = viewModel::removeFavorite)
+                SettingsSection.PLACE_HOME -> PlacePickerSection(
+                    current = state.savedPlaces.home,
+                    results = state.placeResults,
+                    onSearch = viewModel::searchPlace,
+                    onPick = { viewModel.setHome(it); backToPlaces() },
+                    onUseCurrentPosition = { viewModel.currentPositionAsPlace()?.let(viewModel::setHome); backToPlaces() }.takeIf { state.hasPosition },
+                    onClear = viewModel::clearHome,
+                )
+                SettingsSection.PLACE_WORK -> PlacePickerSection(
+                    current = state.savedPlaces.work,
+                    results = state.placeResults,
+                    onSearch = viewModel::searchPlace,
+                    onPick = { viewModel.setWork(it); backToPlaces() },
+                    onUseCurrentPosition = { viewModel.currentPositionAsPlace()?.let(viewModel::setWork); backToPlaces() }.takeIf { state.hasPosition },
+                    onClear = viewModel::clearWork,
+                )
                 SettingsSection.ABOUT -> AboutSection()
             }
         }

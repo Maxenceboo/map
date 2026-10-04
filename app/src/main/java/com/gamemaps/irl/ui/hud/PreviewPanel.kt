@@ -31,13 +31,13 @@ import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
  * Aperçu avant le départ : destination, durée en grand, distance et heure d'arrivée,
- * croix pour annuler en haut à droite, enregistrement (Maison / Travail / Favori), puis Démarrer (règle §2.3 : bouton principal large).
+ * croix pour annuler en haut à droite, ajout aux favoris, puis Démarrer (règle §2.3 : bouton principal large).
  */
 @Composable
 fun PreviewPanel(
     preview: PreviewModel,
-    saveState: PlaceSaveState,
-    saveCallbacks: PlaceSaveCallbacks,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onStart: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -75,7 +75,7 @@ fun PreviewPanel(
             }
             Spacer(Modifier.height(16.dp))
 
-            PlaceSaveActions(saveState, saveCallbacks)
+            FavoriteToggle(isFavorite, onToggleFavorite)
             Spacer(Modifier.height(12.dp))
 
             ActionButton("Démarrer", CockpitColors.Accent, CockpitColors.OnAccent, onStart, Modifier.fillMaxWidth())

@@ -30,8 +30,6 @@ import com.gamemaps.irl.ui.hud.ManeuverBanner
 import com.gamemaps.irl.ui.hud.MissionPassedOverlay
 import com.gamemaps.irl.navigation.trip.toMissionPassedModel
 import com.gamemaps.irl.ui.hud.MuteButton
-import com.gamemaps.irl.ui.hud.PlaceSaveCallbacks
-import com.gamemaps.irl.ui.hud.PlaceSaveState
 import com.gamemaps.irl.ui.hud.PreviewPanel
 import com.gamemaps.irl.ui.hud.RecenterButton
 import com.gamemaps.irl.ui.hud.toPreviewModel
@@ -44,6 +42,7 @@ import com.gamemaps.irl.ui.map.MapViewHost
 import com.gamemaps.irl.ui.permissions.LocationPermissionEffect
 import com.gamemaps.irl.ui.search.SavedPlacesShortcuts
 import com.gamemaps.irl.ui.settings.SettingsScreen
+import com.gamemaps.irl.ui.settings.SettingsSection
 import com.gamemaps.irl.ui.settings.SettingsViewModel
 import com.gamemaps.irl.ui.search.SearchBar
 import com.gamemaps.irl.ui.search.SearchResultsList
@@ -59,7 +58,8 @@ import com.gamemaps.irl.ui.search.SearchResultsList
 fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, onLocationPermissionGranted: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var mapController by remember { mutableStateOf<MapController?>(null) }
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+    // Écran des Paramètres à ouvrir, ou null quand le menu est fermé.
+    var settingsStart by rememberSaveable { mutableStateOf<SettingsSection?>(null) }
     val followingFlow = remember(mapController) { mapController?.isFollowing ?: MutableStateFlow(true) }
     val isFollowing by followingFlow.collectAsStateWithLifecycle()
 
@@ -73,7 +73,8 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
         TopArea(
             state = state,
             viewModel = viewModel,
-            onOpenSettings = { showSettings = true },
+            onOpenSettings = { settingsStart = SettingsSection.ROOT },
+            onDefinePlaces = { settingsStart = SettingsSection.PLACES },
             modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(12.dp),
         )
         BottomArea(
@@ -84,8 +85,6 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
                 onToggleMute = viewModel::onToggleMute,
                 onConfirmRoute = viewModel::onConfirmRoute,
                 onRecenter = { mapController?.recenter() },
-                onSetHome = viewModel::onSetHome,
-                onSetWork = viewModel::onSetWork,
                 onToggleFavorite = viewModel::onToggleFavorite,
             ),
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(12.dp),
@@ -93,12 +92,18 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
         (state.navigation as? NavigationState.Arrived)?.let { arrived ->
             MissionPassedOverlay(arrived.toMissionPassedModel(), onDismiss = viewModel::onStopNavigation)
         }
-        if (showSettings) SettingsScreen(settingsViewModel, onClose = { showSettings = false })
+        settingsStart?.let { start -> SettingsScreen(settingsViewModel, startSection = start, onClose = { settingsStart = null }) }
     }
 }
 
 @Composable
-private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings: () -> Unit, modifier: Modifier) {
+private fun TopArea(
+    state: MainUiState,
+    viewModel: MainViewModel,
+    onOpenSettings: () -> Unit,
+    onDefinePlaces: () -> Unit,
+    modifier: Modifier,
+) {
     // Texte du champ gardé localement : mis à jour immédiatement à chaque frappe.
     var query by rememberSaveable { mutableStateOf("") }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -115,7 +120,7 @@ private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings
                     trailing = { GpsStatusDot(state.driving.gpsQuality) },
                 )
                 if (query.isBlank()) {
-                    SavedPlacesShortcuts(saved = state.savedPlaces, onSelect = viewModel::onPlaceSelected)
+                    SavedPlacesShortcuts(saved = state.savedPlaces, onSelect = viewModel::onPlaceSelected, onDefine = onDefinePlaces)
                 }
                 if (state.search.results.isNotEmpty()) {
                     SearchResultsList(
@@ -146,19 +151,10 @@ private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: Bottom
     val navigation = state.navigation
     if (navigation is NavigationState.Previewing) {
         val destination = navigation.destination
-        val saved = state.savedPlaces
         PreviewPanel(
             preview = navigation.toPreviewModel(),
-            saveState = PlaceSaveState(
-                isHome = saved.home?.id == destination.id,
-                isWork = saved.work?.id == destination.id,
-                isFavorite = saved.isFavorite(destination),
-            ),
-            saveCallbacks = PlaceSaveCallbacks(
-                onSetHome = { actions.onSetHome(destination) },
-                onSetWork = { actions.onSetWork(destination) },
-                onToggleFavorite = { actions.onToggleFavorite(destination) },
-            ),
+            isFavorite = state.savedPlaces.isFavorite(destination),
+            onToggleFavorite = { actions.onToggleFavorite(destination) },
             onStart = actions.onConfirmRoute,
             onCancel = actions.onStop,
             modifier = modifier,
@@ -188,7 +184,5 @@ private class BottomActions(
     val onToggleMute: () -> Unit,
     val onConfirmRoute: () -> Unit,
     val onRecenter: () -> Unit,
-    val onSetHome: (Place) -> Unit,
-    val onSetWork: (Place) -> Unit,
     val onToggleFavorite: (Place) -> Unit,
 )

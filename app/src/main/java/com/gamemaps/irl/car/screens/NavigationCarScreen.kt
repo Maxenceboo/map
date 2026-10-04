@@ -143,12 +143,12 @@ class NavigationCarScreen(
         container.locationRepository.fixes.value?.let(controller::showVehicle)
     }
 
-    /** Icône Maison / Travail : démarre le guidage, ou explique comment enregistrer le lieu. */
+    /** Icône Maison / Travail : démarre le guidage, ou indique où définir le lieu. */
     private fun startSavedTrip(place: Place?, label: String) {
         if (place != null) {
             engine.start(place, autoStart = true)
         } else {
-            CarToast.makeText(carContext, "$label n'est pas défini : choisissez-le sur le téléphone, dans l'aperçu d'un trajet", CarToast.LENGTH_LONG).show()
+            CarToast.makeText(carContext, "$label n'est pas défini : choisissez-le sur le téléphone, dans Paramètres > Lieux enregistrés", CarToast.LENGTH_LONG).show()
         }
     }
 

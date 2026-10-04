@@ -103,10 +103,6 @@ class MainViewModel(
         audioPreferences.toggleMuted()
     }
 
-    fun onSetHome(place: Place) = savedPlacesRepository.setHome(place)
-
-    fun onSetWork(place: Place) = savedPlacesRepository.setWork(place)
-
     fun onToggleFavorite(place: Place) = savedPlacesRepository.toggleFavorite(place)
 
     /** Attend 350 ms sans frappe avant d'interroger le géocodeur ; annule la requête précédente. */
