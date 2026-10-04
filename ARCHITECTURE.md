@@ -138,13 +138,17 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `MapController.kt` | Façade : véhicule, tracé + destination, radars, vue d'ensemble, recentrage, thème et perspective à chaud. |
 | `MapLibreConversions.kt` | Notre `LatLng` → types MapLibre / GeoJSON. |
 | `style/MapStyleSource.kt` | URL du fond de carte OpenFreeMap. |
-| `theme/MapTheme.kt` | Thèmes GTA V Radar et Waze nocturne (§4). |
+| `theme/MapTheme.kt` | Thèmes GTA V Radar, Waze nocturne, Minecraft IRL (§4). |
+| `theme/MapTextures.kt` | Textures d'un thème (herbe, eau, arbres, sprite du véhicule). |
+| `theme/ThemeTextureInstaller.kt` | Ajoute les textures au style comme motifs (pixels nets). |
+| `theme/ThemePatterns.kt` | Motifs installés pour le thème actif. |
 | `theme/MapPalette.kt` | Couleurs d'un thème. |
 | `theme/MapThemeApplier.kt` | Repeint chaque calque du style selon la palette. |
 | `layers/RouteLayer.kt` | Tracé violet + liseré. |
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
 | `layers/VehicleMarkerLayer.kt` | Marqueur du véhicule orienté selon le cap. |
+| `layers/VehicleIconFactory.kt` | Flèche GTA ou sprite pixel-art (cochon Minecraft) selon le thème. |
 | `layers/VehicleArrowBitmap.kt` | Dessin de la flèche GTA (provisoire avant la 3D). |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
 | `layers/RadarLayer.kt` | Icônes des radars sur la carte (une par type). |
@@ -291,4 +295,3 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 1. Trafic TomTom : bordures orange / rouge sur le tracé.
 2. Véhicule 3D (Filament) à la place de la flèche 2D.
-3. Thème Minecraft.

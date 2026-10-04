@@ -35,9 +35,17 @@ class VehicleMarkerLayer(private val style: Style, private val icon: Bitmap) {
         )
     }
 
-    /** Remplace l'icône (changement de thème) : même identifiant, donc le calque suit tout seul. */
-    fun setIcon(newIcon: Bitmap) {
+    /**
+     * Remplace l'icône (changement de thème) : même identifiant, donc le calque suit tout seul.
+     * [rotates] = false pour un sprite vu de côté (cochon Minecraft) : il reste droit au lieu de tourner avec le cap.
+     */
+    fun setIcon(newIcon: Bitmap, rotates: Boolean = true) {
         style.addImage(ICON_ID, newIcon)
+        style.getLayer(LAYER_ID)?.setProperties(
+            PropertyFactory.iconRotate(if (rotates) Expression.get(BEARING_PROPERTY) else Expression.literal(0f)),
+            PropertyFactory.iconRotationAlignment(if (rotates) Property.ICON_ROTATION_ALIGNMENT_MAP else Property.ICON_ROTATION_ALIGNMENT_VIEWPORT),
+            PropertyFactory.iconPitchAlignment(if (rotates) Property.ICON_PITCH_ALIGNMENT_MAP else Property.ICON_PITCH_ALIGNMENT_VIEWPORT),
+        )
     }
 
     fun update(fix: GpsFix) {

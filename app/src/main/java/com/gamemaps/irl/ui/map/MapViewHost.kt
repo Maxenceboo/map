@@ -30,6 +30,7 @@ fun MapViewHost(
             onCreate(null)
             getMapAsync { map ->
                 MapSetup.load(
+                    context = context,
                     map = map,
                     theme = theme,
                     cameraConfig = CameraConfig.PHONE,

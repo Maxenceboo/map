@@ -54,6 +54,7 @@ class CarMapSurface(
 
         mapView.getMapAsync { map ->
             MapSetup.load(
+                context = presentation.context,
                 map = map,
                 theme = theme,
                 cameraConfig = CameraConfig.CAR,

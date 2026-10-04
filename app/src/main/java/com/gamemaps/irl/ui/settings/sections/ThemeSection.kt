@@ -20,4 +20,5 @@ fun ThemeSection(current: MapTheme, onSelect: (MapTheme) -> Unit) {
 private fun descriptionOf(theme: MapTheme): String = when (theme) {
     MapTheme.GTA_RADAR -> "Bleu nuit, routes ardoise, itinéraire violet"
     MapTheme.WAZE_NIGHT -> "Noir profond, grands axes cyan, itinéraire bleu électrique"
+    MapTheme.MINECRAFT -> "Herbe, eau et arbres en pixel art, tracé redstone, cochon"
 }

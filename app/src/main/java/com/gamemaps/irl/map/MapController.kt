@@ -1,5 +1,6 @@
 package com.gamemaps.irl.map
 
+import android.content.Context
 import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.radar.Radar
 import com.gamemaps.irl.data.routing.Route
@@ -9,10 +10,11 @@ import com.gamemaps.irl.map.layers.DestinationLayer
 import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
-import com.gamemaps.irl.map.layers.VehicleArrowBitmap
+import com.gamemaps.irl.map.layers.VehicleIconFactory
 import com.gamemaps.irl.map.layers.VehicleMarkerLayer
 import com.gamemaps.irl.map.theme.MapTheme
 import com.gamemaps.irl.map.theme.MapThemeApplier
+import com.gamemaps.irl.map.theme.ThemeTextureInstaller
 import kotlinx.coroutines.flow.StateFlow
 import org.maplibre.android.maps.Style
 
@@ -21,6 +23,7 @@ import org.maplibre.android.maps.Style
  * Le téléphone et Android Auto n'appellent que ces méthodes.
  */
 class MapController internal constructor(
+    private val context: Context,
     private val style: Style,
     private val routeLayer: RouteLayer,
     private val destinationLayer: DestinationLayer,
@@ -61,9 +64,10 @@ class MapController internal constructor(
     fun applyTheme(theme: MapTheme) {
         if (theme == currentTheme) return
         currentTheme = theme
-        MapThemeApplier.apply(style, theme.palette)
+        val patterns = ThemeTextureInstaller.install(context, style, theme.textures)
+        MapThemeApplier.apply(style, theme.palette, patterns)
         routeLayer.applyPalette(theme.palette)
-        vehicleLayer.setIcon(VehicleArrowBitmap.create(theme.palette))
+        vehicleLayer.setIcon(VehicleIconFactory.create(context, theme), rotates = theme.textures.vehicleSprite == null)
         destinationLayer.setIcon(DestinationPinBitmap.create(theme.palette))
     }
 

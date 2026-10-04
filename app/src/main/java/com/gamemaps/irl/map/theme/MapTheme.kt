@@ -1,7 +1,11 @@
 package com.gamemaps.irl.map.theme
 
-/** Thèmes de carte disponibles (cahier des charges §4). Minecraft arrivera avec les textures. */
-enum class MapTheme(val label: String, val palette: MapPalette) {
+/** Thèmes de carte disponibles (cahier des charges §4). */
+enum class MapTheme(
+    val label: String,
+    val palette: MapPalette,
+    val textures: MapTextures = MapTextures.NONE,
+) {
 
     GTA_RADAR(
         label = "Radar GTA V",
@@ -39,5 +43,26 @@ enum class MapTheme(val label: String, val palette: MapPalette) {
             vehicle = "#38bdf8",
             vehicleOutline = "#0d0f14",
         ),
+    ),
+
+    /** Monde cubique : herbe, eau et arbres en pixel art, routes grises, tracé redstone, cochon. */
+    MINECRAFT(
+        label = "Minecraft IRL",
+        palette = MapPalette(
+            background = "#528330",
+            landcover = "#385e1e",
+            water = "#3c63cc",
+            building = "#71717a",
+            road = "#6b7280",
+            majorRoad = "#9ca3af",
+            boundary = "#374151",
+            label = "#ffffff",
+            labelHalo = "#1f2937",
+            route = "#ef4444",
+            routeCasing = "#7f1d1d",
+            vehicle = "#f9a8d4",
+            vehicleOutline = "#1f2937",
+        ),
+        textures = MapTextures.MINECRAFT,
     ),
 }
