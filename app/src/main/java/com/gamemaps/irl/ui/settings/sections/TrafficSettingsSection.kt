@@ -1,7 +1,11 @@
 package com.gamemaps.irl.ui.settings.sections
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import com.gamemaps.irl.data.settings.AppSettings
+import com.gamemaps.irl.ui.icons.HudIcons
+import com.gamemaps.irl.ui.settings.components.SettingsGroup
 import com.gamemaps.irl.ui.settings.components.SettingsInfoRow
 import com.gamemaps.irl.ui.settings.components.SettingsToggleRow
 import com.gamemaps.irl.ui.settings.components.TomTomKeyField
@@ -19,18 +23,22 @@ fun TrafficSettingsSection(
     onSaveKey: (String) -> Boolean,
     onClearKey: () -> Unit,
 ) {
-    SettingsToggleRow(
-        icon = "🚦",
-        title = "Trafic en temps réel",
-        description = "Itinéraire qui évite les bouchons ; bords orange (ralenti) ou rouges (bouchon) sur le tracé",
-        checked = settings.traffic,
-    ) { enabled -> onUpdate { it.copy(traffic = enabled) } }
+    SettingsGroup {
+        SettingsToggleRow(
+            icon = HudIcons.Traffic,
+            title = "Trafic en temps réel",
+            description = "Itinéraire qui évite les bouchons ; bords orange (ralenti) ou rouges (bouchon) sur le tracé",
+            checked = settings.traffic,
+        ) { enabled -> onUpdate { it.copy(traffic = enabled) } }
+    }
 
-    if (maskedKey != null) {
-        SettingsInfoRow("🔑", "Clé TomTom enregistrée", maskedKey, actionLabel = "Retirer", onAction = onClearKey)
-        SettingsInfoRow("📱", "Stockée sur ce téléphone", "Ni dans l'application ni dans les sauvegardes. Si TomTom la refuse, l'itinéraire est calculé sans trafic")
-    } else {
-        SettingsInfoRow("🔑", "Aucune clé TomTom", "Créez une clé gratuite sur developer.tomtom.com, copiez-la puis collez-la ici. Sans clé : itinéraires sans trafic")
-        TomTomKeyField(onSaveKey)
+    SettingsGroup("Clé TomTom") {
+        if (maskedKey != null) {
+            SettingsInfoRow(HudIcons.Key, "Clé enregistrée", maskedKey, actionLabel = "Retirer", onAction = onClearKey)
+            SettingsInfoRow(Icons.Filled.Lock, "Stockée sur ce téléphone", "Ni dans l'application ni dans les sauvegardes. Si TomTom la refuse, l'itinéraire est calculé sans trafic")
+        } else {
+            SettingsInfoRow(HudIcons.Key, "Aucune clé", "Créez une clé gratuite sur developer.tomtom.com, copiez-la puis collez-la ici. Sans clé : itinéraires sans trafic")
+            TomTomKeyField(onSaveKey)
+        }
     }
 }

@@ -1,9 +1,14 @@
 package com.gamemaps.irl.ui.settings.sections
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.gamemaps.irl.ui.settings.components.SettingsGroupTitle
+import com.gamemaps.irl.ui.icons.HudIcons
+import com.gamemaps.irl.ui.settings.components.SettingsGroup
 import com.gamemaps.irl.ui.settings.components.SettingsInfoRow
 
 /** Version et sources des données (les licences ouvertes demandent de les citer). */
@@ -13,12 +18,15 @@ fun AboutSection() {
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "?"
     }
-    SettingsInfoRow("🎮", "Game Maps IRL", "Version $version — natif Kotlin, Android Auto")
 
-    SettingsGroupTitle("Données")
-    SettingsInfoRow("🗺", "Carte", "© OpenStreetMap contributors, tuiles OpenFreeMap")
-    SettingsInfoRow("🏠", "Adresses", "Base Adresse Nationale (IGN Géoplateforme)")
-    SettingsInfoRow("📍", "Lieux", "Photon (Komoot), données OpenStreetMap")
-    SettingsInfoRow("🧭", "Itinéraires", "OSRM, données OpenStreetMap")
-    SettingsInfoRow("📸", "Radars", "Base officielle française + OpenStreetMap (Overpass)")
+    SettingsGroup {
+        SettingsInfoRow(Icons.Filled.Info, "Game Maps IRL", "Version $version, natif Kotlin, Android Auto")
+    }
+    SettingsGroup("Données") {
+        SettingsInfoRow(HudIcons.Map, "Carte", "© OpenStreetMap contributors, tuiles OpenFreeMap")
+        SettingsInfoRow(Icons.Filled.Home, "Adresses", "Base Adresse Nationale (IGN Géoplateforme)")
+        SettingsInfoRow(Icons.Filled.Place, "Lieux", "Photon (Komoot), données OpenStreetMap")
+        SettingsInfoRow(HudIcons.Navigation, "Itinéraires", "TomTom (avec trafic) ou OSRM, données OpenStreetMap")
+        SettingsInfoRow(HudIcons.Radar, "Radars", "Base officielle française + OpenStreetMap (Overpass)")
+    }
 }

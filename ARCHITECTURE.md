@@ -244,7 +244,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `components/CockpitPanel.kt` | Carte du HUD + formes partagées (`HudShapes`). |
 | `components/HudSurface.kt` | Apparence commune : fond opaque et ombre, sans bordure. |
 | `components/HudIconButton.kt` | Bouton rond avec icône. |
-| `icons/HudIcons.kt` | Icônes vectorielles maison (son, viseur, mallette). |
+| `icons/HudIcons.kt` | Icônes vectorielles maison du HUD et des Paramètres (son, viseur, voiture, feu tricolore…). |
 | `permissions/LocationPermissionEffect.kt` | Demande ce qui manque : localisation, notifications (Android 13+). |
 | `theme/CockpitColors.kt`, `CockpitTypography.kt`, `GameMapsTheme.kt` | Design system : surfaces bleu nuit, accent jaune, police système. |
 
@@ -265,9 +265,10 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `SettingsSection.kt` | Racine, Thème, Perspective, Véhicule (> Modèle, Couleur), Audio, Radars, Trafic, Lieux, À propos. |
 | `SettingsUiState.kt` | Ce qu'affiche le menu. |
 | `sections/*.kt` | Un fichier par écran du menu. |
-| `components/SettingsHeader.kt` | « ← Retour » + titre. |
+| `components/SettingsHeader.kt` | Bouton retour rond + titre. |
+| `components/SettingsGroup.kt` | Carte arrondie qui regroupe les lignes d'un même sujet. |
 | `components/TomTomKeyField.kt` | Champ masqué + COLLER / ENREGISTRER pour la clé TomTom. |
-| `components/SettingsRows.kt` | Lignes : sous-menu ›, interrupteur, choix ✓, info avec action. |
+| `components/SettingsRows.kt` | Lignes : sous-menu, interrupteur, choix, info avec action ; icône vectorielle dans une tuile. |
 
 ### `car/` — Android Auto
 | Fichier | Rôle |
