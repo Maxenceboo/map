@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.gamemaps.irl.data.custom.CustomContentRepository
+import com.gamemaps.irl.data.custom.CustomThemeSpec
+import com.gamemaps.irl.data.custom.CustomVehicleSpec
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.places.SavedPlacesRepository
 import com.gamemaps.irl.data.routing.tomtom.TomTomKeyFormat
@@ -25,7 +28,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Logique du menu Paramètres : réglages, son, clé TomTom, lieux enregistrés (dont le choix de Maison et Travail). */
+/** Logique du menu Paramètres : réglages, son, clé TomTom, lieux enregistrés, thèmes et véhicules créés en mode développeur. */
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val savedPlacesRepository: SavedPlacesRepository,
@@ -33,6 +36,7 @@ class SettingsViewModel(
     private val tomTomKeyStore: TomTomKeyStore,
     private val placeSearch: PlaceSearch,
     private val locationRepository: LocationRepository,
+    private val customContent: CustomContentRepository,
 ) : ViewModel() {
 
     private val placeResults = MutableStateFlow<List<Place>>(emptyList())
@@ -46,8 +50,14 @@ class SettingsViewModel(
         tomTomKeyStore.key,
     ) { settings, saved, muted, key -> SettingsUiState(settings, saved, muted, key?.let(TomTomKeyFormat::mask)) }
 
-    val uiState: StateFlow<SettingsUiState> = combine(stored, placeResults, locationRepository.fixes) { state, results, fix ->
-        state.copy(placeResults = results, hasPosition = fix != null)
+    val uiState: StateFlow<SettingsUiState> = combine(
+        stored,
+        placeResults,
+        locationRepository.fixes,
+        customContent.themes,
+        customContent.vehicles,
+    ) { state, results, fix, themes, vehicles ->
+        state.copy(placeResults = results, hasPosition = fix != null, customThemes = themes, customVehicles = vehicles)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     fun update(change: (AppSettings) -> AppSettings) = settingsRepository.update(change)
@@ -98,6 +108,57 @@ class SettingsViewModel(
         Place(id = "here-${fix.position.lat}-${fix.position.lng}", name = "Position enregistrée", subtitle = "", position = fix.position)
     }
 
+    // ---- Mode développeur : thèmes et véhicules personnalisés ----
+
+    /** Crée un thème à partir des couleurs du thème actuel ; renvoie son identifiant pour l'ouvrir dans l'éditeur. */
+    fun createTheme(): String {
+        val spec = CustomThemeSpec(
+            id = "custom-theme-${System.currentTimeMillis()}",
+            name = "Mon thème ${customContent.themes.value.size + 1}",
+            palette = settingsRepository.settings.value.theme.palette,
+        )
+        customContent.saveTheme(spec)
+        return spec.id
+    }
+
+    /** Enregistre le thème ; s'il est celui affiché, la carte est repeinte tout de suite. */
+    fun saveTheme(spec: CustomThemeSpec) {
+        customContent.saveTheme(spec)
+        if (settingsRepository.settings.value.theme.id == spec.id) useTheme(spec)
+    }
+
+    fun useTheme(spec: CustomThemeSpec) = settingsRepository.update { it.copy(theme = spec.toMapTheme()) }
+
+    /** Supprime le thème ; s'il était affiché, on revient au thème par défaut. */
+    fun deleteTheme(id: String) {
+        customContent.deleteTheme(id)
+        if (settingsRepository.settings.value.theme.id == id) settingsRepository.update { it.copy(theme = AppSettings().theme) }
+    }
+
+    /** Crée un véhicule aux mesures par défaut ; renvoie son identifiant pour l'ouvrir dans l'éditeur. */
+    fun createVehicle(): String {
+        val spec = CustomVehicleSpec(
+            id = "custom-vehicle-${System.currentTimeMillis()}",
+            name = "Mon véhicule ${customContent.vehicles.value.size + 1}",
+        )
+        customContent.saveVehicle(spec)
+        return spec.id
+    }
+
+    /** Enregistre le véhicule ; s'il est celui affiché, il est redessiné tout de suite. */
+    fun saveVehicle(spec: CustomVehicleSpec) {
+        customContent.saveVehicle(spec)
+        if (settingsRepository.settings.value.vehicle.id == spec.id) useVehicle(spec)
+    }
+
+    fun useVehicle(spec: CustomVehicleSpec) = settingsRepository.update { it.copy(vehicle = spec.toVehicleKind()) }
+
+    /** Supprime le véhicule ; s'il était affiché, on revient au véhicule par défaut. */
+    fun deleteVehicle(id: String) {
+        customContent.deleteVehicle(id)
+        if (settingsRepository.settings.value.vehicle.id == id) settingsRepository.update { it.copy(vehicle = AppSettings().vehicle) }
+    }
+
     fun clearHome() = savedPlacesRepository.clearHome()
 
     fun clearWork() = savedPlacesRepository.clearWork()
@@ -116,6 +177,7 @@ class SettingsViewModel(
                     tomTomKeyStore = container.tomTomKeyStore,
                     placeSearch = container.placeSearch,
                     locationRepository = container.locationRepository,
+                    customContent = container.customContentRepository,
                 )
             }
         }

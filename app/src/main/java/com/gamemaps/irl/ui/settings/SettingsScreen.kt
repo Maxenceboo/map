@@ -21,6 +21,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gamemaps.irl.ui.settings.components.SettingsHeader
 import com.gamemaps.irl.ui.settings.sections.AboutSection
 import com.gamemaps.irl.ui.settings.sections.AudioSection
+import com.gamemaps.irl.ui.settings.sections.DevThemeEditSection
+import com.gamemaps.irl.ui.settings.sections.DevThemesSection
+import com.gamemaps.irl.ui.settings.sections.DevVehicleEditSection
+import com.gamemaps.irl.ui.settings.sections.DevVehiclesSection
 import com.gamemaps.irl.ui.settings.sections.PerspectiveSection
 import com.gamemaps.irl.ui.settings.sections.PlacePickerSection
 import com.gamemaps.irl.ui.settings.sections.PlacesSection
@@ -42,6 +46,8 @@ import com.gamemaps.irl.ui.theme.CockpitColors
 fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSection: SettingsSection = SettingsSection.ROOT) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var section by rememberSaveable { mutableStateOf(startSection) }
+    // Thème ou véhicule ouvert dans l'éditeur du mode développeur.
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     // Maison ou Travail choisi : on efface la recherche et on revient à la liste des lieux.
     val backToPlaces = {
         viewModel.searchPlace("")
@@ -69,10 +75,10 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
         ) {
             when (section) {
                 SettingsSection.ROOT -> RootSection(state) { section = it }
-                SettingsSection.THEME -> ThemeSection(state.settings.theme) { theme -> viewModel.update { it.copy(theme = theme) } }
+                SettingsSection.THEME -> ThemeSection(state.settings.theme, state.allThemes) { theme -> viewModel.update { it.copy(theme = theme) } }
                 SettingsSection.PERSPECTIVE -> PerspectiveSection(state.settings.perspective) { p -> viewModel.update { it.copy(perspective = p) } }
                 SettingsSection.VEHICLE -> VehicleSection(state.settings, open = { section = it }, onUpdate = viewModel::update)
-                SettingsSection.VEHICLE_MODEL -> VehicleModelSection(state.settings.vehicle) { kind -> viewModel.update { it.copy(vehicle = kind) } }
+                SettingsSection.VEHICLE_MODEL -> VehicleModelSection(state.settings.vehicle, state.allVehicles) { kind -> viewModel.update { it.copy(vehicle = kind) } }
                 SettingsSection.VEHICLE_COLOR -> VehicleColorSection(state.settings.vehicleColor) { color -> viewModel.update { it.copy(vehicleColor = color) } }
                 SettingsSection.AUDIO -> AudioSection(state.settings, state.isMuted, viewModel::toggleMuted, viewModel::update)
                 SettingsSection.RADARS -> RadarSection(state.settings, viewModel::update)
@@ -101,7 +107,37 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
                     onUseCurrentPosition = { viewModel.currentPositionAsPlace()?.let(viewModel::setWork); backToPlaces() }.takeIf { state.hasPosition },
                     onClear = viewModel::clearWork,
                 )
-                SettingsSection.ABOUT -> AboutSection()
+                SettingsSection.ABOUT -> AboutSection(state.settings.devMode) { enabled -> viewModel.update { it.copy(devMode = enabled) } }
+                SettingsSection.DEV_THEMES -> DevThemesSection(
+                    themes = state.customThemes,
+                    usedId = state.settings.theme.id,
+                    onCreate = { editingId = viewModel.createTheme(); section = SettingsSection.DEV_THEME_EDIT },
+                    onEdit = { editingId = it; section = SettingsSection.DEV_THEME_EDIT },
+                )
+                SettingsSection.DEV_THEME_EDIT -> state.customThemes.firstOrNull { it.id == editingId }?.let { theme ->
+                    DevThemeEditSection(
+                        theme = theme,
+                        isUsed = state.settings.theme.id == theme.id,
+                        onChange = viewModel::saveTheme,
+                        onUse = { viewModel.useTheme(theme) },
+                        onDelete = { viewModel.deleteTheme(theme.id); section = SettingsSection.DEV_THEMES },
+                    )
+                }
+                SettingsSection.DEV_VEHICLES -> DevVehiclesSection(
+                    vehicles = state.customVehicles,
+                    usedId = state.settings.vehicle.id,
+                    onCreate = { editingId = viewModel.createVehicle(); section = SettingsSection.DEV_VEHICLE_EDIT },
+                    onEdit = { editingId = it; section = SettingsSection.DEV_VEHICLE_EDIT },
+                )
+                SettingsSection.DEV_VEHICLE_EDIT -> state.customVehicles.firstOrNull { it.id == editingId }?.let { vehicle ->
+                    DevVehicleEditSection(
+                        vehicle = vehicle,
+                        isUsed = state.settings.vehicle.id == vehicle.id,
+                        onChange = viewModel::saveVehicle,
+                        onUse = { viewModel.useVehicle(vehicle) },
+                        onDelete = { viewModel.deleteVehicle(vehicle.id); section = SettingsSection.DEV_VEHICLES },
+                    )
+                }
             }
         }
     }

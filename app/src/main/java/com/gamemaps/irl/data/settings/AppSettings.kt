@@ -21,6 +21,8 @@ data class AppSettings(
     val speedingBeep: Boolean = true,
     /** Itinéraires TomTom tenant compte des bouchons (si une clé est installée). */
     val traffic: Boolean = true,
+    /** Mode développeur : débloque la création de thèmes et de véhicules (7 appuis sur la version, dans À propos). */
+    val devMode: Boolean = false,
     /** Alertes radar (bandeau, voiture, sons). Les radars restent visibles sur la carte. */
     val radarAlerts: Boolean = true,
 )

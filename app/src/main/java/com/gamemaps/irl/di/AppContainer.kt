@@ -6,6 +6,7 @@ import com.gamemaps.irl.audio.playback.AndroidAudioOutput
 import com.gamemaps.irl.audio.playback.NavigationAudioFocus
 import com.gamemaps.irl.audio.playback.TonePlayer
 import com.gamemaps.irl.audio.playback.VoiceGuide
+import com.gamemaps.irl.data.custom.CustomContentRepository
 import com.gamemaps.irl.data.location.AndroidLocationSource
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.network.HttpClientFactory
@@ -58,7 +59,9 @@ class AppContainer(context: Context) {
 
 
     val audioPreferences = AudioPreferences(context)
-    val settingsRepository = SettingsRepository(context)
+    /** Thèmes et véhicules créés en mode développeur. */
+    val customContentRepository = CustomContentRepository(context)
+    val settingsRepository = SettingsRepository(context, customContentRepository::findTheme, customContentRepository::findVehicle)
 
     val tomTomKeyStore = TomTomKeyStore(context)
 

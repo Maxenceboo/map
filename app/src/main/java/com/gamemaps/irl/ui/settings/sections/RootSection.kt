@@ -10,7 +10,7 @@ import com.gamemaps.irl.ui.settings.SettingsUiState
 import com.gamemaps.irl.ui.settings.components.SettingsGroup
 import com.gamemaps.irl.ui.settings.components.SettingsNavigationRow
 
-/** Menu racine : un groupe par domaine, chaque ligne ouvre un sous-menu. */
+/** Menu racine : un groupe par domaine, chaque ligne ouvre un sous-menu. Le groupe Développeur n'apparaît qu'en mode développeur. */
 @Composable
 fun RootSection(state: SettingsUiState, open: (SettingsSection) -> Unit) {
     val settings = state.settings
@@ -31,6 +31,13 @@ fun RootSection(state: SettingsUiState, open: (SettingsSection) -> Unit) {
     SettingsGroup("Lieux") {
         val placesCount = listOfNotNull(saved.home, saved.work).size + saved.favorites.size
         SettingsNavigationRow(Icons.Filled.Star, "Lieux enregistrés", "$placesCount") { open(SettingsSection.PLACES) }
+    }
+
+    if (settings.devMode) {
+        SettingsGroup("Développeur") {
+            SettingsNavigationRow(HudIcons.Palette, "Mes thèmes", "${state.customThemes.size}") { open(SettingsSection.DEV_THEMES) }
+            SettingsNavigationRow(HudIcons.Car, "Mes véhicules", "${state.customVehicles.size}") { open(SettingsSection.DEV_VEHICLES) }
+        }
     }
 
     SettingsGroup("Application") {

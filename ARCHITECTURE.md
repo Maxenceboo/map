@@ -123,6 +123,19 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `radar/RadarMerger.kt` | Base officielle + radars OSM non doublons (> 60 m). |
 | `radar/RadarRepository.kt` | Radars d'une zone de ~10 km + alerte en cours (`StateFlow`). |
 
+### `data/custom/` — Thèmes et véhicules créés en mode développeur
+Le mode développeur s'active par 7 appuis sur la version (Paramètres > À propos).
+
+| Fichier | Rôle |
+| :--- | :--- |
+| `CustomThemeSpec.kt` | Un thème créé : nom + couleurs ; converti en `MapTheme`. |
+| `ThemeColorSlot.kt` | Les couleurs réglables et celles qui en découlent (contour des textes, liseré du tracé). |
+| `CustomVehicleSpec.kt` | Un véhicule créé : nom + mesures, avec leurs limites. |
+| `CustomVehicleBuilder.kt` | Mesures → modèle 3D (caisse, habitacle, roues, feux, aileron). |
+| `CustomContentSerializer.kt` | Thèmes et véhicules ⇄ JSON. |
+| `CustomContentRepository.kt` | Enregistrement sur le téléphone ; retrouve un thème ou un véhicule par identifiant. |
+| `ColorMath.kt` | Contrôle d'un code couleur, assombrissement. |
+
 ### `navigation/` — Le guidage
 | Fichier | Rôle |
 | :--- | :--- |
@@ -266,6 +279,9 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `SettingsUiState.kt` | Ce qu'affiche le menu. |
 | `sections/*.kt` | Un fichier par écran du menu. |
 | `components/SettingsHeader.kt` | Bouton retour rond + titre. |
+| `components/SettingsInputs.kt` | Champ de texte et curseur de réglage. |
+| `components/ColorPickerRow.kt` | Couleur réglable : grille de couleurs prêtes + code `#RRGGBB`. |
+| `sections/DevThemeSections.kt`, `DevVehicleSections.kt` | Listes et éditeurs du mode développeur. |
 | `components/SettingsGroup.kt` | Carte arrondie qui regroupe les lignes d'un même sujet. |
 | `components/TomTomKeyField.kt` | Champ masqué + COLLER / ENREGISTRER pour la clé TomTom. |
 | `components/SettingsRows.kt` | Lignes : sous-menu, interrupteur, choix, info avec action ; icône vectorielle dans une tuile. |

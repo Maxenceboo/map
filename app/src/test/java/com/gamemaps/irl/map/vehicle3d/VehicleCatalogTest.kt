@@ -9,7 +9,7 @@ import org.junit.Test
 class VehicleCatalogTest {
 
     /** Tous les modèles affichables : ceux des Paramètres et celui imposé par le thème Minecraft. */
-    private val models = VehicleKind.entries.map { it.name to it.model } + ("MINECRAFT_PIG" to MinecraftPig.model)
+    private val models = VehicleKind.entries.map { it.id to it.model } + ("MINECRAFT_PIG" to MinecraftPig.model)
 
     /** Les vrais véhicules, avec des roues (ni la flèche ni le cochon). */
     private val wheeled = VehicleKind.entries.filter { it != VehicleKind.ARROW }

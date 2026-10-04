@@ -107,6 +107,15 @@ fun SettingsInfoRow(icon: ImageVector, title: String, subtitle: String?, actionL
     }
 }
 
+/** Ligne simple avec icône, titre et texte ; un appui déclenche [onClick]. */
+@Composable
+fun SettingsPlainRow(icon: ImageVector, title: String, subtitle: String?, onClick: () -> Unit) {
+    RowContainer(onClick) {
+        IconTile(icon)
+        TitleAndDescription(title, subtitle)
+    }
+}
+
 @Composable
 private fun RowContainer(onClick: (() -> Unit)?, content: @Composable RowScope.() -> Unit) {
     Row(

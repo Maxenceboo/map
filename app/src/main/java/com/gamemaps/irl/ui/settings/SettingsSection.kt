@@ -21,4 +21,10 @@ enum class SettingsSection(val title: String, val parent: SettingsSection?) {
     PLACE_WORK("Travail", PLACES),
     PLACE_FAVORITE("Nouveau favori", PLACES),
     ABOUT("À propos", ROOT),
+
+    // Mode développeur : création de thèmes et de véhicules.
+    DEV_THEMES("Mes thèmes", ROOT),
+    DEV_THEME_EDIT("Éditer le thème", DEV_THEMES),
+    DEV_VEHICLES("Mes véhicules", ROOT),
+    DEV_VEHICLE_EDIT("Éditer le véhicule", DEV_VEHICLES),
 }

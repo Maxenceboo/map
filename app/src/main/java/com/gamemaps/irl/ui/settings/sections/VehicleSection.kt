@@ -34,12 +34,22 @@ fun VehicleSection(settings: AppSettings, open: (SettingsSection) -> Unit, onUpd
     }
 }
 
-/** Paramètres > Véhicule > Modèle : liste verticale (pas de grille de cartes, règle §2.3). */
+/**
+ * Paramètres > Véhicule > Modèle : liste verticale (pas de grille de cartes, règle §2.3).
+ * [kinds] : les véhicules de l'app, suivis de ceux créés en mode développeur.
+ */
 @Composable
-fun VehicleModelSection(current: VehicleKind, onSelect: (VehicleKind) -> Unit) {
-    SettingsGroup {
-        VehicleKind.entries.forEach { kind ->
-            SettingsOptionRow(kind.label, kind.description, selected = kind == current) { onSelect(kind) }
+fun VehicleModelSection(current: VehicleKind, kinds: List<VehicleKind>, onSelect: (VehicleKind) -> Unit) {
+    val (custom, builtIn) = kinds.partition { it.isCustom }
+    VehicleGroup(null, builtIn, current, onSelect)
+    if (custom.isNotEmpty()) VehicleGroup("Mes véhicules", custom, current, onSelect)
+}
+
+@Composable
+private fun VehicleGroup(title: String?, kinds: List<VehicleKind>, current: VehicleKind, onSelect: (VehicleKind) -> Unit) {
+    SettingsGroup(title) {
+        kinds.forEach { kind ->
+            SettingsOptionRow(kind.label, kind.description, selected = kind.id == current.id) { onSelect(kind) }
         }
     }
 }
