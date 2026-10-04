@@ -3,6 +3,7 @@ package com.gamemaps.irl.ui.screen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.gamemaps.irl.map.MapController
+import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.navigation.NavigationState
 
 /**
@@ -18,6 +19,13 @@ fun MapRenderEffect(controller: MapController?, state: MainUiState) {
     val radars = state.driving.radars
     val isNavigating = navigation is NavigationState.Navigating
 
+    // Paramètres : thème et perspective appliqués à chaud.
+    LaunchedEffect(controller, state.settings.theme) {
+        controller?.applyTheme(state.settings.theme)
+    }
+    LaunchedEffect(controller, state.settings.perspective) {
+        controller?.applyCameraConfig(CameraConfig.PHONE.forPerspective(state.settings.perspective))
+    }
     LaunchedEffect(controller, fix) {
         if (fix != null) controller?.showVehicle(fix)
     }

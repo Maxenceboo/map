@@ -10,6 +10,9 @@ import com.gamemaps.irl.data.places.SavedPlacesRepository
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.data.search.PlaceSearch
 import com.gamemaps.irl.data.settings.AudioPreferences
+import com.gamemaps.irl.data.settings.SettingsRepository
+import com.gamemaps.irl.navigation.radar.RadarAlert
+import kotlinx.coroutines.flow.Flow
 import com.gamemaps.irl.data.radar.RadarRepository
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.di.AppContainer
@@ -38,8 +41,10 @@ class MainViewModel(
     private val locationRepository: LocationRepository,
     private val speedLimitRepository: SpeedLimitRepository,
     private val radarRepository: RadarRepository,
+    private val radarAlerts: Flow<RadarAlert?>,
     private val audioPreferences: AudioPreferences,
     private val savedPlacesRepository: SavedPlacesRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val search = MutableStateFlow(SearchUiState())
@@ -49,19 +54,27 @@ class MainViewModel(
         locationRepository.fixes,
         speedLimitRepository.limitKmh,
         radarRepository.radars,
-        radarRepository.alert,
+        radarAlerts,
     ) { fix, speedLimit, radars, radarAlert ->
         DrivingState(fix = fix, speedLimitKmh = speedLimit, radars = radars, radarAlert = radarAlert)
     }
+
+    private val preferences = combine(audioPreferences.muted, savedPlacesRepository.saved, settingsRepository.settings, ::Triple)
 
     val uiState: StateFlow<MainUiState> = combine(
         search,
         navigationEngine.state,
         driving,
-        audioPreferences.muted,
-        savedPlacesRepository.saved,
-    ) { searchState, navigation, drivingState, muted, saved ->
-        MainUiState(search = searchState, navigation = navigation, driving = drivingState, isMuted = muted, savedPlaces = saved)
+        preferences,
+    ) { searchState, navigation, drivingState, (muted, saved, settings) ->
+        MainUiState(
+            search = searchState,
+            navigation = navigation,
+            driving = drivingState,
+            isMuted = muted,
+            savedPlaces = saved,
+            settings = settings,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())
 
     init {
@@ -129,6 +142,8 @@ class MainViewModel(
                     locationRepository = container.locationRepository,
                     speedLimitRepository = container.speedLimitRepository,
                     radarRepository = container.radarRepository,
+                    radarAlerts = container.radarAlerts,
+                    settingsRepository = container.settingsRepository,
                     audioPreferences = container.audioPreferences,
                     savedPlacesRepository = container.savedPlacesRepository,
                 )

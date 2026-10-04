@@ -38,7 +38,7 @@ object MapSetup {
             val vehicleLayer = VehicleMarkerLayer(style, VehicleArrowBitmap.create(theme.palette)).apply { install() }
             val camera = FollowCamera(map, viewHeightPx, cameraConfig)
             if (interactive) pauseFollowingOnUserGesture(map, camera)
-            onReady(MapController(routeLayer, destinationLayer, radarLayer, vehicleLayer, camera))
+            onReady(MapController(style, routeLayer, destinationLayer, radarLayer, vehicleLayer, camera).apply { applyTheme(theme) })
         }
     }
 

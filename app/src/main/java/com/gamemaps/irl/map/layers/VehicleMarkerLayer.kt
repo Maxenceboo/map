@@ -35,6 +35,11 @@ class VehicleMarkerLayer(private val style: Style, private val icon: Bitmap) {
         )
     }
 
+    /** Remplace l'icône (changement de thème) : même identifiant, donc le calque suit tout seul. */
+    fun setIcon(newIcon: Bitmap) {
+        style.addImage(ICON_ID, newIcon)
+    }
+
     fun update(fix: GpsFix) {
         val feature = Feature.fromGeometry(fix.position.toGeoJsonPoint())
         feature.addNumberProperty(BEARING_PROPERTY, fix.bearingDegrees ?: 0f)

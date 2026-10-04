@@ -20,6 +20,12 @@ import com.gamemaps.irl.data.search.ban.BanGeocoder
 import com.gamemaps.irl.data.search.photon.PhotonGeocoder
 import com.gamemaps.irl.data.search.PlaceSearch
 import com.gamemaps.irl.data.settings.AudioPreferences
+import com.gamemaps.irl.data.settings.SettingsRepository
+import com.gamemaps.irl.navigation.radar.RadarAlert
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.navigation.NavigationEngine
 import kotlinx.coroutines.CoroutineScope
@@ -64,15 +70,23 @@ class AppContainer(context: Context) {
 
     val audioPreferences = AudioPreferences(context)
 
+    val settingsRepository = SettingsRepository(context)
+
+    /** Alerte radar en cours, ou null si les alertes sont désactivées dans les Paramètres. */
+    val radarAlerts: StateFlow<RadarAlert?> =
+        combine(radarRepository.alert, settingsRepository.settings) { alert, settings -> alert.takeIf { settings.radarAlerts } }
+            .stateIn(appScope, SharingStarted.Eagerly, null)
+
     init {
         val focus = NavigationAudioFocus(context)
         AudioController(
             scope = appScope,
             navigation = navigationEngine.state,
-            radarAlerts = radarRepository.alert,
+            radarAlerts = radarAlerts,
             fixes = locationRepository.fixes,
             speedLimits = speedLimitRepository.limitKmh,
             muted = audioPreferences.muted,
+            settings = settingsRepository.settings,
             output = AndroidAudioOutput(TonePlayer(focus), VoiceGuide(context, focus)),
         ).start()
     }

@@ -23,7 +23,7 @@ import org.maplibre.android.maps.MapLibreMap
 class FollowCamera(
     private val map: MapLibreMap,
     private val viewHeightPx: () -> Int,
-    private val config: CameraConfig,
+    private var config: CameraConfig,
 ) {
     private var hasPositioned = false
     private var lastFix: GpsFix? = null
@@ -41,6 +41,12 @@ class FollowCamera(
         } else {
             map.easeCamera(update, config.animationMillis, false)
         }
+    }
+
+    /** Changement de perspective (3D / 2D) : appliqué tout de suite si on suit le véhicule. */
+    fun setConfig(newConfig: CameraConfig) {
+        config = newConfig
+        if (_isFollowing.value) recenter()
     }
 
     fun pause() {

@@ -68,6 +68,9 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `location/LocationRepository.kt` | Position partagée (`StateFlow`) pour toute l'app, filtrée (vitesse, arrêt, cap). |
 | `location/LocationPermissions.kt` | Liste et vérification des permissions. |
 | `settings/AudioPreferences.kt` | Son coupé ou non, mémorisé. |
+| `settings/AppSettings.kt` | Réglages : thème, perspective, voix, bips, alertes radar. |
+| `settings/Perspective.kt` | 3D cockpit / 2D vue de dessus. |
+| `settings/SettingsRepository.kt` | Réglages mémorisés (`StateFlow`), partagés avec la voiture. |
 | `network/HttpClientFactory.kt` | Client OkHttp unique. |
 | `network/HttpGet.kt` | GET annulable en coroutine. |
 | `network/UserAgentInterceptor.kt` | User-Agent identifiable (demandé par OSRM / IGN). |
@@ -129,7 +132,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | Fichier | Rôle |
 | :--- | :--- |
 | `MapSetup.kt` | Charge le style, applique le thème, installe les calques. |
-| `MapController.kt` | Façade : véhicule, tracé + destination, radars, vue d'ensemble, recentrage. |
+| `MapController.kt` | Façade : véhicule, tracé + destination, radars, vue d'ensemble, recentrage, thème et perspective à chaud. |
 | `MapLibreConversions.kt` | Notre `LatLng` → types MapLibre / GeoJSON. |
 | `style/MapStyleSource.kt` | URL du fond de carte OpenFreeMap. |
 | `theme/MapTheme.kt` | Thèmes GTA V Radar et Waze nocturne (§4). |
@@ -144,12 +147,13 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `layers/RadarLayer.kt` | Icônes des radars sur la carte (une par type). |
 | `layers/RadarIconBitmap.kt` | Dessin des icônes : appareil photo, feu tricolore. |
 | `camera/FollowCamera.kt` | Suivi incliné, pause au doigt (`isFollowing`), recentrage, vue d'ensemble d'un trajet. |
-| `camera/CameraConfig.kt` | Réglages téléphone / voiture. |
+| `camera/CameraConfig.kt` | Réglages téléphone / voiture, variante 2D vue de dessus. |
 
 ### `audio/` — Sons et guidage vocal
 | Fichier | Rôle |
 | :--- | :--- |
 | `AudioController.kt` | Écoute guidage, radars et vitesse ; joue les annonces (sauf son coupé). Un seul pour téléphone + voiture. |
+| `AudioCueFilter.kt` | Retire ce qui est désactivé dans les Paramètres (voix, bips). |
 | `cue/AudioCue.kt` | Une annonce : un son ou une phrase. |
 | `cue/SoundEffect.kt` | Liste des sons (départ, virage, arrivée, radar, excès). |
 | `announcers/GuidanceAnnouncer.kt` | Départ, "Dans 500 mètres…", carillon + instruction avant la manœuvre, recalcul, arrivée. |
@@ -186,6 +190,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
 | `hud/StatusBanner.kt` | Messages (calcul, erreur, arrivée). |
 | `hud/MuteButton.kt` | Bouton 🔊 / 🔇. |
+| `hud/MenuButton.kt` | Bouton ☰ (ouvre les Paramètres). |
 | `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
 | `hud/PreviewModel.kt` | Textes de l'aperçu. |
 | `hud/PlaceSaveActions.kt` | Boutons Maison / Travail / Favori de l'aperçu. |
@@ -198,6 +203,17 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `components/CockpitPanel.kt` | Conteneur flat sombre à bordure fine (§2.1). |
 | `permissions/LocationPermissionEffect.kt` | Demande la localisation. |
 | `theme/CockpitColors.kt`, `CockpitTypography.kt`, `GameMapsTheme.kt` | Design system cockpit. |
+
+### `ui/settings/` — Menu Paramètres (listes verticales, §2.3)
+| Fichier | Rôle |
+| :--- | :--- |
+| `SettingsScreen.kt` | Menu plein écran, navigation entre sections, bouton retour. |
+| `SettingsViewModel.kt` | Lit et modifie réglages, son et lieux enregistrés. |
+| `SettingsSection.kt` | Racine, Thème, Perspective, Audio, Radars, Lieux, À propos. |
+| `SettingsUiState.kt` | Ce qu'affiche le menu. |
+| `sections/*.kt` | Un fichier par écran du menu. |
+| `components/SettingsHeader.kt` | « ← Retour » + titre. |
+| `components/SettingsRows.kt` | Lignes : sous-menu ›, interrupteur, choix ✓, info avec action. |
 
 ### `car/` — Android Auto
 | Fichier | Rôle |
@@ -263,4 +279,4 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 2. Véhicule 3D (Filament) à la place de la flèche 2D.
 3. Thème Minecraft, fanfare « Mission Passed ».
 4. Service au premier plan pour continuer le guidage écran éteint.
-5. Menu Paramètres (thème, 2D / 3D, audio, radars, gestion des favoris).
+5. Thème Minecraft dans le menu Paramètres.

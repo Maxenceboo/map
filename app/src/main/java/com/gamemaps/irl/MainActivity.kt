@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamemaps.irl.di.appContainer
 import com.gamemaps.irl.ui.screen.MainScreen
 import com.gamemaps.irl.ui.screen.MainViewModel
+import com.gamemaps.irl.ui.settings.SettingsViewModel
 import com.gamemaps.irl.ui.theme.GameMapsTheme
 
 /** Écran unique du téléphone. */
@@ -21,6 +22,7 @@ class MainActivity : ComponentActivity() {
             GameMapsTheme {
                 MainScreen(
                     viewModel = viewModel(factory = MainViewModel.factory(container)),
+                    settingsViewModel = viewModel(factory = SettingsViewModel.factory(container)),
                     onLocationPermissionGranted = container.locationRepository::start,
                 )
             }

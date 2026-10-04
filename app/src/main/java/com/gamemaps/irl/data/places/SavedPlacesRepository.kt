@@ -20,6 +20,12 @@ class SavedPlacesRepository(context: Context) {
 
     fun setWork(place: Place) = update { it.copy(work = place) }
 
+    fun clearHome() = update { it.copy(home = null) }
+
+    fun clearWork() = update { it.copy(work = null) }
+
+    fun removeFavorite(place: Place) = update { saved -> saved.copy(favorites = saved.favorites.filterNot { it.id == place.id }) }
+
     /** Ajoute le lieu aux favoris, ou l'en retire s'il y est déjà. */
     fun toggleFavorite(place: Place) = update { saved ->
         if (saved.isFavorite(place)) {

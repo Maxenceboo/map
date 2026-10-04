@@ -1,6 +1,7 @@
 package com.gamemaps.irl.ui.screen
 
 import com.gamemaps.irl.data.places.SavedPlaces
+import com.gamemaps.irl.data.settings.AppSettings
 import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.ui.search.SearchUiState
 
@@ -11,4 +12,5 @@ data class MainUiState(
     val driving: DrivingState = DrivingState(),
     val isMuted: Boolean = false,
     val savedPlaces: SavedPlaces = SavedPlaces(),
+    val settings: AppSettings = AppSettings(),
 )

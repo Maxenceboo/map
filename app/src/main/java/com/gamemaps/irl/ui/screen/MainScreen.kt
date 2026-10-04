@@ -25,11 +25,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.map.MapController
-import com.gamemaps.irl.map.theme.MapTheme
 import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.ui.hud.ArrivalPanel
 import com.gamemaps.irl.ui.hud.GpsStatusDot
 import com.gamemaps.irl.ui.hud.ManeuverBanner
+import com.gamemaps.irl.ui.hud.MenuButton
 import com.gamemaps.irl.ui.hud.MuteButton
 import com.gamemaps.irl.ui.hud.PlaceSaveCallbacks
 import com.gamemaps.irl.ui.hud.PlaceSaveState
@@ -43,6 +43,8 @@ import com.gamemaps.irl.ui.hud.toHudModel
 import com.gamemaps.irl.ui.map.MapViewHost
 import com.gamemaps.irl.ui.permissions.LocationPermissionEffect
 import com.gamemaps.irl.ui.search.SavedPlacesShortcuts
+import com.gamemaps.irl.ui.settings.SettingsScreen
+import com.gamemaps.irl.ui.settings.SettingsViewModel
 import com.gamemaps.irl.ui.search.SearchBar
 import com.gamemaps.irl.ui.search.SearchResultsList
 import com.gamemaps.irl.ui.theme.CockpitColors
@@ -55,9 +57,10 @@ import com.gamemaps.irl.ui.theme.CockpitColors
  *  └ vitesse            arrivée   ┘
  */
 @Composable
-fun MainScreen(viewModel: MainViewModel, onLocationPermissionGranted: () -> Unit) {
+fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, onLocationPermissionGranted: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var mapController by remember { mutableStateOf<MapController?>(null) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
     val followingFlow = remember(mapController) { mapController?.isFollowing ?: MutableStateFlow(true) }
     val isFollowing by followingFlow.collectAsStateWithLifecycle()
 
@@ -66,11 +69,12 @@ fun MainScreen(viewModel: MainViewModel, onLocationPermissionGranted: () -> Unit
     MapRenderEffect(mapController, state)
 
     Box(Modifier.fillMaxSize()) {
-        MapViewHost(theme = MapTheme.GTA_RADAR, modifier = Modifier.fillMaxSize()) { mapController = it }
+        MapViewHost(theme = state.settings.theme, modifier = Modifier.fillMaxSize()) { mapController = it }
 
         TopArea(
             state = state,
             viewModel = viewModel,
+            onOpenSettings = { showSettings = true },
             modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(12.dp),
         )
         BottomArea(
@@ -87,25 +91,30 @@ fun MainScreen(viewModel: MainViewModel, onLocationPermissionGranted: () -> Unit
             ),
             modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(12.dp),
         )
+        if (showSettings) SettingsScreen(settingsViewModel, onClose = { showSettings = false })
     }
 }
 
 @Composable
-private fun TopArea(state: MainUiState, viewModel: MainViewModel, modifier: Modifier) {
+private fun TopArea(state: MainUiState, viewModel: MainViewModel, onOpenSettings: () -> Unit, modifier: Modifier) {
     // Texte du champ gardé localement : mis à jour immédiatement à chaque frappe.
     var query by rememberSaveable { mutableStateOf("") }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (val navigation = state.navigation) {
             is NavigationState.Idle -> {
-                SearchBar(
-                    query = query,
-                    onQueryChange = {
-                        query = it
-                        viewModel.onQueryChange(it)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    trailing = { GpsStatusDot(state.driving.gpsQuality) },
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    MenuButton(onClick = onOpenSettings)
+                    Spacer(Modifier.width(8.dp))
+                    SearchBar(
+                        query = query,
+                        onQueryChange = {
+                            query = it
+                            viewModel.onQueryChange(it)
+                        },
+                        modifier = Modifier.weight(1f),
+                        trailing = { GpsStatusDot(state.driving.gpsQuality) },
+                    )
+                }
                 if (query.isBlank()) {
                     SavedPlacesShortcuts(saved = state.savedPlaces, onSelect = viewModel::onPlaceSelected)
                 }

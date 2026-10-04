@@ -17,7 +17,7 @@ import org.maplibre.geojson.LineString
  * Tracé de l'itinéraire : un liseré sombre (casing) sous une ligne violette de 8 px
  * (cahier des charges §5.2). Les bordures de trafic s'ajouteront ici.
  */
-class RouteLayer(private val style: Style, private val palette: MapPalette) {
+class RouteLayer(private val style: Style, private var palette: MapPalette) {
 
     private val source = GeoJsonSource(SOURCE_ID)
 
@@ -33,6 +33,13 @@ class RouteLayer(private val style: Style, private val palette: MapPalette) {
         } else {
             source.setGeoJson(Feature.fromGeometry(LineString.fromLngLats(route.geometry.map { it.toGeoJsonPoint() })))
         }
+    }
+
+    /** Changement de thème : nouvelles couleurs du tracé, sans recréer les calques. */
+    fun applyPalette(newPalette: MapPalette) {
+        palette = newPalette
+        style.getLayer(CASING_LAYER_ID)?.setProperties(PropertyFactory.lineColor(newPalette.routeCasing))
+        style.getLayer(LINE_LAYER_ID)?.setProperties(PropertyFactory.lineColor(newPalette.route))
     }
 
     private fun addBelowLabels(layer: Layer) {

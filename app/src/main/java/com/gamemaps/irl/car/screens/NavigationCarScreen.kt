@@ -18,7 +18,7 @@ import com.gamemaps.irl.car.trip.CarTripReporter
 import com.gamemaps.irl.data.location.LocationPermissions
 import com.gamemaps.irl.di.AppContainer
 import com.gamemaps.irl.map.MapController
-import com.gamemaps.irl.map.theme.MapTheme
+import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.navigation.NavigationState
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -40,7 +40,7 @@ class NavigationCarScreen(
 
     private val tripReporter = CarTripReporter(carContext, onStopRequested = engine::stop)
     private val radarAlerter = CarRadarAlerter(carContext)
-    private val mapSurface = CarMapSurface(carContext, MapTheme.GTA_RADAR) { controller ->
+    private val mapSurface = CarMapSurface(carContext, container.settingsRepository.settings.value.theme) { controller ->
         mapController = controller
         refreshMap()
     }
@@ -54,6 +54,7 @@ class NavigationCarScreen(
         observeLocation()
         observeRadars()
         observeMute()
+        observeSettings()
     }
 
     override fun onGetTemplate(): Template {
@@ -108,12 +109,20 @@ class NavigationCarScreen(
             container.radarRepository.radars.collect { mapController?.showRadars(it) }
         }
         lifecycleScope.launch {
-            container.radarRepository.alert.collect(radarAlerter::onAlert)
+            container.radarAlerts.collect(radarAlerter::onAlert)
         }
+    }
+
+    /** Thème et perspective choisis dans les Paramètres du téléphone, appliqués aussi à la voiture. */
+    private fun observeSettings() {
+        lifecycleScope.launch { container.settingsRepository.settings.collect { refreshMap() } }
     }
 
     private fun refreshMap() {
         val controller = mapController ?: return
+        val settings = container.settingsRepository.settings.value
+        controller.applyTheme(settings.theme)
+        controller.applyCameraConfig(CameraConfig.CAR.forPerspective(settings.perspective))
         val route = (navigation as? NavigationState.Navigating)?.route ?: (navigation as? NavigationState.Previewing)?.route
         controller.showRoute(route)
         controller.showRadars(container.radarRepository.radars.value)

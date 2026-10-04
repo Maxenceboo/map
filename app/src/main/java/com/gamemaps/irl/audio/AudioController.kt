@@ -6,6 +6,7 @@ import com.gamemaps.irl.audio.announcers.SpeedingAnnouncer
 import com.gamemaps.irl.audio.cue.AudioCue
 import com.gamemaps.irl.audio.playback.AudioOutput
 import com.gamemaps.irl.data.location.GpsFix
+import com.gamemaps.irl.data.settings.AppSettings
 import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.navigation.SpeedingDetector
 import com.gamemaps.irl.navigation.radar.RadarAlert
@@ -19,7 +20,8 @@ import kotlinx.coroutines.launch
  * Chef d'orchestre audio, unique pour toute l'app (téléphone et Android Auto).
  *
  * Écoute le guidage, les radars et la vitesse, demande aux "announcers" quoi dire,
- * et l'envoie à la sortie audio — sauf si le son est coupé.
+ * retire ce qui est désactivé dans les Paramètres, et l'envoie à la sortie audio —
+ * sauf si le son est coupé.
  */
 class AudioController(
     private val scope: CoroutineScope,
@@ -28,6 +30,7 @@ class AudioController(
     private val fixes: Flow<GpsFix?>,
     private val speedLimits: Flow<Int?>,
     private val muted: StateFlow<Boolean>,
+    private val settings: StateFlow<AppSettings>,
     private val output: AudioOutput,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
@@ -47,6 +50,8 @@ class AudioController(
     }
 
     private fun play(cues: List<AudioCue>) {
-        if (cues.isNotEmpty() && !muted.value) output.play(cues)
+        if (muted.value) return
+        val allowed = AudioCueFilter.filter(cues, settings.value)
+        if (allowed.isNotEmpty()) output.play(allowed)
     }
 }

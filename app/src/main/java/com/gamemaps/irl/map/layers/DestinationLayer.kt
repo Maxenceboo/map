@@ -31,6 +31,10 @@ class DestinationLayer(private val style: Style, private val icon: Bitmap) {
         )
     }
 
+    fun setIcon(newIcon: Bitmap) {
+        style.addImage(ICON_ID, newIcon)
+    }
+
     fun update(destination: LatLng?) {
         if (destination == null) {
             source.setGeoJson(FeatureCollection.fromFeatures(emptyList<Feature>()))
