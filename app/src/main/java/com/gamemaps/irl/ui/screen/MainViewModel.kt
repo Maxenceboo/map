@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.search.Place
 import com.gamemaps.irl.data.search.PlaceSearch
+import com.gamemaps.irl.data.settings.AudioPreferences
 import com.gamemaps.irl.data.radar.RadarRepository
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.di.AppContainer
@@ -36,6 +37,7 @@ class MainViewModel(
     private val locationRepository: LocationRepository,
     private val speedLimitRepository: SpeedLimitRepository,
     private val radarRepository: RadarRepository,
+    private val audioPreferences: AudioPreferences,
 ) : ViewModel() {
 
     private val search = MutableStateFlow(SearchUiState())
@@ -50,8 +52,13 @@ class MainViewModel(
         DrivingState(fix = fix, speedLimitKmh = speedLimit, radars = radars, radarAlert = radarAlert)
     }
 
-    val uiState: StateFlow<MainUiState> = combine(search, navigationEngine.state, driving) { searchState, navigation, drivingState ->
-        MainUiState(search = searchState, navigation = navigation, driving = drivingState)
+    val uiState: StateFlow<MainUiState> = combine(
+        search,
+        navigationEngine.state,
+        driving,
+        audioPreferences.muted,
+    ) { searchState, navigation, drivingState, muted ->
+        MainUiState(search = searchState, navigation = navigation, driving = drivingState, isMuted = muted)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())
 
     init {
@@ -59,7 +66,6 @@ class MainViewModel(
     }
 
     fun onQueryChange(query: String) {
-        search.update { it.copy(query = query) }
         queries.value = query
     }
 
@@ -71,6 +77,10 @@ class MainViewModel(
 
     fun onStopNavigation() {
         navigationEngine.stop()
+    }
+
+    fun onToggleMute() {
+        audioPreferences.toggleMuted()
     }
 
     /** Attend 350 ms sans frappe avant d'interroger le géocodeur ; annule la requête précédente. */
@@ -106,6 +116,7 @@ class MainViewModel(
                     locationRepository = container.locationRepository,
                     speedLimitRepository = container.speedLimitRepository,
                     radarRepository = container.radarRepository,
+                    audioPreferences = container.audioPreferences,
                 )
             }
         }

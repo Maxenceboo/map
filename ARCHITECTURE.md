@@ -65,6 +65,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `location/HeadingStabilizer.kt` | Garde le dernier cap fiable à l'arrêt (anti-toupie). |
 | `location/LocationRepository.kt` | Position partagée (`StateFlow`) pour toute l'app. |
 | `location/LocationPermissions.kt` | Liste et vérification des permissions. |
+| `settings/AudioPreferences.kt` | Son coupé ou non, mémorisé. |
 | `network/HttpClientFactory.kt` | Client OkHttp unique. |
 | `network/HttpGet.kt` | GET annulable en coroutine. |
 | `network/UserAgentInterceptor.kt` | User-Agent identifiable (demandé par OSRM / IGN). |
@@ -97,7 +98,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `NavigationEngine.kt` | Lance le calcul, suit le GPS, recalcule, détecte l'arrivée. |
 | `RouteProgress.kt` | Où on en est : prochaine manœuvre, distance, temps restant. |
 | `RouteProgressCalculator.kt` | Calcule `RouteProgress` à partir d'une position. |
-| `OffRouteDetector.kt` | > 35 m du tracé pendant > 3 s ⇒ recalcul (§5.3). |
+| `OffRouteDetector.kt` | > 35 m du tracé pendant > 3 s, en roulant ⇒ recalcul (§5.3). |
 | `ArrivalDetector.kt` | < 30 m de l'arrivée ⇒ arrivé. |
 | `SpeedingDetector.kt` | Excès de vitesse : limite + 3 km/h (§6.3). |
 | `radar/RadarAlertDetector.kt` | Radar à < 800 m devant, cône de ±30° (§6.2). |
@@ -124,6 +125,26 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `camera/FollowCamera.kt` | Caméra poursuite inclinée (saut à la 1re position, puis glissement linéaire). |
 | `camera/CameraConfig.kt` | Réglages téléphone / voiture. |
 
+### `audio/` — Sons et guidage vocal
+| Fichier | Rôle |
+| :--- | :--- |
+| `AudioController.kt` | Écoute guidage, radars et vitesse ; joue les annonces (sauf son coupé). Un seul pour téléphone + voiture. |
+| `cue/AudioCue.kt` | Une annonce : un son ou une phrase. |
+| `cue/SoundEffect.kt` | Liste des sons (départ, virage, arrivée, radar, excès). |
+| `announcers/GuidanceAnnouncer.kt` | Départ, "Dans 500 mètres…", carillon + instruction avant la manœuvre, recalcul, arrivée. |
+| `announcers/RadarAnnouncer.kt` | Double bip + "Radar dans 600 mètres", puis triple bip sous 300 m. |
+| `announcers/SpeedingAnnouncer.kt` | Bip au dépassement, répété toutes les 15 s. |
+| `announcers/SpeechDistanceFormatter.kt` | "300 mètres", "1,5 kilomètres". |
+| `synth/ToneSynth.kt` | Synthétiseur : notes → échantillons PCM (aucun fichier audio). |
+| `synth/SoundEffectTones.kt` | Partition de chaque son (reprise de la version WebGL). |
+| `synth/Tone.kt`, `synth/Waveform.kt` | Une note ; formes d'onde sinus / triangle / dent de scie. |
+| `playback/TonePlayer.kt` | Joue un son via `AudioTrack`. |
+| `playback/VoiceGuide.kt` | Synthèse vocale française (`TextToSpeech`). |
+| `playback/AndroidAudioOutput.kt` | Enchaîne sons et phrases (la voix attend la fin du carillon). |
+| `playback/NavigationAudioFocus.kt` | Baisse la musique pendant une annonce. |
+| `playback/NavigationAudioAttributes.kt` | Usage "guidage de navigation" (routage vers la voiture en Android Auto). |
+| `playback/AudioOutput.kt` | Interface de sortie audio. |
+
 ### `ui/` — Téléphone (Jetpack Compose)
 | Fichier | Rôle |
 | :--- | :--- |
@@ -142,6 +163,7 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `hud/ArrivalPanel.kt` | Heure d'arrivée, restant, "Arrêter" (bas droite). |
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
 | `hud/StatusBanner.kt` | Messages (calcul, erreur, arrivée). |
+| `hud/MuteButton.kt` | Bouton 🔊 / 🔇. |
 | `search/SearchBar.kt` | Champ "Où aller ?". |
 | `search/SearchResultsList.kt` | Résultats en liste verticale (§2.3). |
 | `search/SearchUiState.kt` | État de la recherche. |
@@ -204,9 +226,11 @@ Tester Android Auto sans voiture : **Desktop Head Unit (DHU)**
 
 ## Prochaines étapes (hors de cette première passe)
 
-1. Bips (radar, excès de vitesse) avec le moteur audio.
-2. Alerte radar sur Android Auto.
-3. Trafic TomTom : bordures orange / rouge sur le tracé.
-4. Véhicule 3D (Filament) à la place de la flèche 2D.
-5. Thème Minecraft, favoris (Maison / Travail), fanfare « Mission Passed ».
-6. Service au premier plan pour continuer le guidage écran éteint.
+1. Base officielle des 3 350 radars français (types, deux niveaux d'alerte).
+2. Aperçu avant départ, bouton recentrer, écran toujours allumé, vitesse lissée.
+3. Recherche de lieux (Photon) et favoris Maison / Travail.
+4. Alerte radar sur Android Auto.
+5. Trafic TomTom : bordures orange / rouge sur le tracé.
+6. Véhicule 3D (Filament) à la place de la flèche 2D.
+7. Thème Minecraft, fanfare « Mission Passed ».
+8. Service au premier plan pour continuer le guidage écran éteint.

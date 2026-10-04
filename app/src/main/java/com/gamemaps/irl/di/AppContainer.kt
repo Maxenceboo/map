@@ -1,6 +1,11 @@
 package com.gamemaps.irl.di
 
 import android.content.Context
+import com.gamemaps.irl.audio.AudioController
+import com.gamemaps.irl.audio.playback.AndroidAudioOutput
+import com.gamemaps.irl.audio.playback.NavigationAudioFocus
+import com.gamemaps.irl.audio.playback.TonePlayer
+import com.gamemaps.irl.audio.playback.VoiceGuide
 import com.gamemaps.irl.data.location.AndroidLocationSource
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.network.HttpClientFactory
@@ -10,6 +15,7 @@ import com.gamemaps.irl.data.routing.RoutingService
 import com.gamemaps.irl.data.routing.osrm.OsrmClient
 import com.gamemaps.irl.data.search.BanGeocoder
 import com.gamemaps.irl.data.search.PlaceSearch
+import com.gamemaps.irl.data.settings.AudioPreferences
 import com.gamemaps.irl.data.speedlimit.SpeedLimitRepository
 import com.gamemaps.irl.navigation.NavigationEngine
 import kotlinx.coroutines.CoroutineScope
@@ -43,4 +49,19 @@ class AppContainer(context: Context) {
     val speedLimitRepository = SpeedLimitRepository(appScope, locationRepository, overpassClient).apply { start() }
 
     val radarRepository = RadarRepository(appScope, locationRepository, overpassClient).apply { start() }
+
+    val audioPreferences = AudioPreferences(context)
+
+    init {
+        val focus = NavigationAudioFocus(context)
+        AudioController(
+            scope = appScope,
+            navigation = navigationEngine.state,
+            radarAlerts = radarRepository.alert,
+            fixes = locationRepository.fixes,
+            speedLimits = speedLimitRepository.limitKmh,
+            muted = audioPreferences.muted,
+            output = AndroidAudioOutput(TonePlayer(focus), VoiceGuide(context, focus)),
+        ).start()
+    }
 }

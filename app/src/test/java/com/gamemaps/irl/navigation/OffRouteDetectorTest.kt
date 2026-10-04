@@ -21,4 +21,14 @@ class OffRouteDetectorTest {
         assertFalse(detector.update(50.0, timeMillis = 0))
         assertTrue(detector.update(50.0, timeMillis = 3_000))
     }
+
+    @Test
+    fun `à l'arrêt, un écart avec le tracé ne déclenche jamais de recalcul`() {
+        val detector = OffRouteDetector(thresholdMeters = 35.0, graceMillis = 3_000)
+        assertFalse(detector.update(60.0, timeMillis = 0, speedMetersPerSecond = 0f))
+        assertFalse(detector.update(60.0, timeMillis = 10_000, speedMetersPerSecond = 0.5f))
+        // On démarre en restant loin du tracé : le délai de grâce commence seulement maintenant.
+        assertFalse(detector.update(60.0, timeMillis = 11_000, speedMetersPerSecond = 8f))
+        assertTrue(detector.update(60.0, timeMillis = 14_000, speedMetersPerSecond = 8f))
+    }
 }

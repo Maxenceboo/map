@@ -8,4 +8,5 @@ data class MainUiState(
     val search: SearchUiState = SearchUiState(),
     val navigation: NavigationState = NavigationState.Idle,
     val driving: DrivingState = DrivingState(),
+    val isMuted: Boolean = false,
 )

@@ -86,7 +86,7 @@ class NavigationEngine(
         }
         _state.update { (it as? NavigationState.Navigating)?.copy(progress = progress) ?: it }
 
-        if (!current.isRerouting && offRouteDetector.update(progress.distanceFromRouteMeters, fix.timeMillis)) {
+        if (!current.isRerouting && offRouteDetector.update(progress.distanceFromRouteMeters, fix.timeMillis, fix.speedMetersPerSecond)) {
             reroute(current.destination, fix.position)
         }
     }

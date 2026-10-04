@@ -19,7 +19,12 @@ object NavigatingTemplate {
     /** Fond violet de la carte de manœuvre, couleur de l'itinéraire (§5.2). */
     private val ROUTE_PURPLE = Color.parseColor("#7e22ce")
 
-    fun build(state: NavigationState.Navigating, onStop: () -> Unit): Template {
+    fun build(
+        state: NavigationState.Navigating,
+        isMuted: Boolean,
+        onToggleMute: () -> Unit,
+        onStop: () -> Unit,
+    ): Template {
         val progress = state.progress
         val nextStep = progress.nextStep
         val routingInfo = if (nextStep == null || state.isRerouting) {
@@ -33,7 +38,12 @@ object NavigatingTemplate {
             .setNavigationInfo(routingInfo)
             .setDestinationTravelEstimate(CarTravelEstimateMapper.map(progress))
             .setBackgroundColor(CarColor.createCustom(ROUTE_PURPLE, ROUTE_PURPLE))
-            .setActionStrip(CarActions.strip(CarActions.button("Arrêter", onStop)))
+            .setActionStrip(
+                CarActions.strip(
+                    CarActions.muteToggle(isMuted, onToggleMute),
+                    CarActions.button("Arrêter", onStop),
+                ),
+            )
             .build()
     }
 }

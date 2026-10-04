@@ -31,6 +31,7 @@ class NavigationCarScreen(
 ) : Screen(carContext) {
 
     private val engine = container.navigationEngine
+    private val audio = container.audioPreferences
     private var navigation: NavigationState = engine.state.value
     private var hasLocationPermission = LocationPermissions.isGranted(carContext)
     private var mapController: MapController? = null
@@ -49,14 +50,24 @@ class NavigationCarScreen(
         observeNavigation()
         observeLocation()
         observeRadars()
+        observeMute()
     }
 
     override fun onGetTemplate(): Template {
         if (!hasLocationPermission) return MessageTemplates.permissionRequired(::requestLocationPermission)
         return when (val state = navigation) {
-            is NavigationState.Idle -> IdleTemplate.build(onSearch = ::openSearch)
+            is NavigationState.Idle -> IdleTemplate.build(
+                onSearch = ::openSearch,
+                isMuted = audio.muted.value,
+                onToggleMute = audio::toggleMuted,
+            )
             is NavigationState.Calculating -> CalculatingTemplate.build(onStop = engine::stop)
-            is NavigationState.Navigating -> NavigatingTemplate.build(state, onStop = engine::stop)
+            is NavigationState.Navigating -> NavigatingTemplate.build(
+                state = state,
+                isMuted = audio.muted.value,
+                onToggleMute = audio::toggleMuted,
+                onStop = engine::stop,
+            )
             is NavigationState.Arrived -> MessageTemplates.arrived(state.destination.name, onDone = engine::stop)
             is NavigationState.Failed -> MessageTemplates.failed(
                 reason = state.message,
@@ -81,6 +92,11 @@ class NavigationCarScreen(
         lifecycleScope.launch {
             container.locationRepository.fixes.filterNotNull().collect { mapController?.showVehicle(it) }
         }
+    }
+
+    /** Le bouton Son / Muet change de titre : il faut redessiner le template. */
+    private fun observeMute() {
+        lifecycleScope.launch { audio.muted.collect { invalidate() } }
     }
 
     private fun observeRadars() {
