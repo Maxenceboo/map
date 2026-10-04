@@ -46,7 +46,7 @@ class VehicleGeometryTest {
         val carBeams = VehicleGeometry.headlightBeams(SportCar.model, center, 0.0, 1.0)
         assertEquals(2, carBeams.size)
         assertTrue(carBeams.all { beam -> beam.all { it.lat > center.lat } }) // tout est devant (au nord)
-        assertEquals(1, VehicleGeometry.headlightBeams(VehicleKind.MOTO.model!!, center, 0.0, 1.0).size)
+        assertEquals(1, VehicleGeometry.headlightBeams(VehicleKind.MOTO.model, center, 0.0, 1.0).size)
     }
 
     @Test

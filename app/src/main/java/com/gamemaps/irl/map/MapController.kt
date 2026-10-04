@@ -11,8 +11,6 @@ import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
 import com.gamemaps.irl.map.layers.TrafficLayer
-import com.gamemaps.irl.map.layers.VehicleIconFactory
-import com.gamemaps.irl.map.layers.VehicleMarkerLayer
 import com.gamemaps.irl.map.theme.MapTheme
 import com.gamemaps.irl.map.theme.MapThemeApplier
 import com.gamemaps.irl.map.theme.ThemeTextureInstaller
@@ -33,7 +31,6 @@ class MapController internal constructor(
     private val trafficLayer: TrafficLayer,
     private val destinationLayer: DestinationLayer,
     private val radarLayer: RadarLayer,
-    private val vehicleLayer: VehicleMarkerLayer,
     private val vehicle3DLayer: Vehicle3DLayer,
     private val camera: FollowCamera,
 ) {
@@ -46,7 +43,6 @@ class MapController internal constructor(
     val isFollowing: StateFlow<Boolean> get() = camera.isFollowing
 
     fun showVehicle(fix: GpsFix) {
-        vehicleLayer.update(fix)
         vehicle3DLayer.update(fix)
         camera.follow(fix)
     }
@@ -78,12 +74,11 @@ class MapController internal constructor(
         val patterns = ThemeTextureInstaller.install(context, style, theme.textures)
         MapThemeApplier.apply(style, theme.palette, patterns)
         routeLayer.applyPalette(theme.palette)
-        vehicleLayer.setIcon(VehicleIconFactory.create(context, theme), rotates = theme.textures.vehicleSprite == null)
         destinationLayer.setIcon(DestinationPinBitmap.create(theme.palette))
         refreshVehicle()
     }
 
-    /** Véhicule choisi dans Paramètres > Véhicule : modèle 3D (ou flèche), couleur, phares. */
+    /** Véhicule choisi dans Paramètres > Véhicule : modèle 3D, couleur, phares. */
     fun applyVehicle(kind: VehicleKind, color: VehicleColor, headlights: Boolean) {
         vehicleKind = kind
         vehicleColor = color
@@ -97,14 +92,12 @@ class MapController internal constructor(
     }
 
     /**
-     * Un seul véhicule visible à la fois : le modèle 3D s'il y en a un, sinon l'icône plate.
-     * Un thème à sprite (cochon Minecraft) garde son sprite, quel que soit le modèle choisi.
+     * Le véhicule est toujours un modèle 3D : celui du thème s'il en impose un (cochon Minecraft),
+     * sinon celui choisi dans les Paramètres.
      */
     private fun refreshVehicle() {
-        val themeHasSprite = currentTheme?.textures?.vehicleSprite != null
-        val model = vehicleKind.model.takeUnless { themeHasSprite }
+        val model = currentTheme?.textures?.vehicleModel ?: vehicleKind.model
         vehicle3DLayer.configure(model, vehicleColor, headlights)
-        vehicleLayer.setVisible(model == null)
     }
 
     /** 3D cockpit ou 2D vue de dessus. */

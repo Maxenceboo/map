@@ -4,7 +4,16 @@ package com.gamemaps.irl.map.vehicle3d
 object VehicleShapes {
 
     /** Boîte centrée en ([centerX], [centerZ]), de [width] (gauche-droite) sur [length] (avant-arrière). */
-    fun box(centerX: Double, centerZ: Double, width: Double, length: Double, base: Double, top: Double, role: PartRole): VehiclePart {
+    fun box(
+        centerX: Double,
+        centerZ: Double,
+        width: Double,
+        length: Double,
+        base: Double,
+        top: Double,
+        role: PartRole,
+        colorHex: String? = null,
+    ): VehiclePart {
         val halfW = width / 2
         val halfL = length / 2
         return VehiclePart(
@@ -17,6 +26,7 @@ object VehicleShapes {
             baseMeters = base,
             topMeters = top,
             role = role,
+            colorHex = colorHex,
         )
     }
 

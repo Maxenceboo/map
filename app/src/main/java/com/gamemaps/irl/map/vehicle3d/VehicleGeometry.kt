@@ -18,7 +18,7 @@ object VehicleGeometry {
                 ring = part.footprint.map { toLatLng(it, center, bearingDegrees, scale) },
                 baseMeters = part.baseMeters * scale,
                 topMeters = part.topMeters * scale,
-                colorHex = VehiclePalette.hexFor(part.role, color),
+                colorHex = part.colorHex ?: VehiclePalette.hexFor(part.role, color),
             )
         }
 

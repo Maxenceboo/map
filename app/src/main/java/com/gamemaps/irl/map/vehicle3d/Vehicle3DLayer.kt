@@ -51,7 +51,7 @@ class Vehicle3DLayer(private val style: Style, private val zoom: () -> Double) {
         )
     }
 
-    /** [model] null = pas de véhicule 3D (flèche plate ou sprite du thème à la place). */
+    /** [model] null = aucun véhicule affiché. */
     fun configure(model: VehicleModel?, color: VehicleColor, headlights: Boolean) {
         this.model = model
         this.color = color

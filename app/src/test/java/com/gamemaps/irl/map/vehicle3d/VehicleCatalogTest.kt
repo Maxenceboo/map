@@ -1,47 +1,58 @@
 package com.gamemaps.irl.map.vehicle3d
 
+import com.gamemaps.irl.map.vehicle3d.models.MinecraftPig
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Vérifie que chaque modèle du catalogue est cohérent (évite un véhicule invisible ou difforme). */
 class VehicleCatalogTest {
 
-    private val models = VehicleKind.entries.mapNotNull { kind -> kind.model?.let { kind to it } }
+    /** Tous les modèles affichables : ceux des Paramètres et celui imposé par le thème Minecraft. */
+    private val models = VehicleKind.entries.map { it.name to it.model } + ("MINECRAFT_PIG" to MinecraftPig.model)
 
-    @Test
-    fun `la flèche n'a pas de modèle 3D, les autres en ont un`() {
-        assertNull(VehicleKind.ARROW.model)
-        assertEquals(VehicleKind.entries.size - 1, models.size)
-    }
+    /** Les vrais véhicules, avec des roues (ni la flèche ni le cochon). */
+    private val wheeled = VehicleKind.entries.filter { it != VehicleKind.ARROW }
 
     @Test
     fun `chaque pièce est un volume valide`() {
-        models.forEach { (kind, model) ->
+        models.forEach { (name, model) ->
             model.parts.forEach { part ->
-                assertTrue("$kind : contour à moins de 3 points", part.footprint.size >= 3)
-                assertTrue("$kind : pièce sans épaisseur", part.topMeters > part.baseMeters)
-                assertTrue("$kind : pièce sous le sol", part.baseMeters >= 0.0)
+                assertTrue("$name : contour à moins de 3 points", part.footprint.size >= 3)
+                assertTrue("$name : pièce sans épaisseur", part.topMeters > part.baseMeters)
+                assertTrue("$name : pièce sous le sol", part.baseMeters >= 0.0)
             }
         }
     }
 
     @Test
     fun `dimensions réalistes et véhicule centré`() {
-        models.forEach { (kind, model) ->
-            assertTrue("$kind : longueur ${model.lengthMeters} m", model.lengthMeters in 2.0..6.0)
+        models.forEach { (name, model) ->
+            assertTrue("$name : longueur ${model.lengthMeters} m", model.lengthMeters in 2.0..6.0)
             val xs = model.parts.flatMap { it.footprint }.map { it.x }
-            assertEquals("$kind : pas symétrique gauche/droite", xs.max(), -xs.min(), 1e-9)
-            assertTrue("$kind : hauteur", model.parts.maxOf { it.topMeters } in 0.8..2.0)
+            assertEquals("$name : pas symétrique gauche/droite", xs.max(), -xs.min(), 1e-9)
+            assertTrue("$name : hauteur", model.parts.maxOf { it.topMeters } in 0.5..2.0)
         }
     }
 
     @Test
-    fun `chaque véhicule a des pneus, une carrosserie et un feu arrière`() {
-        models.forEach { (kind, model) ->
-            val roles = model.parts.map { it.role }.toSet()
+    fun `la flèche pointe vers l'avant`() {
+        val body = VehicleKind.ARROW.model.parts.last().footprint
+        val tip = body.maxBy { it.z }
+        assertEquals(0.0, tip.x, 1e-9) // la pointe est sur l'axe
+        assertTrue(body.count { it.z < 0 } >= 3) // les deux ailes et l'encoche sont à l'arrière
+    }
+
+    @Test
+    fun `chaque véhicule roulant a des pneus, une carrosserie et un feu arrière`() {
+        wheeled.forEach { kind ->
+            val roles = kind.model.parts.map { it.role }.toSet()
             assertTrue("$kind", roles.containsAll(setOf(PartRole.BODY, PartRole.TIRE, PartRole.TAILLIGHT)))
         }
+    }
+
+    @Test
+    fun `le cochon garde ses couleurs quelle que soit la carrosserie choisie`() {
+        assertTrue(MinecraftPig.model.parts.all { it.colorHex != null })
     }
 }

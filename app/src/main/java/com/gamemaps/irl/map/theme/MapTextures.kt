@@ -2,18 +2,21 @@ package com.gamemaps.irl.map.theme
 
 import androidx.annotation.DrawableRes
 import com.gamemaps.irl.R
+import com.gamemaps.irl.map.vehicle3d.VehicleModel
+import com.gamemaps.irl.map.vehicle3d.models.MinecraftPig
 
 /**
- * Textures optionnelles d'un thème (images répétées en motif, sprite du véhicule).
+ * Habillage optionnel d'un thème : images répétées en motif et véhicule imposé.
  * null = pas de texture : la couleur de la [MapPalette] est utilisée.
  *
- * @property vehicleSprite image pixel-art affichée à la place de la flèche (non tournée).
+ * @property vehicleModel véhicule 3D propre au thème (cochon Minecraft), affiché à la place
+ *   de celui choisi dans les Paramètres ; null = le véhicule de l'utilisateur.
  */
 data class MapTextures(
     @DrawableRes val ground: Int? = null,
     @DrawableRes val water: Int? = null,
     @DrawableRes val woods: Int? = null,
-    @DrawableRes val vehicleSprite: Int? = null,
+    val vehicleModel: VehicleModel? = null,
 ) {
     companion object {
         val NONE = MapTextures()
@@ -22,7 +25,7 @@ data class MapTextures(
             ground = R.drawable.minecraft_grass,
             water = R.drawable.minecraft_water,
             woods = R.drawable.minecraft_tree,
-            vehicleSprite = R.drawable.minecraft_pig,
+            vehicleModel = MinecraftPig.model,
         )
     }
 }

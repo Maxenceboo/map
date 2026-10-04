@@ -159,9 +159,6 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `layers/TrafficLayer.kt` | Bordures orange / rouges autour du tracé sur les portions ralenties. |
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
-| `layers/VehicleMarkerLayer.kt` | Marqueur 2D du véhicule orienté selon le cap (masqué quand un modèle 3D est affiché). |
-| `layers/VehicleIconFactory.kt` | Flèche GTA ou sprite pixel-art (cochon Minecraft) selon le thème. |
-| `layers/VehicleArrowBitmap.kt` | Dessin de la flèche GTA (modèle « Flèche »). |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
 | `layers/RadarLayer.kt` | Icônes des radars sur la carte (une par type). |
 | `layers/RadarIconBitmap.kt` | Dessin des icônes : appareil photo, feu tricolore. |
@@ -179,7 +176,9 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `VehicleShapes.kt` | Formes de base : boîte, carrosserie effilée, symétrie gauche / droite, quatre roues. |
 | `VehicleModel.kt` | Un véhicule = liste de pièces + position des phares. |
 | `models/SportCar.kt`, `MuscleCar.kt`, `Suv.kt`, `FormulaOne.kt`, `Motorbike.kt` | Un fichier par modèle. |
-| `VehicleKind.kt` | Catalogue proposé dans les Paramètres (« Flèche » = pas de 3D). |
+| `VehicleKind.kt` | Catalogue proposé dans les Paramètres ; tous en 3D, flèche comprise. |
+| `models/Arrow.kt` | Curseur GTA en relief. |
+| `models/MinecraftPig.kt` | Cochon en cubes, imposé par le thème Minecraft. |
 | `VehicleColor.kt` | Couleurs de carrosserie. |
 | `VehiclePalette.kt` | Couleur de chaque rôle (la carrosserie prend la couleur choisie). |
 | `VehicleScale.kt` | Agrandit le modèle selon le zoom pour garder la même taille à l'écran. |
