@@ -39,3 +39,8 @@ Thumbs.db
 # Kotlin
 .kotlin/
 *.iml
+
+# Signature de publication : ne jamais versionner
+keystore.properties
+*.jks
+*.keystore

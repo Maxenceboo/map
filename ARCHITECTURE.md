@@ -166,7 +166,7 @@ Le mode développeur s'active par 7 appuis sur la version (Paramètres > À prop
 | `MapController.kt` | Façade : véhicule, tracé + destination, radars, vue d'ensemble, recentrage, thème et perspective à chaud. |
 | `MapLibreConversions.kt` | Notre `LatLng` → types MapLibre / GeoJSON. |
 | `style/MapStyleSource.kt` | URL du fond de carte OpenFreeMap. |
-| `theme/MapTheme.kt` | Thèmes GTA V Radar, Waze nocturne, Minecraft IRL (§4). |
+| `theme/MapTheme.kt` | Thèmes Radar nocturne, Néon cyan, Monde cubique (§4). |
 | `theme/MapTextures.kt` | Textures d'un thème (herbe, eau, arbres, sprite du véhicule). |
 | `theme/ThemeTextureInstaller.kt` | Ajoute les textures au style comme motifs (pixels nets). |
 | `theme/ThemePatterns.kt` | Motifs installés pour le thème actif. |
@@ -194,8 +194,8 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `VehicleModel.kt` | Un véhicule = liste de pièces + position des phares. |
 | `models/SportCar.kt`, `MuscleCar.kt`, `Suv.kt`, `FormulaOne.kt`, `Motorbike.kt` | Un fichier par modèle. |
 | `VehicleKind.kt` | Catalogue proposé dans les Paramètres ; tous en 3D, flèche comprise. |
-| `models/Arrow.kt` | Curseur GTA en relief. |
-| `models/MinecraftPig.kt` | Cochon en cubes, imposé par le thème Minecraft. |
+| `models/Arrow.kt` | Flèche en relief, façon mini-carte de jeu. |
+| `models/MinecraftPig.kt` | Cochon en cubes, imposé par le thème Monde cubique. |
 | `VehicleColor.kt` | Couleurs de carrosserie. |
 | `VehiclePalette.kt` | Couleur de chaque rôle (la carrosserie prend la couleur choisie). |
 | `VehicleScale.kt` | Agrandit le modèle selon le zoom pour garder la même taille à l'écran. |
