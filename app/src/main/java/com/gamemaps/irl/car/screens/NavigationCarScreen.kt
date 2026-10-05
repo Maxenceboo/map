@@ -108,7 +108,7 @@ class NavigationCarScreen(
 
     private fun observeLocation() {
         lifecycleScope.launch {
-            container.locationRepository.fixes.filterNotNull().collect { mapController?.showVehicle(it) }
+            container.displayFixes.filterNotNull().collect { mapController?.showVehicle(it) }
         }
     }
 
@@ -136,7 +136,7 @@ class NavigationCarScreen(
         controller.applyVehicle(settings.vehicle, settings.vehicleColor, settings.headlights)
         val route = (navigation as? NavigationState.Navigating)?.route ?: (navigation as? NavigationState.Previewing)?.route
         controller.showRoute(route)
-        container.locationRepository.fixes.value?.let(controller::showVehicle)
+        container.displayFixes.value?.let(controller::showVehicle)
     }
 
     /** Icône Maison / Travail : démarre le guidage, ou indique où définir le lieu. */

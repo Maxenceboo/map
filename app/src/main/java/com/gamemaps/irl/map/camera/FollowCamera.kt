@@ -15,7 +15,7 @@ import org.maplibre.android.maps.MapLibreMap
  * Caméra de la carte.
  *
  * - **Suivi** : inclinée derrière le véhicule, orientée dans le sens de la marche.
- *   Première position : saut immédiat ; ensuite glissement linéaire, fluide entre deux mesures GPS.
+ *   Elle est déplacée à chaque image par l'animation du véhicule (voir `VehicleAnimator`).
  * - **Pause** : dès que l'utilisateur déplace la carte au doigt ([pause]), on arrête de suivre
  *   (sinon la caméra lui reprendrait la main). [isFollowing] permet d'afficher le bouton RECENTRER.
  * - **Vue d'ensemble** : cadre tout un itinéraire (aperçu avant le départ).
@@ -34,13 +34,9 @@ class FollowCamera(
     fun follow(fix: GpsFix) {
         lastFix = fix
         if (!_isFollowing.value) return
-        val update = CameraUpdateFactory.newCameraPosition(positionFor(fix))
-        if (!hasPositioned) {
-            map.moveCamera(update)
-            hasPositioned = true
-        } else {
-            map.easeCamera(update, config.animationMillis, false)
-        }
+        // Appelée à chaque image de l'animation du véhicule : un simple déplacement suffit, il est déjà fluide.
+        map.moveCamera(CameraUpdateFactory.newCameraPosition(positionFor(fix)))
+        hasPositioned = true
     }
 
     /** Changement de perspective (3D / 2D) : appliqué tout de suite si on suit le véhicule. */

@@ -39,9 +39,15 @@ class MapController internal constructor(
     /** false quand l'utilisateur a déplacé la carte : afficher le bouton RECENTRER. */
     val isFollowing: StateFlow<Boolean> get() = camera.isFollowing
 
-    fun showVehicle(fix: GpsFix) {
+    /** Le véhicule et la caméra glissent ensemble d'une position à la suivante. */
+    private val vehicleAnimator = VehicleAnimator { fix ->
         vehicle3DLayer.update(fix)
         camera.follow(fix)
+    }
+
+    /** Nouvelle position : le véhicule la rejoint en douceur. */
+    fun showVehicle(fix: GpsFix) {
+        vehicleAnimator.moveTo(fix)
     }
 
     /** Tracé, bordures de trafic et épingle de destination (au bout du tracé). null efface tout. */

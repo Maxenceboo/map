@@ -153,6 +153,8 @@ Le mode développeur s'active par 7 appuis sur la version (Paramètres > À prop
 | `trip/TripStats.kt` | Bilan du trajet (distance, durée, moyenne). |
 | `trip/MissionPassedModel.kt` | Bilan mis en forme (téléphone + voiture). |
 | `SpeedingDetector.kt` | Excès de vitesse : limite + 3 km/h (§6.3). |
+| `snap/RoadSnapper.kt` | Aimante le véhicule affiché à l'itinéraire, ou à la route la plus proche. |
+| `snap/SnapCandidate.kt` | Point d'une route où poser le véhicule, et direction de la route. |
 | `radar/RadarAlertDetector.kt` | Entrée et sortie d'une zone de danger (§6.2) : les trois quarts de la zone avant le point de contrôle, un quart après. |
 | `radar/RadarAlert.kt` | « On est dans une zone de danger » : identifiant de zone et vitesse autorisée, sans emplacement ni distance. |
 | `radar/DangerZoneSize.kt` | Longueur d'une zone : 4 km sur autoroute, 2 km hors agglomération, 300 m en ville. |
@@ -176,6 +178,7 @@ Le mode développeur s'active par 7 appuis sur la version (Paramètres > À prop
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
+| `VehicleAnimator.kt` | Fait glisser le véhicule et la caméra d'une position GPS à la suivante. |
 | `camera/FollowCamera.kt` | Suivi incliné, pause au doigt (`isFollowing`), recentrage, vue d'ensemble d'un trajet. |
 | `camera/CameraConfig.kt` | Réglages téléphone / voiture, variante 2D vue de dessus. |
 

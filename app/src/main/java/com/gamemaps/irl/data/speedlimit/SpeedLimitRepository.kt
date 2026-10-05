@@ -1,5 +1,7 @@
 package com.gamemaps.irl.data.speedlimit
 
+import com.gamemaps.irl.navigation.snap.SnapCandidate
+import com.gamemaps.irl.core.geo.LatLng
 import android.util.Log
 import com.gamemaps.irl.core.geo.BoundingBox
 import com.gamemaps.irl.data.location.GpsFix
@@ -79,6 +81,9 @@ class SpeedLimitRepository(
             }
         }
     }
+
+    /** Point de la route la plus proche parmi celles chargées (pour aimanter le véhicule) ; null si aucune. */
+    fun snapToRoad(position: LatLng, bearingDegrees: Float?): SnapCandidate? = index?.snapAt(position, bearingDegrees)
 
     private fun publish(index: SpeedLimitIndex?, fix: GpsFix) {
         val road = index?.roadAt(fix.position, fix.bearingDegrees)

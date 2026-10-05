@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.places.SavedPlacesRepository
 import com.gamemaps.irl.data.search.Place
@@ -39,6 +40,7 @@ class MainViewModel(
     private val placeSearch: PlaceSearch,
     private val navigationEngine: NavigationEngine,
     private val locationRepository: LocationRepository,
+    private val displayFixes: Flow<GpsFix?>,
     private val speedLimitRepository: SpeedLimitRepository,
     private val radarRepository: RadarRepository,
     private val radarAlerts: Flow<RadarAlert?>,
@@ -51,7 +53,7 @@ class MainViewModel(
     private val queries = MutableStateFlow("")
 
     private val driving = combine(
-        locationRepository.fixes,
+        displayFixes,
         speedLimitRepository.limit,
         radarRepository.radars,
         radarAlerts,
@@ -136,6 +138,7 @@ class MainViewModel(
                     placeSearch = container.placeSearch,
                     navigationEngine = container.navigationEngine,
                     locationRepository = container.locationRepository,
+                    displayFixes = container.displayFixes,
                     speedLimitRepository = container.speedLimitRepository,
                     radarRepository = container.radarRepository,
                     radarAlerts = container.radarAlerts,

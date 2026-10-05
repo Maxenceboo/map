@@ -8,6 +8,9 @@ import com.gamemaps.irl.audio.playback.TonePlayer
 import com.gamemaps.irl.audio.playback.VoiceGuide
 import com.gamemaps.irl.data.custom.CustomContentRepository
 import com.gamemaps.irl.data.location.AndroidLocationSource
+import com.gamemaps.irl.navigation.snap.RoadSnapper
+import com.gamemaps.irl.navigation.NavigationState
+import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.location.DemoLocationSource
 import com.gamemaps.irl.data.location.SwitchableLocationSource
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -61,6 +64,17 @@ class AppContainer(context: Context) {
 
     val savedPlacesRepository = SavedPlacesRepository(context)
 
+
+    /**
+     * Position à afficher : celle du GPS, aimantée à l'itinéraire ou à la route la plus proche.
+     * Le guidage, lui, garde la position GPS réelle ([locationRepository]).
+     */
+    val displayFixes: StateFlow<GpsFix?> by lazy {
+        val snapper = RoadSnapper()
+        combine(locationRepository.fixes, navigationEngine.state) { fix, navigation ->
+            fix?.let { snapper.snap(it, (navigation as? NavigationState.Navigating)?.route, speedLimitRepository::snapToRoad) }
+        }.stateIn(appScope, SharingStarted.Eagerly, null)
+    }
 
     val audioPreferences = AudioPreferences(context)
     /** Thèmes et véhicules créés en mode développeur. */
