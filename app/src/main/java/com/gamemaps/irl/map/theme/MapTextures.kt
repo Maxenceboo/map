@@ -22,9 +22,9 @@ data class MapTextures(
         val NONE = MapTextures()
 
         val MINECRAFT = MapTextures(
-            ground = R.drawable.minecraft_grass,
-            water = R.drawable.minecraft_water,
-            woods = R.drawable.minecraft_tree,
+            ground = R.drawable.cubic_grass,
+            water = R.drawable.cubic_water,
+            woods = R.drawable.cubic_tree,
             vehicleModel = MinecraftPig.model,
         )
     }

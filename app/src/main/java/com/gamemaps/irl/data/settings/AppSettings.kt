@@ -23,6 +23,8 @@ data class AppSettings(
     val traffic: Boolean = true,
     /** Mode développeur : débloque la création de thèmes et de véhicules (7 appuis sur la version, dans À propos). */
     val devMode: Boolean = false,
+    /** Mode développeur : position simulée à Paris, pour présenter l'app sans montrer où l'on est. */
+    val demoLocation: Boolean = false,
     /** Alertes radar (bandeau, voiture, sons). Les radars restent visibles sur la carte. */
     val radarAlerts: Boolean = true,
 )

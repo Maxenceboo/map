@@ -8,6 +8,10 @@ import com.gamemaps.irl.audio.playback.TonePlayer
 import com.gamemaps.irl.audio.playback.VoiceGuide
 import com.gamemaps.irl.data.custom.CustomContentRepository
 import com.gamemaps.irl.data.location.AndroidLocationSource
+import com.gamemaps.irl.data.location.DemoLocationSource
+import com.gamemaps.irl.data.location.SwitchableLocationSource
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import com.gamemaps.irl.data.location.LocationRepository
 import com.gamemaps.irl.data.network.HttpClientFactory
 import com.gamemaps.irl.data.osm.OverpassClient
@@ -72,7 +76,15 @@ class AppContainer(context: Context) {
         trafficEnabled = { settingsRepository.settings.value.traffic },
     )
 
-    val locationRepository = LocationRepository(AndroidLocationSource(context.applicationContext), appScope)
+    /** Vrai GPS, ou position de démonstration si elle est activée en mode développeur. */
+    val locationRepository = LocationRepository(
+        SwitchableLocationSource(
+            real = AndroidLocationSource(context.applicationContext),
+            demo = DemoLocationSource(),
+            useDemo = settingsRepository.settings.map { it.devMode && it.demoLocation }.distinctUntilChanged(),
+        ),
+        appScope,
+    )
 
     val navigationEngine = NavigationEngine(appScope, locationRepository, routingService)
 

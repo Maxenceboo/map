@@ -25,11 +25,11 @@ data class VehicleKind(
     override fun toString(): String = id
 
     companion object {
-        val ARROW = VehicleKind("ARROW", "Flèche radar", "Curseur en relief façon minimap GTA", Arrow.model)
+        val ARROW = VehicleKind("ARROW", "Flèche radar", "Curseur en relief façon mini-carte de jeu", Arrow.model)
         val SPORT = VehicleKind("SPORT", "Coupé sport", "Châssis surbaissé, aileron arrière", SportCar.model)
         val MUSCLE = VehicleKind("MUSCLE", "Muscle car", "Lignes carrées, prise d'air sur le capot", MuscleCar.model)
         val SUV = VehicleKind("SUV", "4x4", "Garde au sol haute, barres de toit", Suv.model)
-        val F1 = VehicleKind("F1", "Formule 1", "Monoplace, ailerons et gros pneus", FormulaOne.model)
+        val F1 = VehicleKind("F1", "Monoplace", "Voiture de course, ailerons et gros pneus", FormulaOne.model)
         val MOTO = VehicleKind("MOTO", "Moto", "Hypersport avec son pilote", Motorbike.model)
 
         /** Véhicules fournis avec l'application. */

@@ -26,7 +26,7 @@ private const val TAPS_TO_UNLOCK = 7
  * Sept appuis sur la version activent le mode développeur ; un interrupteur permet ensuite de le couper.
  */
 @Composable
-fun AboutSection(devMode: Boolean, onSetDevMode: (Boolean) -> Unit) {
+fun AboutSection(devMode: Boolean, demoLocation: Boolean, onSetDevMode: (Boolean) -> Unit, onSetDemoLocation: (Boolean) -> Unit) {
     val context = LocalContext.current
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "?"
@@ -60,6 +60,7 @@ fun AboutSection(devMode: Boolean, onSetDevMode: (Boolean) -> Unit) {
                 taps = 0
                 onSetDevMode(enabled)
             }
+            SettingsToggleRow(HudIcons.Recenter, "Position de démonstration", "Place le véhicule à Paris, sur les Champs-Élysées, à la place du GPS", demoLocation, onSetDemoLocation)
         }
     }
 

@@ -66,6 +66,8 @@ Racine des sources : `app/src/main/java/com/gamemaps/irl/`
 | `location/SpeedSmoother.kt` | Vitesse lissée, 0 sous 3 km/h (pas de vitesse fantôme). |
 | `location/StationaryPositionFilter.kt` | Position figée à l'arrêt (ignore le bruit GPS de quelques mètres). |
 | `location/LocationRepository.kt` | Position partagée (`StateFlow`) pour toute l'app, filtrée (vitesse, arrêt, cap). |
+| `location/DemoLocationSource.kt` | Position de démonstration : le véhicule sur les Champs-Élysées (mode développeur). |
+| `location/SwitchableLocationSource.kt` | Bascule entre le vrai GPS et la position de démonstration. |
 | `location/LocationPermissions.kt` | Liste et vérification des permissions. |
 | `settings/AudioPreferences.kt` | Son coupé ou non, mémorisé. |
 | `settings/AppSettings.kt` | Réglages : thème, perspective, voix, bips, alertes radar. |

@@ -56,6 +56,8 @@ Un seul accent : le jaune. Le violet est réservé à l'itinéraire, le rouge au
 ## Captures d'écran
 
 Format 1080 × 1920, un titre court au-dessus de chaque écran, même fond que la bannière.
-Fournies : véhicules, thèmes, éditeur de véhicule, éditeur de thème (`capture-*.png`).
-**À refaire toi-même pour la carte et le guidage**, loin de chez toi : celles prises pendant
-le développement montrent ton quartier.
+Ordre conseillé : guidage, carte, aperçu du trajet, recherche, véhicules, thèmes, éditeur de véhicule
+(`capture-1-guidage.png` à `capture-7-editeur-vehicule.png`).
+
+Pour en refaire : Paramètres > À propos > « Position de démonstration » place le véhicule
+sur les Champs-Élysées, ce qui évite de montrer où l'on se trouve.

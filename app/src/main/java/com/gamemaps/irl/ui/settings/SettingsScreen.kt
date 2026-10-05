@@ -125,7 +125,12 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit, startSecti
                     onUseCurrentPosition = { viewModel.currentPositionAsPlace()?.let(viewModel::setWork); backToPlaces() }.takeIf { state.hasPosition },
                     onClear = viewModel::clearWork,
                 )
-                SettingsSection.ABOUT -> AboutSection(state.settings.devMode) { enabled -> viewModel.update { it.copy(devMode = enabled) } }
+                SettingsSection.ABOUT -> AboutSection(
+                    devMode = state.settings.devMode,
+                    demoLocation = state.settings.demoLocation,
+                    onSetDevMode = { enabled -> viewModel.update { it.copy(devMode = enabled) } },
+                    onSetDemoLocation = { enabled -> viewModel.update { it.copy(demoLocation = enabled) } },
+                )
                 SettingsSection.DEV_THEMES -> DevThemesSection(
                     themes = state.customThemes,
                     usedId = state.settings.theme.id,

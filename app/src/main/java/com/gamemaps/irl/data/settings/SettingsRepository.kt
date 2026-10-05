@@ -37,6 +37,7 @@ class SettingsRepository(
             .putBoolean(KEY_RADAR_ALERTS, newValue.radarAlerts)
             .putBoolean(KEY_TRAFFIC, newValue.traffic)
             .putBoolean(KEY_DEV_MODE, newValue.devMode)
+            .putBoolean(KEY_DEMO_LOCATION, newValue.demoLocation)
             .apply()
         _settings.value = newValue
     }
@@ -56,6 +57,7 @@ class SettingsRepository(
             radarAlerts = prefs.getBoolean(KEY_RADAR_ALERTS, defaults.radarAlerts),
             traffic = prefs.getBoolean(KEY_TRAFFIC, defaults.traffic),
             devMode = prefs.getBoolean(KEY_DEV_MODE, defaults.devMode),
+            demoLocation = prefs.getBoolean(KEY_DEMO_LOCATION, defaults.demoLocation),
         )
     }
 
@@ -76,5 +78,6 @@ class SettingsRepository(
         const val KEY_RADAR_ALERTS = "radar_alerts"
         const val KEY_TRAFFIC = "traffic"
         const val KEY_DEV_MODE = "dev_mode"
+        const val KEY_DEMO_LOCATION = "demo_location"
     }
 }

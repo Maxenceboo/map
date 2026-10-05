@@ -19,7 +19,7 @@ data class MapTheme(
     companion object {
         val GTA_RADAR = MapTheme(
             id = "GTA_RADAR",
-            label = "Radar GTA V",
+            label = "Radar nocturne",
             description = "Bleu nuit, routes ardoise, itinéraire violet",
             palette = MapPalette(
                 background = "#10131a",
@@ -40,7 +40,7 @@ data class MapTheme(
 
         val WAZE_NIGHT = MapTheme(
             id = "WAZE_NIGHT",
-            label = "Waze nocturne",
+            label = "Néon cyan",
             description = "Noir profond, grands axes cyan, itinéraire bleu électrique",
             palette = MapPalette(
                 background = "#0d0f14",
@@ -62,8 +62,8 @@ data class MapTheme(
         /** Monde cubique : herbe, eau et arbres en pixel art, routes grises, tracé redstone, cochon. */
         val MINECRAFT = MapTheme(
             id = "MINECRAFT",
-            label = "Minecraft IRL",
-            description = "Herbe, eau et arbres en pixel art, tracé redstone, cochon",
+            label = "Monde cubique",
+            description = "Herbe, eau et arbres en pixel art, tracé rouge, cochon",
             palette = MapPalette(
                 background = "#528330",
                 landcover = "#385e1e",

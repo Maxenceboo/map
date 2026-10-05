@@ -56,21 +56,21 @@ GPS, navigation, itinéraire, Android Auto, radar, limitation de vitesse, trafic
 
 # Avant de publier
 
-## Noms de marques à retirer de l'app
+## Noms de marques
 
-Le Play Store refuse ou retire les apps qui utilisent des marques d'autres sociétés.
-Aujourd'hui l'app en contient :
+Fait : les noms de thèmes, de couleurs et de véhicules ne citent plus de marque
+(« Radar nocturne », « Néon cyan », « Monde cubique », « Monoplace »…), et les textures
+du thème cubique ont été redessinées pour l'app.
 
-| Où | Texte actuel | Proposition |
-| :--- | :--- | :--- |
-| Thème | « Radar GTA V » | « Radar nocturne » |
-| Thème | « Waze nocturne » | « Néon cyan » |
-| Thème | « Minecraft IRL » | « Monde cubique » |
-| Couleurs | « Jaune GTA », « Cyan Waze », « Orange McLaren » | « Jaune objectif », « Cyan », « Orange » |
-| Véhicule | « façon minimap GTA » | « façon mini-carte » |
+## Captures d'écran
 
-Les textures du thème cubique (herbe, eau, arbres) sont à vérifier aussi : si elles viennent
-du jeu, il faut les remplacer par des textures dessinées pour l'app.
+Sept captures 1080 × 1920 sont prêtes (`capture-1` à `capture-7`), prises sur Paris avec la
+« Position de démonstration » du mode développeur (Paramètres > À propos).
+
+## Politique de confidentialité
+
+Le texte est dans `politique-de-confidentialite.md`. Il reste à y mettre une adresse de contact
+et à le publier à une adresse web (une page GitHub suffit), à indiquer dans la fiche.
 
 ## Ce que Google demande pour une app de navigation
 
