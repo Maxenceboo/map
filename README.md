@@ -10,7 +10,7 @@ Application Android native (Kotlin), avec Android Auto.
 - **Carte** en 3D inclinée ou vue de dessus, plusieurs thèmes, véhicules 3D et couleurs au choix.
 - **Navigation** : recherche d'adresses et de lieux, guidage vocal, recalcul automatique,
   Maison / Travail / favoris, guidage écran éteint.
-- **Sur la route** : limitation de vitesse, alertes radars, trafic en temps réel (avec une clé TomTom).
+- **Sur la route** : limitation de vitesse, alertes de zones de danger, trafic en temps réel (avec une clé TomTom).
 - **Android Auto** : carte, guidage et recherche sur l'écran de la voiture.
 - **Mode développeur** : création de thèmes et de véhicules.
 
@@ -40,4 +40,4 @@ La signature et la fiche Play Store sont décrites dans [store/publication.md](s
 ## Données
 
 Carte et lieux © les contributeurs d'OpenStreetMap (OpenFreeMap, Photon, OSRM, Overpass),
-adresses de la Base Adresse Nationale, radars de la base officielle française.
+adresses de la Base Adresse Nationale, données publiques françaises de contrôle routier.

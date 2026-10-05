@@ -69,6 +69,6 @@ fun AboutSection(devMode: Boolean, demoLocation: Boolean, onSetDevMode: (Boolean
         SettingsInfoRow(Icons.Filled.Home, "Adresses", "Base Adresse Nationale (IGN Géoplateforme)")
         SettingsInfoRow(Icons.Filled.Place, "Lieux", "Photon (Komoot), données OpenStreetMap")
         SettingsInfoRow(HudIcons.Navigation, "Itinéraires", "TomTom (avec trafic) ou OSRM, données OpenStreetMap")
-        SettingsInfoRow(HudIcons.Radar, "Radars", "Base officielle française + OpenStreetMap (Overpass)")
+        SettingsInfoRow(HudIcons.Radar, "Zones de danger", "Données publiques françaises + OpenStreetMap (Overpass)")
     }
 }

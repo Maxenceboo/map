@@ -5,58 +5,53 @@ import com.gamemaps.irl.core.geo.LatLng
 import com.gamemaps.irl.data.radar.Radar
 import com.gamemaps.irl.data.radar.RadarType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RadarAlertDetectorTest {
 
     private val detector = RadarAlertDetector()
-    private val car = LatLng(44.8400, -0.5800)
 
-    /** ~500 m au nord de la voiture. */
-    private val radarNorth = Radar("r1", LatLng(44.8445, -0.5800), RadarType.SPEED, maxSpeedKmh = 50)
+    /** Point de contrôle sur une route à 80 : zone de 2 km (1,5 km avant, 500 m après). */
+    private val control = Radar("r1", LatLng(44.8600, -0.5800), RadarType.SPEED, maxSpeedKmh = 80)
 
-    /** ~300 m au sud (derrière quand on roule vers le nord). */
-    private val radarSouth = Radar("r2", LatLng(44.8373, -0.5800), RadarType.RED_LIGHT, maxSpeedKmh = null)
+    /** Position à [meters] au sud du point de contrôle (négatif = au nord, donc après l'avoir passé). */
+    private fun southOf(meters: Double) = LatLng(control.position.lat - meters / 111_320.0, control.position.lng)
 
-    /** ~1,5 km au nord : trop loin. */
-    private val radarFar = Radar("r3", LatLng(44.8535, -0.5800), RadarType.SPEED, maxSpeedKmh = 90)
-
-    private fun drivingNorth() = TestFixtures.fix(car).copy(bearingDegrees = 0f)
+    private fun drivingNorthAt(position: LatLng) = TestFixtures.fix(position).copy(bearingDegrees = 0f)
 
     @Test
-    fun `radar devant à moins de 800 m`() {
-        val alert = detector.detect(drivingNorth(), listOf(radarNorth, radarFar))!!
-        assertEquals("r1", alert.radar.id)
-        assertEquals(500.0, alert.distanceMeters, 10.0)
+    fun `taille de la zone selon la route`() {
+        assertEquals(4_000.0, DangerZoneSize.lengthMeters(130), 0.0)
+        assertEquals(2_000.0, DangerZoneSize.lengthMeters(80), 0.0)
+        assertEquals(300.0, DangerZoneSize.lengthMeters(50), 0.0)
+        assertEquals(2_000.0, DangerZoneSize.lengthMeters(null), 0.0)
     }
 
     @Test
-    fun `un radar derrière ne déclenche rien`() {
-        assertNull(detector.detect(drivingNorth(), listOf(radarSouth)))
+    fun `on entre dans la zone bien avant le point de contrôle`() {
+        assertNull(detector.detect(drivingNorthAt(southOf(1_800.0)), listOf(control)))
+        val alert = detector.detect(drivingNorthAt(southOf(1_400.0)), listOf(control))
+        assertEquals(RadarAlert(zoneId = "r1", maxSpeedKmh = 80), alert)
     }
 
     @Test
-    fun `en roulant vers le sud, c'est l'autre radar qui compte`() {
-        val alert = detector.detect(drivingNorth().copy(bearingDegrees = 180f), listOf(radarNorth, radarSouth))!!
-        assertEquals("r2", alert.radar.id)
+    fun `la zone continue après le point de contrôle, puis se termine`() {
+        detector.detect(drivingNorthAt(southOf(1_000.0)), listOf(control))
+        // 300 m après le point : toujours dans la zone, la fin de l'alerte ne trahit pas l'emplacement.
+        assertNotNull(detector.detect(drivingNorthAt(southOf(-300.0)), listOf(control)))
+        assertNull(detector.detect(drivingNorthAt(southOf(-700.0)), listOf(control)))
     }
 
     @Test
-    fun `cône de 30 degrés, y compris autour du nord`() {
-        assertEquals("r1", detector.detect(drivingNorth().copy(bearingDegrees = 340f), listOf(radarNorth))?.radar?.id)
-        assertNull(detector.detect(drivingNorth().copy(bearingDegrees = 45f), listOf(radarNorth)))
+    fun `un point de contrôle derrière soi ne déclenche rien`() {
+        assertNull(detector.detect(drivingNorthAt(southOf(-200.0)), listOf(control)))
     }
 
     @Test
-    fun `sans cap connu, pas d'alerte`() {
-        assertNull(detector.detect(drivingNorth().copy(bearingDegrees = null), listOf(radarNorth)))
-    }
-
-    @Test
-    fun `niveau urgent sous 300 m`() {
-        assertEquals(RadarAlertLevel.WARNING, detector.detect(drivingNorth(), listOf(radarNorth))?.level)
-        val close = radarNorth.copy(position = LatLng(44.8420, -0.5800)) // ~220 m
-        assertEquals(RadarAlertLevel.URGENT, detector.detect(drivingNorth(), listOf(close))?.level)
+    fun `sans cap connu, pas d'entrée en zone`() {
+        val stopped = TestFixtures.fix(southOf(500.0)).copy(bearingDegrees = null)
+        assertNull(detector.detect(stopped, listOf(control)))
     }
 }

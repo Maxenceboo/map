@@ -16,7 +16,6 @@ fun MapRenderEffect(controller: MapController?, state: MainUiState) {
     val preview = navigation as? NavigationState.Previewing
     val route = (navigation as? NavigationState.Navigating)?.route ?: preview?.route
     val fix = state.driving.fix
-    val radars = state.driving.radars
     val isNavigating = navigation is NavigationState.Navigating
 
     // Paramètres : thème et perspective appliqués à chaud.
@@ -34,9 +33,6 @@ fun MapRenderEffect(controller: MapController?, state: MainUiState) {
     }
     LaunchedEffect(controller, route) {
         controller?.showRoute(route)
-    }
-    LaunchedEffect(controller, radars) {
-        controller?.showRadars(radars)
     }
     // Aperçu : on cadre tout le trajet. Départ (ou annulation) : retour derrière le véhicule.
     LaunchedEffect(controller, preview?.route) {

@@ -7,7 +7,7 @@ Game Maps IRL est une application de navigation. Elle fonctionne sans compte et 
 ## Ce que l'application utilise
 
 - **Ta position** : pour afficher la carte autour de toi, te guider, trouver la limitation
-  de vitesse et les radars proches. Pendant un trajet, elle est aussi utilisée écran éteint,
+  de vitesse et les zones de danger. Pendant un trajet, elle est aussi utilisée écran éteint,
   avec une notification visible ; cela s'arrête dès que le trajet se termine.
 - **Tes recherches** : le texte que tu tapes ou dictes pour trouver une adresse ou un lieu.
 - **Tes réglages et lieux enregistrés** (Maison, Travail, favoris, thèmes et véhicules créés) :
@@ -25,7 +25,7 @@ Pour fonctionner, elle interroge des services externes, qui reçoivent ce qui es
 | Base Adresse Nationale (IGN) et Photon (Komoot) | Ta recherche et ta position approximative | Trouver des adresses et des lieux proches |
 | OSRM | Le départ et l'arrivée du trajet | Calculer l'itinéraire |
 | TomTom (seulement si tu ajoutes ta propre clé) | Le départ et l'arrivée du trajet | Itinéraire tenant compte du trafic |
-| Overpass (OpenStreetMap) | La zone autour de toi | Limitations de vitesse et radars |
+| Overpass (OpenStreetMap) | La zone autour de toi | Limitations de vitesse et zones de danger |
 
 Ces données ne sont ni vendues ni utilisées pour de la publicité par l'application.
 Chaque service applique sa propre politique de confidentialité.

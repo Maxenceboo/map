@@ -2,13 +2,11 @@ package com.gamemaps.irl.map
 
 import android.content.Context
 import com.gamemaps.irl.data.location.GpsFix
-import com.gamemaps.irl.data.radar.Radar
 import com.gamemaps.irl.data.routing.Route
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.map.camera.FollowCamera
 import com.gamemaps.irl.map.layers.DestinationLayer
 import com.gamemaps.irl.map.layers.DestinationPinBitmap
-import com.gamemaps.irl.map.layers.RadarLayer
 import com.gamemaps.irl.map.layers.RouteLayer
 import com.gamemaps.irl.map.layers.TrafficLayer
 import com.gamemaps.irl.map.theme.MapTheme
@@ -30,7 +28,6 @@ class MapController internal constructor(
     private val routeLayer: RouteLayer,
     private val trafficLayer: TrafficLayer,
     private val destinationLayer: DestinationLayer,
-    private val radarLayer: RadarLayer,
     private val vehicle3DLayer: Vehicle3DLayer,
     private val camera: FollowCamera,
 ) {
@@ -52,10 +49,6 @@ class MapController internal constructor(
         routeLayer.update(route)
         trafficLayer.update(route)
         destinationLayer.update(route?.geometry?.lastOrNull())
-    }
-
-    fun showRadars(radars: List<Radar>) {
-        radarLayer.update(radars)
     }
 
     /** Cadre tout l'itinéraire (aperçu avant le départ). */

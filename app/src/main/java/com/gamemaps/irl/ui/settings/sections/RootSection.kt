@@ -3,6 +3,7 @@ package com.gamemaps.irl.ui.settings.sections
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import com.gamemaps.irl.ui.icons.HudIcons
 import com.gamemaps.irl.ui.settings.SettingsSection
@@ -24,7 +25,7 @@ fun RootSection(state: SettingsUiState, open: (SettingsSection) -> Unit) {
 
     SettingsGroup("Navigation") {
         SettingsNavigationRow(HudIcons.VolumeOn, "Audio", if (state.isMuted) "Son coupé" else "Son actif") { open(SettingsSection.AUDIO) }
-        SettingsNavigationRow(HudIcons.Radar, "Radars", if (settings.radarAlerts) "Alertes actives" else "Alertes désactivées") { open(SettingsSection.RADARS) }
+        SettingsNavigationRow(Icons.Filled.Warning, "Zones de danger", if (settings.radarAlerts) "Alertes actives" else "Alertes désactivées") { open(SettingsSection.RADARS) }
         SettingsNavigationRow(HudIcons.Traffic, "Trafic", trafficLabel(settings.traffic, hasKey = state.maskedTomTomKey != null)) { open(SettingsSection.TRAFFIC) }
     }
 

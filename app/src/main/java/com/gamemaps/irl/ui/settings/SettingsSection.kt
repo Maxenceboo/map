@@ -14,7 +14,7 @@ enum class SettingsSection(val title: String, val parent: SettingsSection?) {
     VEHICLE_MODEL("Modèle de véhicule", VEHICLE),
     VEHICLE_COLOR("Couleur de carrosserie", VEHICLE),
     AUDIO("Audio", ROOT),
-    RADARS("Radars", ROOT),
+    RADARS("Zones de danger", ROOT),
     TRAFFIC("Trafic", ROOT),
     PLACES("Lieux enregistrés", ROOT),
     PLACE_HOME("Maison", PLACES),

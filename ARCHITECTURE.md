@@ -153,10 +153,9 @@ Le mode développeur s'active par 7 appuis sur la version (Paramètres > À prop
 | `trip/TripStats.kt` | Bilan du trajet (distance, durée, moyenne). |
 | `trip/MissionPassedModel.kt` | Bilan mis en forme (téléphone + voiture). |
 | `SpeedingDetector.kt` | Excès de vitesse : limite + 3 km/h (§6.3). |
-| `radar/RadarAlertDetector.kt` | Radar à < 800 m devant, cône de ±30° (§6.2) ; urgent sous 300 m. |
-| `radar/RadarAlert.kt` | Le radar concerné, sa distance et le niveau d'alerte. |
-| `radar/RadarAlertLevel.kt` | Avertissement / urgent. |
-| `radar/RadarTypeText.kt` | Libellés par type ("RADAR FEU ROUGE", "Radar tronçon"). |
+| `radar/RadarAlertDetector.kt` | Entrée et sortie d'une zone de danger (§6.2) : les trois quarts de la zone avant le point de contrôle, un quart après. |
+| `radar/RadarAlert.kt` | « On est dans une zone de danger » : identifiant de zone et vitesse autorisée, sans emplacement ni distance. |
+| `radar/DangerZoneSize.kt` | Longueur d'une zone : 4 km sur autoroute, 2 km hors agglomération, 300 m en ville. |
 | `instructions/InstructionTextBuilder.kt` | "Au rond-point, prenez la 2e sortie vers D1010". |
 
 ### `map/` — Carte MapLibre (partagée téléphone + voiture)
@@ -177,8 +176,6 @@ Le mode développeur s'active par 7 appuis sur la version (Paramètres > À prop
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
-| `layers/RadarLayer.kt` | Icônes des radars sur la carte (une par type). |
-| `layers/RadarIconBitmap.kt` | Dessin des icônes : appareil photo, feu tricolore. |
 | `camera/FollowCamera.kt` | Suivi incliné, pause au doigt (`isFollowing`), recentrage, vue d'ensemble d'un trajet. |
 | `camera/CameraConfig.kt` | Réglages téléphone / voiture, variante 2D vue de dessus. |
 
@@ -213,12 +210,12 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `cue/AudioCue.kt` | Une annonce : un son ou une phrase. |
 | `cue/SoundEffect.kt` | Liste des sons (départ, virage, fanfare d'arrivée, radar, excès). |
 | `announcers/GuidanceAnnouncer.kt` | Départ, "Dans 500 mètres…", carillon + instruction avant la manœuvre, recalcul, arrivée. |
-| `announcers/RadarAnnouncer.kt` | Double bip + "Radar dans 600 mètres", puis triple bip sous 300 m. |
+| `announcers/RadarAnnouncer.kt` | Double bip + « Zone de danger » à l'entrée d'une zone, une seule fois. |
 | `announcers/SpeedingAnnouncer.kt` | Bip au dépassement, répété toutes les 15 s. |
 | `announcers/SpeechDistanceFormatter.kt` | "300 mètres", "1,5 kilomètres". |
 | `synth/ToneSynth.kt` | Synthétiseur : notes → échantillons PCM (aucun fichier audio). |
 | `synth/SoundEffectTones.kt` | Partition de chaque son (reprise de la version WebGL). |
-| `synth/MissionPassedScore.kt` | Fanfare « Mission Passed » : accord suspendu mineur → majeur, basse 55 Hz, cordes ±7 cents. |
+| `synth/MissionPassedScore.kt` | Fanfare d'arrivée composée pour l'app : montée de quatre notes, accord tenu, basse, scintillement. |
 | `synth/Tone.kt`, `synth/Waveform.kt` | Une note (avec passe-bas optionnel) ; formes d'onde sinus / triangle / dent de scie. |
 | `playback/TonePlayer.kt` | Joue un son via `AudioTrack`. |
 | `playback/VoiceGuide.kt` | Synthèse vocale française (`TextToSpeech`). |
@@ -244,7 +241,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `hud/ManeuverArrowShape.kt` | Tracé de chaque flèche sur une grille 24 × 24. |
 | `hud/SpeedGauge.kt` | Compteur rond (bas gauche), rouge en excès, panneau de limitation accroché. |
 | `hud/SpeedLimitSign.kt` | Panneau rond blanc / rouge de limitation. |
-| `hud/RadarAlertBanner.kt` | Alerte « 450 m · Radar feu rouge » ; toute la carte clignote en rouge sous 300 m. |
+| `hud/RadarAlertBanner.kt` | Bandeau « Zone de danger » avec la vitesse autorisée ; ni emplacement ni distance du contrôle. |
 | `hud/TripBar.kt` | Barre du bas en guidage : arrêter, heure d'arrivée, temps et distance restants, son. |
 | `hud/GpsStatusDot.kt` | Pastille GPS. |
 | `hud/StatusBanner.kt` | Message du haut : attente (indicateur qui tourne) ou erreur (croix pour fermer). |

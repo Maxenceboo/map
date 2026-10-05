@@ -10,19 +10,19 @@ import com.gamemaps.irl.ui.settings.components.SettingsGroup
 import com.gamemaps.irl.ui.settings.components.SettingsInfoRow
 import com.gamemaps.irl.ui.settings.components.SettingsToggleRow
 
-/** Alertes radar et rappel des sources de données. */
+/** Alertes de zone de danger et rappel des sources de données. */
 @Composable
 fun RadarSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSettings) -> Unit) {
     SettingsGroup {
         SettingsToggleRow(
             icon = Icons.Filled.Warning,
-            title = "Alertes radar",
-            description = "Bandeau, alerte sur l'écran de la voiture et bips à moins de 800 m devant",
+            title = "Alertes de zone de danger",
+            description = "Bandeau, alerte sur l'écran de la voiture et bip à l'entrée d'une zone. L'emplacement des contrôles n'est pas affiché",
             checked = settings.radarAlerts,
         ) { enabled -> onUpdate { it.copy(radarAlerts = enabled) } }
     }
     SettingsGroup("Sources") {
-        SettingsInfoRow(Icons.Filled.CheckCircle, "Base officielle", "3 350 radars français embarqués, fonctionne hors ligne")
-        SettingsInfoRow(HudIcons.Globe, "OpenStreetMap", "Complète la base (radars récents, étranger) quand le réseau le permet")
+        SettingsInfoRow(Icons.Filled.CheckCircle, "Base officielle", "Données publiques françaises embarquées, fonctionne hors ligne")
+        SettingsInfoRow(HudIcons.Globe, "OpenStreetMap", "Complète la base quand le réseau le permet")
     }
 }

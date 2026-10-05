@@ -29,7 +29,7 @@
 
     SUR LA ROUTE
     • Limitation de vitesse de la route, avec avertissement en cas d'excès
-    • Alertes radars (base officielle française)
+    • Alertes de zones de danger
     • Trafic en temps réel et itinéraire qui évite les bouchons (avec ta clé TomTom gratuite)
 
     ANDROID AUTO
@@ -50,7 +50,7 @@ Cartes et navigation
 
 ## Mots-clés à faire apparaître naturellement
 
-GPS, navigation, itinéraire, Android Auto, radar, limitation de vitesse, trafic, carte 3D
+GPS, navigation, itinéraire, Android Auto, zone de danger, limitation de vitesse, trafic, carte 3D
 
 ---
 

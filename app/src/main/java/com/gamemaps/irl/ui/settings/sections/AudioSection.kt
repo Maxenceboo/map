@@ -23,7 +23,7 @@ fun AudioSection(
         SettingsToggleRow(HudIcons.Speech, "Guidage vocal", "« Dans 500 mètres, tournez à droite… »", settings.voiceGuidance) { enabled ->
             onUpdate { it.copy(voiceGuidance = enabled) }
         }
-        SettingsToggleRow(HudIcons.Radar, "Bips radar", "Double bip, puis triple bip sous 300 m", settings.radarBeeps) { enabled ->
+        SettingsToggleRow(HudIcons.Radar, "Bip de zone de danger", "Double bip à l'entrée d'une zone", settings.radarBeeps) { enabled ->
             onUpdate { it.copy(radarBeeps = enabled) }
         }
         SettingsToggleRow(Icons.Filled.Notifications, "Bip d'excès de vitesse", "Au-delà de la limite + 3 km/h", settings.speedingBeep) { enabled ->

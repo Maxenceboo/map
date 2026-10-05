@@ -119,9 +119,6 @@ class NavigationCarScreen(
 
     private fun observeRadars() {
         lifecycleScope.launch {
-            container.radarRepository.radars.collect { mapController?.showRadars(it) }
-        }
-        lifecycleScope.launch {
             container.radarAlerts.collect(radarAlerter::onAlert)
         }
     }
@@ -139,7 +136,6 @@ class NavigationCarScreen(
         controller.applyVehicle(settings.vehicle, settings.vehicleColor, settings.headlights)
         val route = (navigation as? NavigationState.Navigating)?.route ?: (navigation as? NavigationState.Previewing)?.route
         controller.showRoute(route)
-        controller.showRadars(container.radarRepository.radars.value)
         container.locationRepository.fixes.value?.let(controller::showVehicle)
     }
 
