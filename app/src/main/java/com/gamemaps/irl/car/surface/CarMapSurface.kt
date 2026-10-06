@@ -34,6 +34,7 @@ class CarMapSurface(
     private var presentation: Presentation? = null
     private var mapView: MapView? = null
     private var speedView: CarSpeedView? = null
+    private var controller: MapController? = null
     private var surfaceWidth = 0
     private var surfaceHeight = 0
 
@@ -77,7 +78,11 @@ class CarMapSurface(
                 cameraConfig = CameraConfig.CAR,
                 viewHeightPx = { mapView.height },
                 interactive = false,
-                onReady = onControllerChanged,
+                onReady = { controller ->
+                    this.controller = controller
+                    controller.setLeftInset(visibleArea?.left ?: 0)
+                    onControllerChanged(controller)
+                },
             )
         }
 
@@ -95,6 +100,7 @@ class CarMapSurface(
 
     override fun onVisibleAreaChanged(visibleArea: Rect) {
         this.visibleArea = Rect(visibleArea)
+        controller?.setLeftInset(visibleArea.left)
         placeSpeedView()
     }
 
@@ -120,6 +126,7 @@ class CarMapSurface(
     }
 
     fun release() {
+        controller = null
         onControllerChanged(null)
         mapView?.apply {
             onPause()

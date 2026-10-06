@@ -106,6 +106,11 @@ class MapController internal constructor(
         vehicle3DLayer.configure(model, vehicleColor, headlights)
     }
 
+    /** Largeur de carte masquée à gauche par un panneau (écran de la voiture). */
+    fun setLeftInset(px: Int) {
+        camera.setLeftInset(px)
+    }
+
     /** 3D cockpit ou 2D vue de dessus. */
     fun applyCameraConfig(config: CameraConfig) {
         camera.setConfig(config)

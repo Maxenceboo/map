@@ -26,6 +26,9 @@ class FollowCamera(
     private var config: CameraConfig,
 ) {
     private var hasPositioned = false
+
+    /** Largeur masquée à gauche par un panneau (menu de la voiture), en pixels. */
+    private var leftInsetPx = 0
     private var lastFix: GpsFix? = null
 
     private val _isFollowing = MutableStateFlow(true)
@@ -43,6 +46,13 @@ class FollowCamera(
     fun setConfig(newConfig: CameraConfig) {
         config = newConfig
         if (_isFollowing.value) recenter()
+    }
+
+    /** Un panneau recouvre (ou libère) la gauche de la carte : on recentre le véhicule dans la partie visible. */
+    fun setLeftInset(px: Int) {
+        if (px == leftInsetPx) return
+        leftInsetPx = px
+        if (_isFollowing.value) lastFix?.let(::follow)
     }
 
     fun pause() {
@@ -83,7 +93,7 @@ class FollowCamera(
         .zoom(config.zoom)
         .tilt(config.tilt)
         .bearing(fix.bearingDegrees?.toDouble() ?: map.cameraPosition.bearing)
-        .padding(0.0, viewHeightPx() * config.topPaddingRatio, 0.0, 0.0)
+        .padding(leftInsetPx.toDouble(), viewHeightPx() * config.topPaddingRatio, 0.0, 0.0)
         .build()
 
     private companion object {

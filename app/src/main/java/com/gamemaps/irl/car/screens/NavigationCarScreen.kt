@@ -4,7 +4,6 @@ import com.gamemaps.irl.data.routing.Route
 import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.AppManager
 import androidx.car.app.CarContext
-import com.gamemaps.irl.data.search.Place
 import androidx.car.app.CarToast
 import androidx.car.app.Screen
 import androidx.car.app.model.Template
@@ -47,6 +46,12 @@ class NavigationCarScreen(
     /** Trajets actuellement cadrés sur la carte (aperçu) ; null hors aperçu. */
     private var framedRoutes: List<Route>? = null
 
+    /** Menu des destinations affiché à gauche de la carte quand il n'y a pas de trajet. */
+    private var menuVisible = true
+
+    private val maxPlaces: Int =
+        carContext.getCarService(ConstraintManager::class.java).getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_PLACE_LIST)
+
     private val maxRoutes: Int =
         carContext.getCarService(ConstraintManager::class.java).getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_ROUTE_LIST)
 
@@ -68,19 +73,28 @@ class NavigationCarScreen(
         observeLocation()
         observeRadars()
         observeMute()
+        observeSavedPlaces()
         observeSettings()
     }
 
     override fun onGetTemplate(): Template {
         if (!hasLocationPermission) return MessageTemplates.permissionRequired(::requestLocationPermission)
         return when (val state = navigation) {
-            is NavigationState.Idle -> IdleTemplate.build(
-                onHome = { startSavedTrip(container.savedPlacesRepository.saved.value.home, "Maison") },
-                onWork = { startSavedTrip(container.savedPlacesRepository.saved.value.work, "Travail") },
-                onSearch = ::openSearch,
-                isMuted = audio.muted.value,
-                onToggleMute = audio::toggleMuted,
-            )
+            is NavigationState.Idle -> if (menuVisible) {
+                IdleTemplate.menu(
+                    saved = container.savedPlacesRepository.saved.value,
+                    near = container.locationRepository.fixes.value?.position,
+                    maxRows = maxPlaces,
+                    isMuted = audio.muted.value,
+                    onSearch = ::openSearch,
+                    onPlace = engine::start,
+                    onUndefined = ::explainUndefinedPlace,
+                    onHideMenu = { showMenu(false) },
+                    onToggleMute = audio::toggleMuted,
+                )
+            } else {
+                IdleTemplate.mapOnly(onShowMenu = { showMenu(true) }, isMuted = audio.muted.value, onToggleMute = audio::toggleMuted)
+            }
             is NavigationState.Calculating -> CalculatingTemplate.build(onStop = engine::stop)
             is NavigationState.Previewing -> PreviewTemplate.build(
                 state = state,
@@ -115,6 +129,8 @@ class NavigationCarScreen(
     private fun observeNavigation() {
         lifecycleScope.launch {
             engine.state.collect { state ->
+                // Après un trajet, on retrouve le menu des destinations.
+                if (state !is NavigationState.Idle) menuVisible = true
                 navigation = state
                 tripReporter.onStateChanged(state)
                 refreshMap()
@@ -135,6 +151,11 @@ class NavigationCarScreen(
     }
 
     /** Le bouton Son / Muet change de titre : il faut redessiner le template. */
+    /** Lieux enregistrés modifiés sur le téléphone, ou fin d'un trajet : le menu doit être à jour et de retour. */
+    private fun observeSavedPlaces() {
+        lifecycleScope.launch { container.savedPlacesRepository.saved.collect { invalidate() } }
+    }
+
     private fun observeMute() {
         lifecycleScope.launch { audio.muted.collect { invalidate() } }
     }
@@ -168,13 +189,14 @@ class NavigationCarScreen(
         container.displayFixes.value?.let(controller::showVehicle)
     }
 
-    /** Icône Maison / Travail : démarre le guidage, ou indique où définir le lieu. */
-    private fun startSavedTrip(place: Place?, label: String) {
-        if (place != null) {
-            engine.start(place)
-        } else {
-            CarToast.makeText(carContext, "$label n'est pas défini : choisissez-le sur le téléphone, dans Paramètres > Lieux enregistrés", CarToast.LENGTH_LONG).show()
-        }
+    private fun showMenu(visible: Boolean) {
+        menuVisible = visible
+        invalidate()
+    }
+
+    /** Maison ou Travail touché alors qu'il n'est pas défini : on indique où le faire. */
+    private fun explainUndefinedPlace(label: String) {
+        CarToast.makeText(carContext, "$label n'est pas défini : choisissez-le sur le téléphone, dans Paramètres > Lieux enregistrés", CarToast.LENGTH_LONG).show()
     }
 
     private fun openSearch() {

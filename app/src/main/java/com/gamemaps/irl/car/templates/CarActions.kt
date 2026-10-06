@@ -14,12 +14,6 @@ object CarActions {
     fun cancelTrip(onClick: () -> Unit): Action =
         iconButton(CarIcons.close, onClick)
 
-    /** Trajet en un appui vers la maison. */
-    fun home(onClick: () -> Unit): Action = iconButton(CarIcons.home, onClick)
-
-    /** Trajet en un appui vers le travail. */
-    fun work(onClick: () -> Unit): Action = iconButton(CarIcons.work, onClick)
-
     private fun iconButton(icon: CarIcon, onClick: () -> Unit): Action =
         Action.Builder().setIcon(icon).setOnClickListener { onClick() }.build()
 

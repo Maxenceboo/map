@@ -309,7 +309,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `trip/CarTripReporter.kt` | Informe Android Auto du guidage en cours (`NavigationManager`). |
 | `alerts/CarRadarAlerter.kt` | Alerte radar par-dessus la carte (API ≥ 5), sinon message court. |
 | `alerts/CarRadarAlertPolicy.kt` | Quand afficher / réafficher (urgent) / retirer l'alerte. |
-| `templates/IdleTemplate.kt` | Pas de guidage : bouton "Où aller ?". |
+| `templates/IdleTemplate.kt` | Sans trajet : menu permanent à gauche (recherche, Maison, Travail, favoris), ou carte seule. |
 | `templates/CalculatingTemplate.kt` | Chargement. |
 | `templates/PreviewTemplate.kt` | Choix du trajet : liste des trajets proposés, Démarrer, croix pour annuler. |
 | `templates/NavigatingTemplate.kt` | Manœuvre + estimation d'arrivée + "Arrêter". |
