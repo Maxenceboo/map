@@ -303,6 +303,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `screens/NavigationCarScreen.kt` | Écran principal : carte + template selon l'état du guidage. |
 | `screens/CarSearchScreen.kt` | Recherche de destination (clavier / voix de la voiture). |
 | `surface/CarMapSurface.kt` | **Carte MapLibre sur l'écran de la voiture** (écran virtuel + Presentation). |
+| `surface/CarSpeedView.kt` | Compteur de vitesse et panneau de limitation dessinés par-dessus la carte de la voiture. |
 | `trip/CarTripReporter.kt` | Informe Android Auto du guidage en cours (`NavigationManager`). |
 | `alerts/CarRadarAlerter.kt` | Alerte radar par-dessus la carte (API ≥ 5), sinon message court. |
 | `alerts/CarRadarAlertPolicy.kt` | Quand afficher / réafficher (urgent) / retirer l'alerte. |

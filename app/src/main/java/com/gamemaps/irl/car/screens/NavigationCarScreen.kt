@@ -23,6 +23,7 @@ import com.gamemaps.irl.map.MapController
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.navigation.trip.toMissionPassedModel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
@@ -109,6 +110,11 @@ class NavigationCarScreen(
     private fun observeLocation() {
         lifecycleScope.launch {
             container.displayFixes.filterNotNull().collect { mapController?.showVehicle(it) }
+        }
+        // Compteur dessiné sur la carte : vitesse et limitation de la route.
+        lifecycleScope.launch {
+            combine(container.displayFixes, container.speedLimitRepository.limit) { fix, limit -> (fix?.speedKmh ?: 0) to limit }
+                .collect { (speed, limit) -> mapSurface.showSpeed(speed, limit) }
         }
     }
 
