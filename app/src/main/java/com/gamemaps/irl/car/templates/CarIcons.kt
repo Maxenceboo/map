@@ -13,13 +13,16 @@ import androidx.core.graphics.drawable.IconCompat
 
 /**
  * Icônes des boutons d'Android Auto, dessinées une seule fois à partir de tracés
- * Material Design (grille 24 × 24). Blanches : la voiture leur applique sa teinte.
+ * Material Design (grille 24 × 24). Dessinées en blanc, puis teintées en jaune (rouge pour la croix).
  */
 object CarIcons {
 
     private const val SIZE_PX = 96
 
-    /** Maison : lance le trajet vers le domicile. */
+    /** Jaune d'accent de l'app, comme les icônes du téléphone. */
+    private val ACCENT = CarColor.createCustom(Color.parseColor("#FFC533"), Color.parseColor("#FFC533"))
+
+    /** Maison : le trajet vers le domicile. */
     val home: CarIcon by lazy { fromPath("M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z") }
 
     /** Mallette : lance le trajet vers le travail. */
@@ -29,6 +32,17 @@ object CarIcons {
                 "M14,6h-4V4h4v2z",
         )
     }
+
+    /** Loupe : la recherche de destination. */
+    val search: CarIcon by lazy {
+        fromPath(
+            "M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5z" +
+                "M9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z",
+        )
+    }
+
+    /** Étoile : un favori. */
+    val star: CarIcon by lazy { fromPath("M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z") }
 
     /** Croix : annule le trajet. */
     val close: CarIcon by lazy {
@@ -56,7 +70,7 @@ object CarIcons {
         }
         val bitmap = newBitmap()
         Canvas(bitmap).drawPath(path, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
-        return CarIcon.Builder(IconCompat.createWithBitmap(bitmap)).setTint(CarColor.DEFAULT).build()
+        return CarIcon.Builder(IconCompat.createWithBitmap(bitmap)).setTint(ACCENT).build()
     }
 
     private fun newBitmap(): Bitmap = Bitmap.createBitmap(SIZE_PX, SIZE_PX, Bitmap.Config.ARGB_8888)
