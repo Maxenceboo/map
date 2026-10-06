@@ -23,6 +23,7 @@
     UN VRAI GPS
     • Recherche d'adresses et de lieux, avec la distance
     • Guidage vocal en français, virage par virage
+    • Plusieurs trajets proposés, à toi de choisir
     • Recalcul automatique si tu sors de l'itinéraire
     • Maison, Travail et favoris : un trajet en un appui
     • Guidage qui continue écran éteint
@@ -34,7 +35,8 @@
 
     ANDROID AUTO
     • La carte et le guidage sur l'écran de la voiture
-    • Recherche au clavier ou à la voix, Maison et Travail en un appui
+    • Recherche au clavier ou à la voix, Maison et Travail toujours à portée
+    • Compteur de vitesse et limitation sur l'écran de la voiture
 
     CRÉE LES TIENS
     • Mode développeur : compose tes propres thèmes de carte et tes propres véhicules
