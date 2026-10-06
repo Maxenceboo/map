@@ -311,7 +311,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `alerts/CarRadarAlertPolicy.kt` | Quand afficher / réafficher (urgent) / retirer l'alerte. |
 | `templates/IdleTemplate.kt` | Pas de guidage : bouton "Où aller ?". |
 | `templates/CalculatingTemplate.kt` | Chargement. |
-| `templates/PreviewTemplate.kt` | Trajet choisi sur le téléphone : Démarrer / Annuler. |
+| `templates/PreviewTemplate.kt` | Choix du trajet : liste des trajets proposés, Démarrer, croix pour annuler. |
 | `templates/NavigatingTemplate.kt` | Manœuvre + estimation d'arrivée + "Arrêter". |
 | `templates/MessageTemplates.kt` | Arrivée, erreur, permission. |
 | `templates/PlaceListBuilder.kt` | Résultats de recherche ; Maison / Travail / favoris quand rien n'est tapé. |

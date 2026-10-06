@@ -62,10 +62,10 @@ class FollowCamera(
         val bounds = LatLngBounds.Builder().includes(points.map { it.toMapLibre() }).build()
         val height = viewHeightPx()
         val margins = intArrayOf(
-            OVERVIEW_SIDE_PADDING_PX,
+            OVERVIEW_SIDE_PADDING_PX + (map.width * config.overviewLeftRatio).toInt(),
             (height * 0.10).toInt(),
             OVERVIEW_SIDE_PADDING_PX,
-            (height * 0.58).toInt(), // la fiche d'aperçu, avec le choix des trajets, occupe plus de la moitié basse de l'écran
+            (height * config.overviewBottomRatio).toInt(), // place du panneau d'aperçu (voir CameraConfig)
         )
         val framed = map.getCameraForLatLngBounds(bounds, margins, 0.0, 0.0) ?: return
         // Vue de dessus, nord en haut, et sans le décalage vers le haut du mode suivi

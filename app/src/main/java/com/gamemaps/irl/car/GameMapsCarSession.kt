@@ -47,7 +47,7 @@ class GameMapsCarSession : Session() {
         return when (val request = NavigationRequestParser.parse(intent.dataString)) {
             is NavigationRequest.ToPosition -> {
                 val place = Place(id = "car-request", name = request.label ?: "Destination", subtitle = "", position = request.position)
-                container.navigationEngine.start(place, autoStart = true)
+                container.navigationEngine.start(place)
                 null
             }
             is NavigationRequest.ToQuery -> CarSearchScreen(carContext, container, initialQuery = request.query)

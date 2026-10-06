@@ -1,5 +1,7 @@
 package com.gamemaps.irl.car.screens
 
+import com.gamemaps.irl.data.routing.Route
+import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.AppManager
 import androidx.car.app.CarContext
 import com.gamemaps.irl.data.search.Place
@@ -42,10 +44,18 @@ class NavigationCarScreen(
     private var hasLocationPermission = LocationPermissions.isGranted(carContext)
     private var mapController: MapController? = null
 
+    /** Trajets actuellement cadrés sur la carte (aperçu) ; null hors aperçu. */
+    private var framedRoutes: List<Route>? = null
+
+    private val maxRoutes: Int =
+        carContext.getCarService(ConstraintManager::class.java).getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_ROUTE_LIST)
+
     private val tripReporter = CarTripReporter(carContext, onStopRequested = engine::stop)
     private val radarAlerter = CarRadarAlerter(carContext)
     private val mapSurface = CarMapSurface(carContext, container.settingsRepository.settings.value.theme) { controller ->
         mapController = controller
+        // Nouvelle surface (plein écran ⇄ vue partagée) : l'aperçu doit être recadré à la nouvelle taille.
+        framedRoutes = null
         refreshMap()
     }
 
@@ -72,7 +82,13 @@ class NavigationCarScreen(
                 onToggleMute = audio::toggleMuted,
             )
             is NavigationState.Calculating -> CalculatingTemplate.build(onStop = engine::stop)
-            is NavigationState.Previewing -> PreviewTemplate.build(state, onStart = engine::confirm, onCancel = engine::stop)
+            is NavigationState.Previewing -> PreviewTemplate.build(
+                state = state,
+                maxRoutes = maxRoutes,
+                onSelect = engine::selectRoute,
+                onStart = engine::confirm,
+                onCancel = engine::stop,
+            )
             is NavigationState.Navigating -> NavigatingTemplate.build(
                 state = state,
                 isMuted = audio.muted.value,
@@ -90,7 +106,7 @@ class NavigationCarScreen(
             }
             is NavigationState.Failed -> MessageTemplates.failed(
                 reason = state.message,
-                onRetry = { engine.start(state.destination, autoStart = true) },
+                onRetry = { engine.start(state.destination) },
                 onDone = engine::stop,
             )
         }
@@ -140,15 +156,22 @@ class NavigationCarScreen(
         controller.applyTheme(settings.theme)
         controller.applyCameraConfig(CameraConfig.CAR.forPerspective(settings.perspective))
         controller.applyVehicle(settings.vehicle, settings.vehicleColor, settings.headlights)
-        val route = (navigation as? NavigationState.Navigating)?.route ?: (navigation as? NavigationState.Previewing)?.route
+        val preview = navigation as? NavigationState.Previewing
+        val route = (navigation as? NavigationState.Navigating)?.route ?: preview?.route
         controller.showRoute(route)
+        // Aperçu : les autres trajets en gris, et la carte cadrée sur l'ensemble. Sinon, retour derrière le véhicule.
+        controller.showAlternatives(preview?.alternatives.orEmpty().filter { it !== preview?.route })
+        if (preview?.alternatives !== framedRoutes) {
+            framedRoutes = preview?.alternatives
+            if (preview != null) controller.showOverview(preview.alternatives) else controller.recenter()
+        }
         container.displayFixes.value?.let(controller::showVehicle)
     }
 
     /** Icône Maison / Travail : démarre le guidage, ou indique où définir le lieu. */
     private fun startSavedTrip(place: Place?, label: String) {
         if (place != null) {
-            engine.start(place, autoStart = true)
+            engine.start(place)
         } else {
             CarToast.makeText(carContext, "$label n'est pas défini : choisissez-le sur le téléphone, dans Paramètres > Lieux enregistrés", CarToast.LENGTH_LONG).show()
         }
