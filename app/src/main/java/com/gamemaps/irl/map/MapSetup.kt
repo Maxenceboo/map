@@ -3,6 +3,7 @@ package com.gamemaps.irl.map
 import android.content.Context
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.map.camera.FollowCamera
+import com.gamemaps.irl.map.layers.AlternativeRoutesLayer
 import com.gamemaps.irl.map.layers.DestinationLayer
 import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RouteLayer
@@ -33,12 +34,13 @@ object MapSetup {
             // Ordre d'empilement : tracé (et trafic sous la ligne), destination, puis véhicule tout en haut.
             val routeLayer = RouteLayer(style, theme.palette).apply { install() }
             val trafficLayer = TrafficLayer(style).apply { install() }
+            val alternativesLayer = AlternativeRoutesLayer(style).apply { install() }
             val destinationLayer = DestinationLayer(style, DestinationPinBitmap.create(theme.palette)).apply { install() }
             val vehicle3DLayer = Vehicle3DLayer(style, zoom = { map.cameraPosition.zoom }).apply { install() }
             val camera = FollowCamera(map, viewHeightPx, cameraConfig)
             if (interactive) pauseFollowingOnUserGesture(map, camera)
             // applyTheme repeint le fond de carte, installe les textures et choisit le véhicule.
-            val controller = MapController(context, style, routeLayer, trafficLayer, destinationLayer, vehicle3DLayer, camera)
+            val controller = MapController(context, style, routeLayer, alternativesLayer, trafficLayer, destinationLayer, vehicle3DLayer, camera)
             controller.applyTheme(theme)
             map.addOnCameraMoveListener(controller::onCameraMoved)
             onReady(controller)

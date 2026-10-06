@@ -65,7 +65,7 @@ class FollowCamera(
             OVERVIEW_SIDE_PADDING_PX,
             (height * 0.10).toInt(),
             OVERVIEW_SIDE_PADDING_PX,
-            (height * 0.48).toInt(), // la fiche d'aperçu occupe presque la moitié basse de l'écran
+            (height * 0.58).toInt(), // la fiche d'aperçu, avec le choix des trajets, occupe plus de la moitié basse de l'écran
         )
         val framed = map.getCameraForLatLngBounds(bounds, margins, 0.0, 0.0) ?: return
         // Vue de dessus, nord en haut, et sans le décalage vers le haut du mode suivi

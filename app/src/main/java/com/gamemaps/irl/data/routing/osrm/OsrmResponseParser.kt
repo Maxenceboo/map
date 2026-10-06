@@ -11,16 +11,22 @@ import org.json.JSONObject
 /** Transforme la réponse JSON d'OSRM (geometries=geojson, steps=true) en [Route]. */
 object OsrmResponseParser {
 
-    fun parse(json: String): Route {
+    /** Le trajet conseillé (le premier de la réponse). */
+    fun parse(json: String): Route = parseAll(json).first()
+
+    /** Tous les trajets de la réponse : le conseillé, puis les variantes demandées avec `alternatives=true`. */
+    fun parseAll(json: String): List<Route> {
         val root = JSONObject(json)
         val code = root.optString("code")
         if (code != "Ok") throw RoutingException("OSRM a répondu $code")
-        val route = root.optJSONArray("routes")?.optJSONObject(0)
-            ?: throw RoutingException("Aucun itinéraire trouvé")
+        val routes = root.optJSONArray("routes")?.objects().orEmpty()
+        if (routes.isEmpty()) throw RoutingException("Aucun itinéraire trouvé")
+        return routes.map(::parseRoute)
+    }
 
+    private fun parseRoute(route: JSONObject): Route {
         val geometry = parseCoordinates(route.getJSONObject("geometry").getJSONArray("coordinates"))
         val rawSteps = route.getJSONArray("legs").flatMapObjects { leg -> leg.getJSONArray("steps").objects() }
-
         return Route(
             geometry = geometry,
             steps = buildSteps(rawSteps, PolylineProjector.cumulativeDistances(geometry).lastOrNull() ?: 0.0),

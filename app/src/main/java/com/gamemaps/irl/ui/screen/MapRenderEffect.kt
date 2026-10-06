@@ -34,9 +34,13 @@ fun MapRenderEffect(controller: MapController?, state: MainUiState) {
     LaunchedEffect(controller, route) {
         controller?.showRoute(route)
     }
-    // Aperçu : on cadre tout le trajet. Départ (ou annulation) : retour derrière le véhicule.
-    LaunchedEffect(controller, preview?.route) {
-        preview?.route?.let { controller?.showOverview(it) }
+    // Aperçu : les trajets non choisis restent visibles en gris.
+    LaunchedEffect(controller, preview?.alternatives, preview?.route) {
+        controller?.showAlternatives(preview?.alternatives.orEmpty().filter { it !== preview?.route })
+    }
+    // Aperçu : on cadre tous les trajets proposés. Départ (ou annulation) : retour derrière le véhicule.
+    LaunchedEffect(controller, preview?.alternatives) {
+        preview?.alternatives?.let { controller?.showOverview(it) }
     }
     LaunchedEffect(controller, isNavigating, preview == null) {
         if (preview == null) controller?.recenter()

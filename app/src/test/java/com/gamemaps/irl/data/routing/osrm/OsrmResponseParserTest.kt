@@ -57,4 +57,18 @@ class OsrmResponseParserTest {
     fun `code d'erreur OSRM`() {
         OsrmResponseParser.parse("""{ "code": "NoRoute", "routes": [] }""")
     }
+
+    @Test
+    fun `lit tous les trajets proposés`() {
+        val twoRoutes = json.replace(""""routes": [{""", """"routes": [{ "duration": 300.0, "distance": 2000.0,
+            "geometry": { "type": "LineString", "coordinates": [[-0.58, 44.84], [-0.5673, 44.849]] },
+            "legs": [{ "steps": [
+              { "distance": 2000.0, "duration": 300.0, "name": "", "maneuver": { "type": "depart", "location": [-0.58, 44.84] } },
+              { "distance": 0.0, "duration": 0.0, "name": "", "maneuver": { "type": "arrive", "location": [-0.5673, 44.849] } }
+            ] }] }, {""")
+        val routes = OsrmResponseParser.parseAll(twoRoutes)
+        assertEquals(2, routes.size)
+        assertEquals(300.0, routes[0].durationSeconds, 1e-9)
+        assertEquals(120.0, routes[1].durationSeconds, 1e-9)
+    }
 }

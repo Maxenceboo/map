@@ -93,6 +93,8 @@ class MainViewModel(
         navigationEngine.start(place)
     }
 
+    fun onSelectRoute(index: Int) = navigationEngine.selectRoute(index)
+
     fun onConfirmRoute() {
         navigationEngine.confirm()
     }

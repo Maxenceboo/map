@@ -31,13 +31,14 @@ import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
  * Aperçu avant le départ : destination, durée en grand, distance et heure d'arrivée,
- * croix pour annuler en haut à droite, ajout aux favoris, puis Démarrer (règle §2.3 : bouton principal large).
+ * croix pour annuler en haut à droite, choix entre les trajets proposés, ajout aux favoris, puis Démarrer (règle §2.3 : bouton principal large).
  */
 @Composable
 fun PreviewPanel(
     preview: PreviewModel,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
+    onSelectRoute: (Int) -> Unit,
     onStart: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -72,6 +73,10 @@ fun PreviewPanel(
             }
             preview.trafficDelay?.let { delay ->
                 Text(delay, style = CockpitTypography.Caption, color = CockpitColors.Warning)
+            }
+            if (preview.options.size > 1) {
+                Spacer(Modifier.height(14.dp))
+                RouteOptionChips(preview.options, onSelectRoute)
             }
             Spacer(Modifier.height(16.dp))
 

@@ -17,14 +17,19 @@ class TrafficAwareRoutingService(
     private val trafficEnabled: () -> Boolean,
 ) : RoutingService {
 
-    override suspend fun route(from: LatLng, to: LatLng): Route {
-        val trafficRouting = withTraffic().takeIf { trafficEnabled() } ?: return fallback.route(from, to)
+    override suspend fun route(from: LatLng, to: LatLng): Route = ask { it.route(from, to) }
+
+    override suspend fun alternatives(from: LatLng, to: LatLng): List<Route> = ask { it.alternatives(from, to) }
+
+    /** Pose la question au moteur avec trafic, puis au moteur de secours s'il n'est pas disponible ou échoue. */
+    private suspend fun <T> ask(question: suspend (RoutingService) -> T): T {
+        val trafficRouting = withTraffic().takeIf { trafficEnabled() } ?: return question(fallback)
         return try {
-            trafficRouting.route(from, to)
+            question(trafficRouting)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            fallback.route(from, to)
+            question(fallback)
         }
     }
 }

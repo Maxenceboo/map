@@ -15,9 +15,12 @@ import okhttp3.OkHttpClient
 class TomTomClient(private val http: OkHttpClient, private val apiKey: String) : RoutingService {
 
     override suspend fun route(from: LatLng, to: LatLng): Route =
-        TomTomResponseParser.parse(http.getText(buildUrl(from, to)))
+        TomTomResponseParser.parse(http.getText(buildUrl(from, to, extraRoutes = 0)))
 
-    private fun buildUrl(from: LatLng, to: LatLng): HttpUrl = HttpUrl.Builder()
+    override suspend fun alternatives(from: LatLng, to: LatLng): List<Route> =
+        TomTomResponseParser.parseAll(http.getText(buildUrl(from, to, extraRoutes = 2)))
+
+    private fun buildUrl(from: LatLng, to: LatLng, extraRoutes: Int): HttpUrl = HttpUrl.Builder()
         .scheme("https")
         .host("api.tomtom.com")
         .addPathSegments("routing/1/calculateRoute")
@@ -25,6 +28,7 @@ class TomTomClient(private val http: OkHttpClient, private val apiKey: String) :
         .addPathSegment("${from.lat},${from.lng}:${to.lat},${to.lng}")
         .addPathSegment("json")
         .addQueryParameter("traffic", "true")
+        .addQueryParameter("maxAlternatives", extraRoutes.toString())
         .addQueryParameter("routeType", "fastest")
         .addQueryParameter("travelMode", "car")
         .addQueryParameter("sectionType", "traffic")

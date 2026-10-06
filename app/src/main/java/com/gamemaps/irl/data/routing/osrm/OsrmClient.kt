@@ -14,9 +14,12 @@ import okhttp3.OkHttpClient
 class OsrmClient(private val http: OkHttpClient) : RoutingService {
 
     override suspend fun route(from: LatLng, to: LatLng): Route =
-        OsrmResponseParser.parse(http.getText(buildUrl(from, to)))
+        OsrmResponseParser.parse(http.getText(buildUrl(from, to, alternatives = false)))
 
-    private fun buildUrl(from: LatLng, to: LatLng): HttpUrl = HttpUrl.Builder()
+    override suspend fun alternatives(from: LatLng, to: LatLng): List<Route> =
+        OsrmResponseParser.parseAll(http.getText(buildUrl(from, to, alternatives = true)))
+
+    private fun buildUrl(from: LatLng, to: LatLng, alternatives: Boolean): HttpUrl = HttpUrl.Builder()
         .scheme("https")
         .host("router.project-osrm.org")
         .addPathSegments("route/v1/driving")
@@ -25,6 +28,6 @@ class OsrmClient(private val http: OkHttpClient) : RoutingService {
         .addQueryParameter("overview", "full")
         .addQueryParameter("geometries", "geojson")
         .addQueryParameter("steps", "true")
-        .addQueryParameter("alternatives", "false")
+        .addQueryParameter("alternatives", alternatives.toString())
         .build()
 }

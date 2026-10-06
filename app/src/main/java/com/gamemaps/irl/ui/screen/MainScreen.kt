@@ -84,6 +84,7 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
                 onStop = viewModel::onStopNavigation,
                 onToggleMute = viewModel::onToggleMute,
                 onConfirmRoute = viewModel::onConfirmRoute,
+                onSelectRoute = viewModel::onSelectRoute,
                 onRecenter = { mapController?.recenter() },
                 onToggleFavorite = viewModel::onToggleFavorite,
             ),
@@ -155,6 +156,7 @@ private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: Bottom
             preview = navigation.toPreviewModel(),
             isFavorite = state.savedPlaces.isFavorite(destination),
             onToggleFavorite = { actions.onToggleFavorite(destination) },
+            onSelectRoute = actions.onSelectRoute,
             onStart = actions.onConfirmRoute,
             onCancel = actions.onStop,
             modifier = modifier,
@@ -183,6 +185,7 @@ private class BottomActions(
     val onStop: () -> Unit,
     val onToggleMute: () -> Unit,
     val onConfirmRoute: () -> Unit,
+    val onSelectRoute: (Int) -> Unit,
     val onRecenter: () -> Unit,
     val onToggleFavorite: (Place) -> Unit,
 )

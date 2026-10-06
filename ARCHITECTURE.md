@@ -175,6 +175,7 @@ Le mode développeur s'active par 7 appuis sur la version (Paramètres > À prop
 | `theme/MapThemeApplier.kt` | Repeint chaque calque du style selon la palette. |
 | `layers/RouteLayer.kt` | Tracé violet + liseré. |
 | `layers/TrafficLayer.kt` | Bordures orange / rouges autour du tracé sur les portions ralenties. |
+| `layers/AlternativeRoutesLayer.kt` | Dans l'aperçu, les trajets proposés mais non choisis, en gris. |
 | `layers/DestinationLayer.kt` | Épingle de destination au bout du tracé. |
 | `layers/DestinationPinBitmap.kt` | Dessin de l'épingle. |
 | `layers/LayerOrder.kt` | Place le tracé sous les noms de rues. |
@@ -252,6 +253,7 @@ pas de second moteur 3D, donc rendu identique sur le téléphone et sur Android 
 | `hud/MuteButton.kt` | Bouton rond du son (hors guidage). |
 | `hud/PreviewPanel.kt` | Aperçu : destination, durée, distance, arrivée, DÉMARRER / ANNULER. |
 | `hud/PreviewModel.kt` | Textes de l'aperçu. |
+| `hud/RouteOptionChips.kt` | Choix entre les trajets proposés (durée, distance, nature). |
 | `hud/PlaceSaveActions.kt` | Pastille « Ajouter aux favoris » de l'aperçu. |
 | `hud/RecenterButton.kt` | Bouton rond jaune « viseur » quand la carte a été déplacée. |
 | `search/SearchBar.kt` | Barre "Où aller ?" avec le bouton du menu (Paramètres) intégré. |

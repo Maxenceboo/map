@@ -9,9 +9,17 @@ import org.json.JSONObject
 /** Transforme la réponse JSON de TomTom (calculateRoute) en [Route]. */
 object TomTomResponseParser {
 
-    fun parse(json: String): Route {
-        val route = JSONObject(json).optJSONArray("routes")?.optJSONObject(0)
-            ?: throw RoutingException("Aucun itinéraire trouvé")
+    /** Le trajet conseillé (le premier de la réponse). */
+    fun parse(json: String): Route = parseAll(json).first()
+
+    /** Tous les trajets de la réponse : le conseillé, puis les variantes demandées avec `maxAlternatives`. */
+    fun parseAll(json: String): List<Route> {
+        val routes = JSONObject(json).optJSONArray("routes").objects()
+        if (routes.isEmpty()) throw RoutingException("Aucun itinéraire trouvé")
+        return routes.map(::parseRoute)
+    }
+
+    private fun parseRoute(route: JSONObject): Route {
 
         // Un seul tronçon ("leg") : l'app ne demande jamais d'étape intermédiaire.
         val geometry = route.optJSONArray("legs")?.optJSONObject(0)?.optJSONArray("points").objects()

@@ -5,6 +5,7 @@ import com.gamemaps.irl.data.location.GpsFix
 import com.gamemaps.irl.data.routing.Route
 import com.gamemaps.irl.map.camera.CameraConfig
 import com.gamemaps.irl.map.camera.FollowCamera
+import com.gamemaps.irl.map.layers.AlternativeRoutesLayer
 import com.gamemaps.irl.map.layers.DestinationLayer
 import com.gamemaps.irl.map.layers.DestinationPinBitmap
 import com.gamemaps.irl.map.layers.RouteLayer
@@ -26,6 +27,7 @@ class MapController internal constructor(
     private val context: Context,
     private val style: Style,
     private val routeLayer: RouteLayer,
+    private val alternativesLayer: AlternativeRoutesLayer,
     private val trafficLayer: TrafficLayer,
     private val destinationLayer: DestinationLayer,
     private val vehicle3DLayer: Vehicle3DLayer,
@@ -57,9 +59,14 @@ class MapController internal constructor(
         destinationLayer.update(route?.geometry?.lastOrNull())
     }
 
-    /** Cadre tout l'itinéraire (aperçu avant le départ). */
-    fun showOverview(route: Route) {
-        camera.showOverview(route.geometry)
+    /** Trajets proposés mais non choisis, en gris (aperçu). Liste vide : on les efface. */
+    fun showAlternatives(routes: List<Route>) {
+        alternativesLayer.update(routes)
+    }
+
+    /** Cadre tous les trajets proposés (aperçu avant le départ). */
+    fun showOverview(routes: List<Route>) {
+        camera.showOverview(routes.flatMap { it.geometry })
     }
 
     fun recenter() {

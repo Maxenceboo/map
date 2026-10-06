@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
  *
  * - [start] : calcule l'itinéraire depuis la position actuelle, puis l'affiche en aperçu
  *   (ou démarre directement si `autoStart`, utilisé par Android Auto).
+ * - [selectRoute] : dans l'aperçu, le conducteur choisit un des trajets proposés.
  * - [confirm] : le conducteur valide l'aperçu, le guidage commence.
  * - À chaque position GPS : met à jour la progression, détecte l'arrivée et la sortie de route.
  * - Avec un itinéraire qui tient compte du trafic : il est recalculé en silence toutes les
@@ -63,6 +64,14 @@ class NavigationEngine(
         }
     }
 
+    /** Dans l'aperçu, choisit un autre trajet parmi ceux proposés. */
+    fun selectRoute(index: Int) {
+        _state.update { state ->
+            val preview = state as? NavigationState.Previewing ?: return@update state
+            preview.alternatives.getOrNull(index)?.let { preview.copy(route = it) } ?: state
+        }
+    }
+
     /** Passe de l'aperçu au guidage, en partant de la position actuelle. */
     fun confirm() {
         val preview = _state.value as? NavigationState.Previewing ?: return
@@ -82,7 +91,10 @@ class NavigationEngine(
 
     private suspend fun computeRoute(destination: Place, origin: LatLng, autoStart: Boolean) {
         try {
-            val route = routing.route(origin, destination.position)
+            // Avant un départ depuis l'aperçu, on demande plusieurs trajets pour laisser le choix.
+            val forPreview = !autoStart && _state.value !is NavigationState.Navigating
+            val routes = if (forPreview) routing.alternatives(origin, destination.position) else listOf(routing.route(origin, destination.position))
+            val route = routes.first()
             routeComputedAt = clock()
             offRouteDetector.reset()
             // Un recalcul en cours de route repart directement en guidage, sans nouvel aperçu.
@@ -91,7 +103,7 @@ class NavigationEngine(
             _state.value = if (autoStart || isReroute) {
                 NavigationState.Navigating(destination, route, progressCalculator.compute(route, origin))
             } else {
-                NavigationState.Previewing(destination, route)
+                NavigationState.Previewing(destination, route, routes)
             }
         } catch (e: CancellationException) {
             throw e

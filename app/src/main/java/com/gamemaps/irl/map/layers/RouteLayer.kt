@@ -65,6 +65,7 @@ class RouteLayer(private val style: Style, private var palette: MapPalette) {
         /** Identifiant de la ligne violette : [TrafficLayer] se glisse juste dessous. */
         const val LINE_LAYER_ID = "route-line"
         private const val SOURCE_ID = "route-source"
-        private const val CASING_LAYER_ID = "route-casing"
+        /** Identifiant du liseré : [AlternativeRoutesLayer] se glisse juste dessous. */
+        const val CASING_LAYER_ID = "route-casing"
     }
 }

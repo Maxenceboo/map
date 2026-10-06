@@ -18,8 +18,15 @@ sealed interface NavigationState {
     /** Destination choisie, itinéraire en cours de calcul. */
     data class Calculating(val destination: Place) : NavigationState
 
-    /** Itinéraire calculé, affiché en entier : on attend que le conducteur appuie sur DÉMARRER. */
-    data class Previewing(val destination: Place, val route: Route) : NavigationState
+    /**
+     * Itinéraire calculé, affiché en entier : on attend que le conducteur appuie sur Démarrer.
+     * [route] est le trajet choisi parmi [alternatives] (le conseillé en premier).
+     */
+    data class Previewing(
+        val destination: Place,
+        val route: Route,
+        val alternatives: List<Route> = listOf(route),
+    ) : NavigationState
 
     /** Guidage actif. [isRerouting] = recalcul en cours après une sortie d'itinéraire. */
     data class Navigating(

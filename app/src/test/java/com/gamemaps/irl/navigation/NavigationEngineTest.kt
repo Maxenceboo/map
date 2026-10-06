@@ -170,4 +170,31 @@ class NavigationEngineTest {
         assertEquals(1, calls)
         scope.cancel()
     }
+
+    @Test
+    fun `l'aperçu propose plusieurs trajets et on peut en choisir un autre`() = runTest {
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val fast = TestFixtures.lShapedRoute()
+        val other = TestFixtures.lShapedRoute().copy(durationSeconds = 999.0)
+        val routing = object : RoutingService {
+            override suspend fun route(from: LatLng, to: LatLng) = fast
+            override suspend fun alternatives(from: LatLng, to: LatLng) = listOf(fast, other)
+        }
+        val engine = engine(scope, routing)
+
+        engine.start(TestFixtures.PLACE)
+        gps.emit(TestFixtures.fix(TestFixtures.START))
+        val preview = engine.state.value as NavigationState.Previewing
+        assertEquals(2, preview.alternatives.size)
+        assertTrue(preview.route === fast)
+
+        engine.selectRoute(1)
+        assertTrue((engine.state.value as NavigationState.Previewing).route === other)
+        engine.selectRoute(7) // indice inconnu : rien ne change
+        assertTrue((engine.state.value as NavigationState.Previewing).route === other)
+
+        engine.confirm()
+        assertTrue((engine.state.value as NavigationState.Navigating).route === other)
+        scope.cancel()
+    }
 }
