@@ -78,12 +78,12 @@ class FollowCamera(
             (height * config.overviewBottomRatio).toInt(), // place du panneau d'aperçu (voir CameraConfig)
         )
         val framed = map.getCameraForLatLngBounds(bounds, margins, 0.0, 0.0) ?: return
-        // Vue de dessus, nord en haut, et sans le décalage vers le haut du mode suivi
-        // (il resterait appliqué et pousserait le trajet sous le panneau).
+        // Vue de dessus, nord en haut. On garde les marges calculées par la carte ("framed" les contient) :
+        // elles placent le trajet dans la partie de l'écran que le panneau d'aperçu ne recouvre pas,
+        // et remplacent le décalage du mode suivi.
         val overview = CameraPosition.Builder(framed)
             .bearing(0.0)
             .tilt(0.0)
-            .padding(0.0, 0.0, 0.0, 0.0)
             .build()
         map.animateCamera(CameraUpdateFactory.newCameraPosition(overview), RECENTER_MILLIS)
     }
