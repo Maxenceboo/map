@@ -115,7 +115,7 @@ class MainViewModel(
         viewModelScope.launch {
             queries.debounce(DEBOUNCE_MS).distinctUntilChanged().collectLatest { query ->
                 if (query.isBlank()) {
-                    search.update { it.copy(results = emptyList(), isLoading = false) }
+                    search.value = SearchUiState()
                     return@collectLatest
                 }
                 search.update { it.copy(isLoading = true) }
@@ -124,9 +124,14 @@ class MainViewModel(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    emptyList()
+                    null // réseau absent ou serveur injoignable
                 }
-                search.update { it.copy(results = results, isLoading = false) }
+                val message = when {
+                    results == null -> "Recherche impossible. Vérifiez votre connexion."
+                    results.isEmpty() -> "Aucun résultat pour « ${query.trim()} »"
+                    else -> null
+                }
+                search.value = SearchUiState(results = results.orEmpty(), message = message)
             }
         }
     }

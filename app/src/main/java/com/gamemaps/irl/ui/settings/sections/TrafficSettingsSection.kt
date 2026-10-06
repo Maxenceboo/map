@@ -27,7 +27,7 @@ fun TrafficSettingsSection(
         SettingsToggleRow(
             icon = HudIcons.Traffic,
             title = "Trafic en temps réel",
-            description = "Itinéraire qui évite les bouchons ; bords orange (ralenti) ou rouges (bouchon) sur le tracé",
+            description = "Évite les bouchons et les signale sur le tracé",
             checked = settings.traffic,
         ) { enabled -> onUpdate { it.copy(traffic = enabled) } }
     }
@@ -35,9 +35,9 @@ fun TrafficSettingsSection(
     SettingsGroup("Clé TomTom") {
         if (maskedKey != null) {
             SettingsInfoRow(HudIcons.Key, "Clé enregistrée", maskedKey, actionLabel = "Retirer", onAction = onClearKey)
-            SettingsInfoRow(Icons.Filled.Lock, "Stockée sur ce téléphone", "Ni dans l'application ni dans les sauvegardes. Si TomTom la refuse, l'itinéraire est calculé sans trafic")
+            SettingsInfoRow(Icons.Filled.Lock, "Stockée sur ce téléphone", "Exclue des sauvegardes")
         } else {
-            SettingsInfoRow(HudIcons.Key, "Aucune clé", "Créez une clé gratuite sur developer.tomtom.com, copiez-la puis collez-la ici. Sans clé : itinéraires sans trafic")
+            SettingsInfoRow(HudIcons.Key, "Aucune clé", "Clé gratuite sur developer.tomtom.com")
             TomTomKeyField(onSaveKey)
         }
     }

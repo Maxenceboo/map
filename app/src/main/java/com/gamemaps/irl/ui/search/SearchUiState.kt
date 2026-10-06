@@ -9,4 +9,6 @@ import com.gamemaps.irl.data.search.Place
 data class SearchUiState(
     val results: List<Place> = emptyList(),
     val isLoading: Boolean = false,
+    /** À dire à la place des résultats : "Aucun résultat…", "Recherche impossible…" ; null sinon. */
+    val message: String? = null,
 )

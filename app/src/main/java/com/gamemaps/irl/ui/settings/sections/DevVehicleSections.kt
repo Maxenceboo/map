@@ -28,7 +28,7 @@ fun DevVehiclesSection(vehicles: List<CustomVehicleSpec>, usedId: String, onCrea
     }
     if (vehicles.isEmpty()) {
         SettingsGroup {
-            SettingsInfoRow(Icons.Filled.Info, "Aucun véhicule créé", "Vous réglez ses mesures : l'application construit le modèle 3D")
+            SettingsInfoRow(Icons.Filled.Info, "Aucun véhicule créé", "Réglez ses mesures, le modèle 3D suit")
         }
     } else {
         SettingsGroup("Mes véhicules") {
@@ -78,7 +78,7 @@ fun DevVehicleEditSection(
 
     SettingsGroup {
         if (isUsed) {
-            SettingsInfoRow(Icons.Filled.Check, "Véhicule utilisé", "Les changements s'appliquent tout de suite sur la carte")
+            SettingsInfoRow(Icons.Filled.Check, "Véhicule utilisé", "Modifications appliquées en direct")
         } else {
             SettingsNavigationRow(Icons.Filled.Check, "Utiliser ce véhicule", null, onUse)
         }

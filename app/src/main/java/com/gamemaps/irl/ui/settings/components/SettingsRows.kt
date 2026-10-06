@@ -20,6 +20,13 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -96,14 +103,7 @@ fun SettingsInfoRow(icon: ImageVector, title: String, subtitle: String?, actionL
     RowContainer(onClick = null) {
         IconTile(icon)
         TitleAndDescription(title, subtitle)
-        if (actionLabel != null && onAction != null) {
-            Text(
-                actionLabel,
-                style = CockpitTypography.Metric,
-                color = CockpitColors.Danger,
-                modifier = Modifier.padding(start = 8.dp).clip(HudShapes.Pill).clickable(onClick = onAction).padding(horizontal = 10.dp, vertical = 8.dp),
-            )
-        }
+        if (actionLabel != null && onAction != null) ConfirmedAction(actionLabel, onAction)
     }
 }
 
@@ -115,6 +115,37 @@ fun SettingsPlainRow(icon: ImageVector, title: String, subtitle: String?, onClic
         TitleAndDescription(title, subtitle)
     }
 }
+
+/**
+ * Action qui supprime quelque chose ("Retirer", "Supprimer") : un premier appui la transforme en
+ * "Confirmer", un second l'exécute. Sans second appui, elle revient à la normale après quelques secondes.
+ */
+@Composable
+private fun ConfirmedAction(label: String, onConfirmed: () -> Unit) {
+    var confirming by remember { mutableStateOf(false) }
+    LaunchedEffect(confirming) {
+        if (confirming) {
+            delay(CONFIRM_TIMEOUT_MS)
+            confirming = false
+        }
+    }
+    Text(
+        text = if (confirming) "Confirmer" else label,
+        style = CockpitTypography.Metric,
+        color = if (confirming) Color.White else CockpitColors.Danger,
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .clip(HudShapes.Pill)
+            .background(if (confirming) CockpitColors.Danger else Color.Transparent)
+            .clickable {
+                if (confirming) onConfirmed()
+                confirming = !confirming
+            }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
+}
+
+private const val CONFIRM_TIMEOUT_MS = 3_000L
 
 @Composable
 private fun RowContainer(onClick: (() -> Unit)?, content: @Composable RowScope.() -> Unit) {

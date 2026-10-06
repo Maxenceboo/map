@@ -12,6 +12,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import com.gamemaps.irl.ui.hud.HudNote
+import com.gamemaps.irl.data.location.GpsQuality
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +68,16 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
     val followingFlow = remember(mapController) { mapController?.isFollowing ?: MutableStateFlow(true) }
     val isFollowing by followingFlow.collectAsStateWithLifecycle()
 
+    // Arrêter un guidage demande une confirmation : un appui accidentel ne doit pas faire perdre le trajet.
+    var confirmStop by remember { mutableStateOf(false) }
+    val isNavigating = state.navigation is NavigationState.Navigating
+    LaunchedEffect(isNavigating) { if (!isNavigating) confirmStop = false }
+
+    // Bouton retour du téléphone : pendant un guidage il demande confirmation, sinon il annule le trajet affiché.
+    BackHandler(enabled = state.navigation !is NavigationState.Idle) {
+        if (isNavigating) confirmStop = !confirmStop else viewModel.onStopNavigation()
+    }
+
     KeepScreenOnEffect()
     LocationPermissionEffect(onGranted = onLocationPermissionGranted)
     MapRenderEffect(mapController, state)
@@ -82,6 +97,9 @@ fun MainScreen(viewModel: MainViewModel, settingsViewModel: SettingsViewModel, o
             isFollowing = isFollowing,
             actions = BottomActions(
                 onStop = viewModel::onStopNavigation,
+                confirmStop = confirmStop,
+                onAskStop = { confirmStop = true },
+                onCancelStop = { confirmStop = false },
                 onToggleMute = viewModel::onToggleMute,
                 onConfirmRoute = viewModel::onConfirmRoute,
                 onSelectRoute = viewModel::onSelectRoute,
@@ -107,6 +125,14 @@ private fun TopArea(
 ) {
     // Texte du champ gardé localement : mis à jour immédiatement à chaque frappe.
     var query by rememberSaveable { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val clearSearch = {
+        query = ""
+        viewModel.onQueryChange("")
+        focusManager.clearFocus() // referme le clavier
+    }
+    // Bouton retour du téléphone pendant une recherche : on l'efface au lieu de quitter l'app.
+    BackHandler(enabled = query.isNotBlank() && state.navigation is NavigationState.Idle, onBack = clearSearch)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (val navigation = state.navigation) {
             is NavigationState.Idle -> {
@@ -117,9 +143,17 @@ private fun TopArea(
                         viewModel.onQueryChange(it)
                     },
                     onMenuClick = onOpenSettings,
+                    isLoading = state.search.isLoading,
+                    onSubmit = { focusManager.clearFocus() },
                     modifier = Modifier.fillMaxWidth(),
                     trailing = { GpsStatusDot(state.driving.gpsQuality) },
                 )
+                if (query.isBlank() && state.driving.gpsQuality == GpsQuality.SEARCHING) {
+                    HudNote("Recherche du signal GPS…")
+                }
+                if (query.isNotBlank() && state.search.results.isEmpty()) {
+                    state.search.message?.let { HudNote(it) }
+                }
                 if (query.isBlank()) {
                     SavedPlacesShortcuts(saved = state.savedPlaces, onSelect = viewModel::onPlaceSelected, onDefine = onDefinePlaces)
                 }
@@ -128,7 +162,7 @@ private fun TopArea(
                         results = state.search.results,
                         near = state.driving.fix?.position,
                         onSelect = { place ->
-                            query = ""
+                            clearSearch()
                             viewModel.onPlaceSelected(place)
                         },
                     )
@@ -175,7 +209,15 @@ private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: Bottom
             }
         }
         if (navigation is NavigationState.Navigating) {
-            TripBar(hud = navigation.toHudModel(), isMuted = state.isMuted, onStop = actions.onStop, onToggleMute = actions.onToggleMute)
+            TripBar(
+                hud = navigation.toHudModel(),
+                isMuted = state.isMuted,
+                confirmStop = actions.confirmStop,
+                onAskStop = actions.onAskStop,
+                onCancelStop = actions.onCancelStop,
+                onStop = actions.onStop,
+                onToggleMute = actions.onToggleMute,
+            )
         }
     }
 }
@@ -183,6 +225,9 @@ private fun BottomArea(state: MainUiState, isFollowing: Boolean, actions: Bottom
 /** Actions des boutons du bas de l'écran, regroupées pour garder des signatures lisibles. */
 private class BottomActions(
     val onStop: () -> Unit,
+    val confirmStop: Boolean,
+    val onAskStop: () -> Unit,
+    val onCancelStop: () -> Unit,
     val onToggleMute: () -> Unit,
     val onConfirmRoute: () -> Unit,
     val onSelectRoute: (Int) -> Unit,

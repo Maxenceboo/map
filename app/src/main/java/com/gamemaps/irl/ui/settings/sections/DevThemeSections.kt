@@ -27,7 +27,7 @@ fun DevThemesSection(themes: List<CustomThemeSpec>, usedId: String, onCreate: ()
     }
     if (themes.isEmpty()) {
         SettingsGroup {
-            SettingsInfoRow(Icons.Filled.Info, "Aucun thème créé", "Un nouveau thème part des couleurs du thème affiché en ce moment")
+            SettingsInfoRow(Icons.Filled.Info, "Aucun thème créé", "Un nouveau thème reprend les couleurs du thème actuel")
         }
     } else {
         SettingsGroup("Mes thèmes") {
@@ -76,7 +76,7 @@ fun DevThemeEditSection(
 
     SettingsGroup {
         if (isUsed) {
-            SettingsInfoRow(Icons.Filled.Check, "Thème utilisé", "Les changements s'appliquent tout de suite à la carte")
+            SettingsInfoRow(Icons.Filled.Check, "Thème utilisé", "Modifications appliquées en direct")
         } else {
             SettingsNavigationRow(Icons.Filled.Check, "Utiliser ce thème", null, onUse)
         }

@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
@@ -28,13 +32,15 @@ import com.gamemaps.irl.ui.theme.CockpitTypography
 
 /**
  * Barre "Où aller ?" : le menu (Paramètres) à gauche, le champ, la croix pour effacer,
- * puis [trailing] (pastille GPS).
+ * un indicateur pendant la recherche, puis [trailing] (pastille GPS).
  */
 @Composable
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onMenuClick: () -> Unit,
+    isLoading: Boolean = false,
+    onSubmit: () -> Unit = {},
     modifier: Modifier = Modifier,
     trailing: @Composable () -> Unit = {},
 ) {
@@ -62,6 +68,9 @@ fun SearchBar(
                 singleLine = true,
                 textStyle = CockpitTypography.Street.copy(color = CockpitColors.Text),
                 cursorBrush = SolidColor(CockpitColors.Accent),
+                // Touche "Rechercher" du clavier : il se referme pour laisser voir les résultats.
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -74,6 +83,10 @@ fun SearchBar(
             )
         }
         Spacer(Modifier.width(10.dp))
+        if (isLoading) {
+            CircularProgressIndicator(Modifier.size(18.dp), color = CockpitColors.Accent, strokeWidth = 2.dp)
+            Spacer(Modifier.width(10.dp))
+        }
         trailing()
     }
 }

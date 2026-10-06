@@ -17,12 +17,12 @@ fun RadarSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSettings)
         SettingsToggleRow(
             icon = Icons.Filled.Warning,
             title = "Alertes de zone de danger",
-            description = "Bandeau, alerte sur l'écran de la voiture et bip à l'entrée d'une zone. L'emplacement des contrôles n'est pas affiché",
+            description = "Bandeau et bip à l'entrée d'une zone",
             checked = settings.radarAlerts,
         ) { enabled -> onUpdate { it.copy(radarAlerts = enabled) } }
     }
     SettingsGroup("Sources") {
-        SettingsInfoRow(Icons.Filled.CheckCircle, "Base officielle", "Données publiques françaises embarquées, fonctionne hors ligne")
+        SettingsInfoRow(Icons.Filled.CheckCircle, "Base officielle", "Données publiques, disponibles hors ligne")
         SettingsInfoRow(HudIcons.Globe, "OpenStreetMap", "Complète la base quand le réseau le permet")
     }
 }

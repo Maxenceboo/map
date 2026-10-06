@@ -29,7 +29,7 @@ fun VehicleSection(settings: AppSettings, open: (SettingsSection) -> Unit, onUpd
         SettingsNavigationRow(HudIcons.Palette, "Couleur", settings.vehicleColor.label) { open(SettingsSection.VEHICLE_COLOR) }
     }
     SettingsGroup {
-        SettingsToggleRow(HudIcons.Bolt, "Phares", "Faisceaux projetés sur la route devant le véhicule 3D", settings.headlights) { enabled ->
+        SettingsToggleRow(HudIcons.Bolt, "Phares", "Éclairent la route devant le véhicule", settings.headlights) { enabled ->
             onUpdate { it.copy(headlights = enabled) }
         }
     }

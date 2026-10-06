@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,7 +41,7 @@ fun AboutSection(devMode: Boolean, demoLocation: Boolean, onSetDevMode: (Boolean
     }
 
     SettingsGroup {
-        SettingsPlainRow(Icons.Filled.Info, "Game Maps IRL", "Version $version, natif Kotlin, Android Auto") {
+        SettingsPlainRow(Icons.Filled.Info, "Game Maps IRL", "Version $version") {
             if (devMode) return@SettingsPlainRow
             taps++
             val remaining = TAPS_TO_UNLOCK - taps
@@ -56,11 +57,11 @@ fun AboutSection(devMode: Boolean, demoLocation: Boolean, onSetDevMode: (Boolean
 
     if (devMode) {
         SettingsGroup("Développeur") {
-            SettingsToggleRow(Icons.Filled.Build, "Mode développeur", "Création de thèmes et de véhicules dans le menu Paramètres", true) { enabled ->
+            SettingsToggleRow(Icons.Filled.Build, "Mode développeur", "Créer des thèmes et des véhicules", true) { enabled ->
                 taps = 0
                 onSetDevMode(enabled)
             }
-            SettingsToggleRow(HudIcons.Recenter, "Position de démonstration", "Place le véhicule à Paris, sur les Champs-Élysées, à la place du GPS", demoLocation, onSetDemoLocation)
+            SettingsToggleRow(HudIcons.Recenter, "Position de démonstration", "Paris, à la place du GPS", demoLocation, onSetDemoLocation)
         }
     }
 
@@ -69,6 +70,6 @@ fun AboutSection(devMode: Boolean, demoLocation: Boolean, onSetDevMode: (Boolean
         SettingsInfoRow(Icons.Filled.Home, "Adresses", "Base Adresse Nationale (IGN Géoplateforme)")
         SettingsInfoRow(Icons.Filled.Place, "Lieux", "Photon (Komoot), données OpenStreetMap")
         SettingsInfoRow(HudIcons.Navigation, "Itinéraires", "TomTom (avec trafic) ou OSRM, données OpenStreetMap")
-        SettingsInfoRow(HudIcons.Radar, "Zones de danger", "Données publiques françaises + OpenStreetMap (Overpass)")
+        SettingsInfoRow(Icons.Filled.Warning, "Zones de danger", "Données publiques françaises + OpenStreetMap (Overpass)")
     }
 }
