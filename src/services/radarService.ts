@@ -7,7 +7,7 @@ export const DEFAULT_RADAR_TRAFFIC_SETTINGS: RadarTrafficSettings = {
   radarAlertsEnabled: true,
   soundAlertsEnabled: true,
   trafficEnabled: true,
-  tomtomApiKey: 'z8yDhKfoVP5L6ozx5G23szZ9xuU4WsKu',
+  tomtomApiKey: '',
 };
 
 // 1. Initialisation de la base française officielle (3 350 radars)
