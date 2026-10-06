@@ -71,8 +71,8 @@ Sept captures 1080 × 1920 sont prêtes (`capture-1` à `capture-7`), prises sur
 
 ## Politique de confidentialité
 
-Le texte est dans `politique-de-confidentialite.md`. Il reste à y mettre une adresse de contact
-et à le publier à une adresse web (une page GitHub suffit), à indiquer dans la fiche.
+Le texte est dans `politique-de-confidentialite.md`, avec l'adresse de contact. Il reste à le publier
+à une adresse web (une page GitHub suffit), à indiquer dans la fiche.
 
 ## Ce que Google demande pour une app de navigation
 

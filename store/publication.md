@@ -45,7 +45,7 @@ Dans la Play Console (compte développeur : 25 $ une fois) :
 - **Textes** : voir `fiche-play-store.md`.
 - **Visuels** : `icone-play-store-512.png`, `banniere-1024x500.png`, `capture-1` à `capture-7`.
 - **Politique de confidentialité** : publier `politique-de-confidentialite.md` à une adresse web
-  (une page GitHub suffit) après y avoir mis une adresse de contact.
+  (une page GitHub suffit).
 - **Sécurité des données** : position précise, utilisée pour le fonctionnement de l'app, non revendue.
 - **Position en arrière-plan** : déclarer le service de guidage, avec une courte vidéo d'un trajet.
 - **Android Auto** : cocher la distribution sur Android Auto ; Google valide à part les apps de navigation.

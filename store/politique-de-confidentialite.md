@@ -42,4 +42,4 @@ l'application. La clé TomTom est exclue des sauvegardes. Désinstaller l'applic
 
 ## Contact
 
-[À compléter : ton adresse e-mail de contact]
+maxence@bourrague.pro
