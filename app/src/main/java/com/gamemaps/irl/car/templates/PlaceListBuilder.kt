@@ -11,9 +11,9 @@ import com.gamemaps.irl.data.search.Place
 /** Listes de lieux pour la voiture, limitées au nombre de lignes autorisé par l'hôte. */
 object PlaceListBuilder {
 
-    /** Résultats de recherche. [near] (position actuelle) ajoute la distance devant l'adresse. */
-    fun build(places: List<Place>, near: LatLng?, maxItems: Int, onSelect: (Place) -> Unit): ItemList =
-        buildLabeled(places.map { it.name to it }, near, maxItems, "Aucun résultat", onSelect)
+    /** Résultats de recherche. [near] (position actuelle) ajoute la distance devant l'adresse ; [emptyMessage] s'affiche s'il n'y en a aucun. */
+    fun build(places: List<Place>, near: LatLng?, maxItems: Int, emptyMessage: String, onSelect: (Place) -> Unit): ItemList =
+        buildLabeled(places.map { it.name to it }, near, maxItems, emptyMessage, onSelect)
 
     /** Maison, Travail puis favoris : proposés tant que rien n'est tapé. */
     fun buildSaved(saved: SavedPlaces, near: LatLng?, maxItems: Int, onSelect: (Place) -> Unit): ItemList {
@@ -22,7 +22,7 @@ object PlaceListBuilder {
             saved.work?.let { add("Travail" to it) }
             saved.favorites.forEach { add(it.name to it) }
         }
-        return buildLabeled(entries, near, maxItems, "Tapez ou dictez une adresse ou un lieu", onSelect)
+        return buildLabeled(entries, near, maxItems, "Dictez ou tapez une adresse ou un lieu", onSelect)
     }
 
     private fun buildLabeled(

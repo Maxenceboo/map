@@ -26,6 +26,8 @@ import com.gamemaps.irl.navigation.NavigationState
 import com.gamemaps.irl.navigation.trip.toMissionPassedModel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -48,6 +50,10 @@ class NavigationCarScreen(
 
     /** Menu des destinations affiché à gauche de la carte quand il n'y a pas de trajet. */
     private var menuVisible = true
+
+    /** Pendant un guidage : la question "Arrêter ?" est affichée à la place des boutons. */
+    private var confirmStop = false
+    private var confirmStopJob: Job? = null
 
     private val maxPlaces: Int =
         carContext.getCarService(ConstraintManager::class.java).getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_PLACE_LIST)
@@ -106,8 +112,11 @@ class NavigationCarScreen(
             is NavigationState.Navigating -> NavigatingTemplate.build(
                 state = state,
                 isMuted = audio.muted.value,
+                confirmStop = confirmStop,
                 onSearch = ::openSearch,
                 onToggleMute = audio::toggleMuted,
+                onAskStop = ::askStop,
+                onCancelStop = { setConfirmStop(false) },
                 onStop = engine::stop,
             )
             is NavigationState.Arrived -> {
@@ -131,6 +140,7 @@ class NavigationCarScreen(
             engine.state.collect { state ->
                 // Après un trajet, on retrouve le menu des destinations.
                 if (state !is NavigationState.Idle) menuVisible = true
+                if (state !is NavigationState.Navigating) confirmStop = false
                 navigation = state
                 tripReporter.onStateChanged(state)
                 refreshMap()
@@ -189,6 +199,22 @@ class NavigationCarScreen(
         container.displayFixes.value?.let(controller::showVehicle)
     }
 
+    /** Croix touchée : on demande confirmation ; sans réponse, les boutons habituels reviennent. */
+    private fun askStop() {
+        setConfirmStop(true)
+        confirmStopJob = lifecycleScope.launch {
+            delay(CONFIRM_STOP_MS)
+            setConfirmStop(false)
+        }
+    }
+
+    private fun setConfirmStop(asking: Boolean) {
+        confirmStopJob?.cancel()
+        if (confirmStop == asking) return
+        confirmStop = asking
+        invalidate()
+    }
+
     private fun showMenu(visible: Boolean) {
         menuVisible = visible
         invalidate()
@@ -210,6 +236,10 @@ class NavigationCarScreen(
             if (hasLocationPermission) container.locationRepository.start()
             invalidate()
         }
+    }
+
+    private companion object {
+        const val CONFIRM_STOP_MS = 8_000L
     }
 
     private fun release() {

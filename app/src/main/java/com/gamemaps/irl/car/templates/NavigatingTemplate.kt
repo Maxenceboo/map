@@ -12,7 +12,7 @@ import com.gamemaps.irl.navigation.NavigationState
 
 /**
  * Guidage actif : carte avec, par-dessus, la manœuvre (gérée par Android Auto),
- * l'estimation d'arrivée et les boutons : changer de destination, son, croix pour annuler le trajet.
+ * l'estimation d'arrivée et les boutons : changer de destination, son, croix pour arrêter (avec confirmation).
  */
 object NavigatingTemplate {
 
@@ -22,8 +22,11 @@ object NavigatingTemplate {
     fun build(
         state: NavigationState.Navigating,
         isMuted: Boolean,
+        confirmStop: Boolean,
         onSearch: () -> Unit,
         onToggleMute: () -> Unit,
+        onAskStop: () -> Unit,
+        onCancelStop: () -> Unit,
         onStop: () -> Unit,
     ): Template {
         val progress = state.progress
@@ -40,11 +43,12 @@ object NavigatingTemplate {
             .setDestinationTravelEstimate(CarTravelEstimateMapper.map(progress))
             .setBackgroundColor(CarColor.createCustom(PANEL, PANEL))
             .setActionStrip(
-                CarActions.strip(
-                    CarActions.search(onSearch),
-                    CarActions.muteToggle(isMuted, onToggleMute),
-                    CarActions.cancelTrip(onStop),
-                ),
+                // La croix ne coupe pas le trajet d'un coup : elle propose "Arrêter" ou "Continuer".
+                if (confirmStop) {
+                    CarActions.strip(CarActions.button("Continuer", onCancelStop), CarActions.button("Arrêter", onStop))
+                } else {
+                    CarActions.strip(CarActions.search(onSearch), CarActions.muteToggle(isMuted, onToggleMute), CarActions.cancelTrip(onAskStop))
+                },
             )
             .build()
     }

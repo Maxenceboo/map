@@ -18,11 +18,11 @@ object CarActions {
         Action.Builder().setIcon(icon).setOnClickListener { onClick() }.build()
 
     /** Ouvre la recherche de destination (clavier ou dictée). */
-    fun search(onClick: () -> Unit): Action = button("Où aller ?", onClick)
+    fun search(onClick: () -> Unit): Action = iconButton(CarIcons.searchButton, onClick)
 
-    /** Bascule son / muet : le titre indique l'action disponible. */
+    /** Son : l'icône montre l'état actuel (haut-parleur, ou haut-parleur barré en rouge) ; un appui le change. */
     fun muteToggle(isMuted: Boolean, onToggle: () -> Unit): Action =
-        button(if (isMuted) "Son" else "Muet", onToggle)
+        iconButton(if (isMuted) CarIcons.volumeOff else CarIcons.volumeOn, onToggle)
 
     fun strip(vararg actions: Action): ActionStrip =
         ActionStrip.Builder().apply { actions.forEach { addAction(it) } }.build()

@@ -8,7 +8,7 @@ import androidx.car.app.model.Template
 object MessageTemplates {
 
     fun arrived(destinationName: String, summary: String, onDone: () -> Unit): Template =
-        message("Mission accomplie", "$destinationName\n$summary", CarActions.button("OK", onDone))
+        message("Mission accomplie", "$destinationName\n$summary", CarActions.button("Terminer", onDone))
 
     fun failed(reason: String, onRetry: () -> Unit, onDone: () -> Unit): Template =
         message(
@@ -21,7 +21,7 @@ object MessageTemplates {
     fun permissionRequired(onRequest: () -> Unit): Template =
         message(
             "Localisation requise",
-            "Autorisez l'accès à la position sur votre téléphone pour démarrer le guidage.",
+            "Autorisez l'accès à la position sur votre téléphone.",
             CarActions.button("Autoriser", onRequest),
         )
 

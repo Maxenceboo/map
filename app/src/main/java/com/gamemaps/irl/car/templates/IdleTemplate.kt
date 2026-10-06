@@ -63,7 +63,7 @@ object IdleTemplate {
 
     /** Carte seule, sans le menu : un bouton le fait revenir (toucher la carte réaffiche les boutons). */
     fun mapOnly(onShowMenu: () -> Unit, isMuted: Boolean, onToggleMute: () -> Unit): Template = NavigationTemplate.Builder()
-        .setActionStrip(CarActions.strip(CarActions.button("Où aller ?", onShowMenu), CarActions.muteToggle(isMuted, onToggleMute)))
+        .setActionStrip(CarActions.strip(CarActions.search(onShowMenu), CarActions.muteToggle(isMuted, onToggleMute)))
         .build()
 
     private fun savedRow(label: String, icon: CarIcon, place: Place?, near: LatLng?, onPlace: (Place) -> Unit, onUndefined: (String) -> Unit): Row =

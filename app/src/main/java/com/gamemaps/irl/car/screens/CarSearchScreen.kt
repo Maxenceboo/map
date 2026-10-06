@@ -29,6 +29,9 @@ class CarSearchScreen(
     private var query = ""
     private var results: List<Place> = emptyList()
     private var isLoading = false
+
+    /** La dernière recherche a échoué (réseau) : à ne pas confondre avec "aucun résultat". */
+    private var failed = false
     private var searchJob: Job? = null
 
     private val maxItems: Int =
@@ -52,7 +55,15 @@ class CarSearchScreen(
             query.isBlank() -> builder.setItemList(
                 PlaceListBuilder.buildSaved(container.savedPlacesRepository.saved.value, position, maxItems, ::onPlaceSelected),
             )
-            else -> builder.setItemList(PlaceListBuilder.build(results, position, maxItems, ::onPlaceSelected))
+            else -> builder.setItemList(
+                PlaceListBuilder.build(
+                    places = results,
+                    near = position,
+                    maxItems = maxItems,
+                    emptyMessage = if (failed) "Recherche impossible. Vérifiez la connexion du téléphone." else "Aucun résultat",
+                    onSelect = ::onPlaceSelected,
+                ),
+            )
         }
         return builder.build()
     }
@@ -77,13 +88,15 @@ class CarSearchScreen(
             delay(DEBOUNCE_MS)
             isLoading = true
             invalidate()
-            results = try {
+            val found = try {
                 container.placeSearch.search(text, position)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                emptyList()
+                null // réseau absent ou serveur injoignable
             }
+            failed = found == null
+            results = found.orEmpty()
             isLoading = false
             invalidate()
         }
