@@ -71,8 +71,11 @@ Sept captures 1080 × 1920 sont prêtes (`capture-1` à `capture-7`), prises sur
 
 ## Politique de confidentialité
 
-Le texte est dans `politique-de-confidentialite.md`, avec l'adresse de contact. Il reste à le publier
-à une adresse web (une page GitHub suffit), à indiquer dans la fiche.
+Adresse à indiquer dans la fiche (page publique, texte de `politique-de-confidentialite.md`) :
+
+    https://github.com/Maxenceboo/map/blob/native-android/store/politique-de-confidentialite.md
+
+Cette adresse reste valable tant que le dépôt est public et que le fichier ne change pas de place.
 
 ## Ce que Google demande pour une app de navigation
 
