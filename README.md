@@ -1,4 +1,4 @@
-# Game Maps IRL
+# Vektor GPS
 
 Un GPS qui ressemble à un jeu vidéo : carte de nuit, itinéraire lumineux, véhicule en 3D.
 Application Android native (Kotlin), avec Android Auto.

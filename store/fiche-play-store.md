@@ -2,7 +2,7 @@
 
 ## Nom de l'application (30 caractères max)
 
-    Game Maps IRL – GPS façon jeu
+    Vektor GPS – navigation
 
 ## Description courte (80 caractères max)
 
@@ -10,7 +10,7 @@
 
 ## Description complète
 
-    Game Maps IRL transforme tes trajets en mission : une carte de nuit, un itinéraire
+    Vektor GPS transforme tes trajets en mission : une carte de nuit, un itinéraire
     lumineux et ton véhicule en 3D au milieu de l'écran, sur ton téléphone comme sur
     l'écran de ta voiture.
 

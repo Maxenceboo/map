@@ -41,7 +41,7 @@ fun AboutSection(devMode: Boolean, demoLocation: Boolean, onSetDevMode: (Boolean
     }
 
     SettingsGroup {
-        SettingsPlainRow(Icons.Filled.Info, "Game Maps IRL", "Version $version") {
+        SettingsPlainRow(Icons.Filled.Info, "Vektor GPS", "Version $version") {
             if (devMode) return@SettingsPlainRow
             taps++
             val remaining = TAPS_TO_UNLOCK - taps

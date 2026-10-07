@@ -1,4 +1,4 @@
-# Direction artistique — Game Maps IRL
+# Direction artistique — Vektor GPS
 
 ## L'idée
 

@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 /** Crée le client HTTP unique de l'application. */
 object HttpClientFactory {
 
-    private const val USER_AGENT = "GameMapsIRL/0.1 (Android; https://github.com/Maxenceboo/map)"
+    private const val USER_AGENT = "VektorGPS/1.0 (Android; https://github.com/Maxenceboo/map)"
 
     fun create(): OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)

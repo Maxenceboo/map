@@ -1,8 +1,8 @@
-# Politique de confidentialité — Game Maps IRL
+# Politique de confidentialité — Vektor GPS
 
 *Dernière mise à jour : 5 octobre 2026*
 
-Game Maps IRL est une application de navigation. Elle fonctionne sans compte et sans publicité.
+Vektor GPS est une application de navigation. Elle fonctionne sans compte et sans publicité.
 
 ## Ce que l'application utilise
 
