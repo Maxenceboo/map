@@ -1,8 +1,8 @@
-# Politique de confidentialité — Vektor GPS
+# Politique de confidentialité — Vektyo GPS
 
 *Dernière mise à jour : 5 octobre 2026*
 
-Vektor GPS est une application de navigation. Elle fonctionne sans compte et sans publicité.
+Vektyo GPS est une application de navigation. Elle fonctionne sans compte et sans publicité.
 
 ## Ce que l'application utilise
 

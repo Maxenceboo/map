@@ -2,7 +2,7 @@
 
 ## Nom de l'application (30 caractères max)
 
-    Vektor GPS – navigation
+    Vektyo GPS – navigation
 
 ## Description courte (80 caractères max)
 
@@ -10,7 +10,7 @@
 
 ## Description complète
 
-    Vektor GPS transforme tes trajets en mission : une carte de nuit, un itinéraire
+    Vektyo GPS transforme tes trajets en mission : une carte de nuit, un itinéraire
     lumineux et ton véhicule en 3D au milieu de l'écran, sur ton téléphone comme sur
     l'écran de ta voiture.
 

@@ -1,4 +1,4 @@
-# Direction artistique — Vektor GPS
+# Direction artistique — Vektyo GPS
 
 ## L'idée
 

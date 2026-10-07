@@ -20,7 +20,7 @@ data class NavigationNotificationContent(val title: String, val text: String) {
             is NavigationState.Previewing -> NavigationNotificationContent("Itinéraire prêt", state.destination.name)
             is NavigationState.Arrived -> NavigationNotificationContent("Vous êtes arrivé", state.destination.name)
             is NavigationState.Failed -> NavigationNotificationContent("Itinéraire introuvable", state.destination.name)
-            NavigationState.Idle -> NavigationNotificationContent("Vektor GPS", "Guidage arrêté")
+            NavigationState.Idle -> NavigationNotificationContent("Vektyo GPS", "Guidage arrêté")
         }
 
         private fun navigating(state: NavigationState.Navigating, nowMillis: Long): NavigationNotificationContent {

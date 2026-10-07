@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GameMapsIRL"
+rootProject.name = "VektyoGPS"
 include(":app")

@@ -1,4 +1,4 @@
-# Architecture — Vektor GPS (version native Kotlin)
+# Architecture — Vektyo GPS (version native Kotlin)
 
 Refonte 100 % native (option B du [cahier des charges](./CAHIER_DES_CHARGES.md) §10) :
 Kotlin + Jetpack Compose sur le téléphone, MapLibre Native pour la carte, Car App Library pour Android Auto.

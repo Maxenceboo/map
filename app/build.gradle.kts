@@ -18,7 +18,8 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.gamemaps.irl"
+        // Identifiant de l'app sur le Play Store : définitif une fois publié. (Le code reste dans le paquet com.gamemaps.irl.)
+        applicationId = "pro.bourrague.vektyo"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
